@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel RHF</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#020617;color:#fff;margin:0;padding:20px}
+    h1{margin-bottom:10px}
+    .box{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:16px}
+    input,textarea,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none}
+    input,textarea{background:#020617;color:#fff;border:1px solid #1e293b}
+    button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+    .item{border-bottom:1px solid #1e293b;padding:8px 0}
+  </style>
+</head>
+<body><h1>Admin Panel RHF Game Store</h1>
+<p>Tambah / edit item (real-time)</p><div class="box">
+  <h3>Tambah Item</h3>
+  <input id="game" placeholder="Nama Game">
+  <input id="name" placeholder="Nama Item">
+  <textarea id="desc" placeholder="Deskripsi"></textarea>
+  <input id="price" placeholder="Harga">
+  <input id="img" placeholder="Link Gambar">
+  <button onclick="addItem()">Simpan Item</button>
+</div><div class="box">
+  <h3>Daftar Item</h3>
+  <div id="items"></div>
+</div><!-- FIREBASE --><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
+  // GANTI DENGAN CONFIG FIREBASE KAMU
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7",
+  measurementId: "G-RYFR9D5R5H"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const ref = db.ref('items');
+
+  function addItem(){
+    const data = {
+      game: game.value,
+      name: name.value,
+      desc: desc.value,
+      price: price.value,
+      img: img.value
+    };
+    ref.push(data);
+    game.value = name.value = desc.value = price.value = img.value = '';
+  }
+
+  ref.on('value', snap =>{
+    items.innerHTML = '';
+    snap.forEach(s =>{
+      const d = s.val();
+      items.innerHTML += `<div class='item'><b>${d.game}</b> - ${d.name}<br>Rp ${d.price}</div>`;
+    });
+  });
+</script></body>
+</html>
