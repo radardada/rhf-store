@@ -52,15 +52,10 @@ button{
   font-weight:bold;
   cursor:pointer;
 }
-.small{
-  font-size:13px;
-  color:#94a3b8;
-}
-.warn{
-  font-size:13px;
-  color:#facc15;
-}
+.small{font-size:13px;color:#94a3b8}
+.warn{font-size:13px;color:#facc15}
 .hidden{display:none}
+hr{border:1px solid #1e293b;margin:12px 0}
 </style>
 </head>
 
@@ -68,21 +63,32 @@ button{
 
 <header>🎮 RHF Game Store</header>
 
-<!-- LOGIN -->
+<!-- LOGIN + REGIS -->
 <div class="box" id="loginBox">
-  <h3>Login (Opsional)</h3>
+  <h3>Login</h3>
   <input id="user" placeholder="Username">
   <input id="pass" type="password" placeholder="Password">
   <button onclick="login()">LOGIN</button>
-  <p class="small">Login untuk voucher & event</p>
+
+  <hr>
+
+  <p class="small">Belum punya akun?</p>
+  <input id="namaReg" placeholder="Nama untuk registrasi">
+  <button onclick="regisWA()">REGIS VIA WHATSAPP</button>
+
+  <p class="small">
+    Login membuka voucher & event.<br>
+    Tanpa login tetap bisa beli (terbatas).
+  </p>
 </div>
 
-<!-- ITEM LIST -->
+<!-- ITEM -->
 <div class="box">
   <h3>Daftar Item</h3>
   <div id="items"></div>
 </div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -110,7 +116,10 @@ function rupiah(x){
 function login(){
   const u = user.value.trim();
   const p = pass.value.trim();
-  if(!u || !p){ alert("Lengkapi data"); return; }
+  if(!u || !p){
+    alert("Isi username & password");
+    return;
+  }
 
   userRef.once("value",snap=>{
     let ok=false;
@@ -133,6 +142,22 @@ function login(){
   });
 }
 
+// ================= REGIS VIA WA =================
+function regisWA(){
+  const nama = namaReg.value.trim();
+  if(!nama){
+    alert("Masukkan nama");
+    return;
+  }
+
+  const nomor = "6285135993982"; // GANTI NOMOR WA KAMU
+  const pesan = `REGISTER RHF\nNama: ${nama}`;
+  window.open(
+    `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`,
+    "_blank"
+  );
+}
+
 // ================= LOAD ITEM =================
 function loadItems(){
   itemRef.on("value",snap=>{
@@ -148,14 +173,12 @@ function loadItems(){
           <p>Harga: <b>Rp ${rupiah(d.price)}</b></p>
 
           ${
-            isLogin ? `
-              <input id="v-${id}" placeholder="Kode Voucher">
-              <button onclick="pakaiVoucher('${id}',${d.price})">
-                Pakai Voucher
-              </button>
-            ` : `
-              <p class="warn">Login untuk voucher & event</p>
-            `
+            isLogin
+            ? `<input placeholder="Kode Voucher (login)">
+               <button onclick="alert('Voucher siap dikembangkan')">
+                 Pakai Voucher
+               </button>`
+            : `<p class="warn">Login untuk voucher & event</p>`
           }
 
           <button onclick="beli('${d.name}',${d.price})">
@@ -169,18 +192,9 @@ function loadItems(){
 
 // ================= BELI (SEMUA BISA) =================
 function beli(nama,harga){
-  const wa="6285135993982"; // GANTI NOMOR KAMU
-  const text=`Saya mau beli ${nama}\nHarga: Rp ${rupiah(harga)}`;
+  const wa = "6285135993982"; // GANTI NOMOR WA
+  const text = `Saya mau beli ${nama}\nHarga: Rp ${rupiah(harga)}`;
   window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`);
-}
-
-// ================= VOUCHER (LOGIN SAJA) =================
-function pakaiVoucher(id,harga){
-  if(!isLogin){
-    alert("Login dulu");
-    return;
-  }
-  alert("Logika voucher aktif (siap dikembangkan)");
 }
 
 // LOAD AWAL
