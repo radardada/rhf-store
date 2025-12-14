@@ -13,18 +13,22 @@ button{font-weight:bold;cursor:pointer}
 .green{background:#22c55e;color:#000}
 .red{background:#ef4444;color:#fff}
 .gray{background:#334155;color:#fff}
-.item{border-bottom:1px solid #1e293b;padding:8px 0}
+.item{border-bottom:1px solid #1e293b;padding:10px 0}
+hr{border:0;border-top:1px dashed #334155;margin:8px 0}
 small{color:#94a3b8}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px}
+.new{background:#eab308;color:#000}
+.done{background:#22c55e;color:#000}
 </style>
 </head>
 
 <body>
 
-<h2>ADMIN PANEL RHF (FULL CONTROL)</h2>
+<h2>ADMIN PANEL RHF — FULL CONTROL</h2>
 
 <!-- ================= ITEM ================= -->
 <div class="box">
-<h3>Tambah / Update Item</h3>
+<h3>🎮 Tambah Item</h3>
 <input id="game" placeholder="Nama Game">
 <input id="name" placeholder="Nama Item">
 <input id="price" placeholder="Harga (contoh 50000)">
@@ -35,31 +39,31 @@ small{color:#94a3b8}
 
 <!-- ================= VOUCHER ================= -->
 <div class="box">
-<h3>Buat Voucher</h3>
+<h3>🎟️ Buat Voucher</h3>
 <input id="vcode" placeholder="Kode Voucher">
 <input id="vdisc" placeholder="Diskon (%)">
 <input id="vmax" placeholder="Maksimal User">
-<input id="vexp" placeholder="Aktif sampai (YYYY-MM-DD)">
+<input id="vexp" placeholder="Berlaku sampai (YYYY-MM-DD)">
 <button class="green" onclick="addVoucher()">Simpan Voucher</button>
 <div id="vouchers"></div>
 </div>
 
 <!-- ================= AKUN ================= -->
 <div class="box">
-<h3>Buat Akun Pembeli</h3>
+<h3>👤 Buat Akun Pembeli</h3>
 <input id="user" placeholder="Username">
 <input id="pass" placeholder="Password">
 <button class="green" onclick="addUser()">Simpan Akun</button>
 </div>
 
 <div class="box">
-<h3>Daftar Akun (Bawah)</h3>
+<h3>📋 Daftar Akun</h3>
 <div id="users"></div>
 </div>
 
 <!-- ================= LOG ================= -->
 <div class="box">
-<h3>LOG VOUCHER & PESANAN</h3>
+<h3>📦 LOG PESANAN & VOUCHER (DETAIL)</h3>
 <div id="logs"></div>
 </div>
 
@@ -89,21 +93,21 @@ const logsRef = db.ref("logs");
 /* ================= ITEM ================= */
 function addItem(){
   itemsRef.push({
-    game:game.value,
-    name:name.value,
-    price:parseInt(price.value),
-    img:img.value
+    game: game.value,
+    name: name.value,
+    price: parseInt(price.value),
+    img: img.value
   });
 }
 
-itemsRef.on("value",s=>{
+itemsRef.on("value", s=>{
   items.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
     items.innerHTML+=`
       <div class="item">
-        <b>${d.game}</b> - ${d.name}<br>
-        Harga: Rp ${d.price.toLocaleString("id-ID")}
+        <b>${d.game}</b> — ${d.name}<br>
+        💰 Rp ${Number(d.price).toLocaleString("id-ID")}
       </div>`;
   });
 });
@@ -111,22 +115,22 @@ itemsRef.on("value",s=>{
 /* ================= VOUCHER ================= */
 function addVoucher(){
   vouchersRef.child(vcode.value).set({
-    code:vcode.value,
-    disc:parseInt(vdisc.value),
-    max:parseInt(vmax.value),
-    used:0,
-    expire:vexp.value,
-    active:true
+    code: vcode.value,
+    disc: parseInt(vdisc.value),
+    max: parseInt(vmax.value),
+    used: 0,
+    expire: vexp.value,
+    active: true
   });
 }
 
-vouchersRef.on("value",s=>{
+vouchersRef.on("value", s=>{
   vouchers.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
     vouchers.innerHTML+=`
       <div class="item">
-        <b>${d.code}</b> - ${d.disc}%<br>
+        <b>${d.code}</b> — ${d.disc}%<br>
         Dipakai: ${d.used}/${d.max}<br>
         Aktif: ${d.active}
       </div>`;
@@ -136,22 +140,22 @@ vouchersRef.on("value",s=>{
 /* ================= USER ================= */
 function addUser(){
   usersRef.child(user.value).set({
-    user:user.value,
-    pass:pass.value,
-    status:"aktif",
-    usedVoucher:false
+    user: user.value,
+    pass: pass.value,
+    status: "aktif",
+    usedVoucher: false
   });
 }
 
-usersRef.on("value",s=>{
+usersRef.on("value", s=>{
   users.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
     users.innerHTML+=`
       <div class="item">
         <b>${d.user}</b><br>
-        Password: ${d.pass}<br>
-        Status: ${d.status}<br>
+        🔑 ${d.pass}<br>
+        Status: ${d.status}<br><br>
         <button class="gray" onclick="banUser('${c.key}')">BAN</button>
         <button class="green" onclick="unbanUser('${c.key}')">UNBAN</button>
         <button class="red" onclick="deleteUser('${c.key}')">HAPUS</button>
@@ -163,17 +167,31 @@ function banUser(u){ usersRef.child(u).update({status:"banned"}); }
 function unbanUser(u){ usersRef.child(u).update({status:"aktif"}); }
 function deleteUser(u){ usersRef.child(u).remove(); }
 
-/* ================= LOG ================= */
-logsRef.on("value",s=>{
+/* ================= LOG DETAIL ================= */
+logsRef.on("value", s=>{
   logs.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
     logs.innerHTML+=`
       <div class="item">
-        User: ${d.user}<br>
-        Voucher: ${d.voucher || "-"}<br>
-        Diskon: ${d.disc || 0}%<br>
-        Waktu: ${d.time}
+        <span class="badge new">ORDER</span><br><br>
+
+        🧾 <b>Kode:</b> ${d.orderCode || "-"}<br>
+        👤 <b>User:</b> ${d.user || "GUEST"}<br>
+        🎮 <b>Game:</b> ${d.game || "-"}<br>
+        📦 <b>Item:</b> ${d.item || "-"}<br>
+
+        <hr>
+
+        💰 <b>Harga Asli:</b> Rp ${Number(d.priceOriginal || 0).toLocaleString("id-ID")}<br>
+        🎟️ <b>Voucher:</b> ${d.voucher || "-"}<br>
+        📉 <b>Diskon:</b> ${d.discount || 0}%<br>
+        💵 <b>Harga Akhir:</b> 
+        <span style="color:#22c55e">
+          Rp ${Number(d.priceFinal || d.price || 0).toLocaleString("id-ID")}
+        </span><br>
+
+        <small>🕒 ${d.time}</small>
       </div>`;
   });
 });
