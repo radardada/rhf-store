@@ -1,28 +1,14 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ADMIN PANEL RHF - FULL CONTROL</title>
-
+<title>ADMIN PANEL RHF – FULL CONTROL</title>
 <style>
-body{margin:0;background:#020617;color:#fff;font-family:Arial}
+body{margin:0;font-family:Arial;background:#020617;color:#fff;padding:16px}
 h2{margin-top:0}
-.box{
- background:#020617;
- border:1px solid #1e293b;
- border-radius:14px;
- padding:16px;
- margin-bottom:16px
-}
-input,textarea,button{
- width:100%;
- padding:10px;
- margin-top:8px;
- border-radius:8px;
- border:none
-}
-button{cursor:pointer;font-weight:bold}
+.box{background:#020617;border:1px solid #1e293b;border-radius:14px;padding:16px;margin-bottom:16px}
+input,button,textarea{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:none}
+button{font-weight:bold;cursor:pointer}
 .green{background:#22c55e;color:#000}
 .red{background:#ef4444;color:#fff}
 .gray{background:#334155;color:#fff}
@@ -30,74 +16,37 @@ button{cursor:pointer;font-weight:bold}
 small{color:#94a3b8}
 </style>
 </head>
-
-<body>
-
-<div style="padding:16px">
-<h2>ADMIN PANEL RHF (MASTER CONTROL)</h2>
-
-<!-- GLOBAL MESSAGE / EVENT -->
-<div class="box">
-<h3>📢 Kirim Pesan / Event Global</h3>
-<textarea id="gtext" placeholder="Pesan global / diskon / event"></textarea>
-<button class="green" onclick="sendGlobal()">KIRIM GLOBAL</button>
-</div>
-
-<!-- ITEM -->
-<div class="box">
-<h3>🎮 Item & Harga</h3>
+<body><h2>ADMIN PANEL RHF (FULL CONTROL)</h2><!-- ITEM --><div class="box">
+<h3>Item / Produk</h3>
 <input id="game" placeholder="Nama Game">
 <input id="name" placeholder="Nama Item">
-<input id="price" placeholder="Harga (contoh 50000)">
+<input id="price" placeholder="Harga">
 <input id="img" placeholder="Link Gambar">
-<button class="green" onclick="addItem()">SIMPAN ITEM</button>
+<button class="green" onclick="addItem()">Simpan Item</button>
 <div id="items"></div>
-</div>
-
-<!-- VOUCHER -->
-<div class="box">
-<h3>🎟 Voucher</h3>
+</div><!-- VOUCHER --><div class="box">
+<h3>Voucher</h3>
 <input id="vcode" placeholder="Kode Voucher">
-<input id="vdisc" placeholder="Diskon %">
-<input id="vmax" placeholder="Maks User">
-<input id="vexp" placeholder="Expired (YYYY-MM-DD)">
-<button class="green" onclick="addVoucher()">SIMPAN VOUCHER</button>
+<input id="vdisc" placeholder="Diskon (%)">
+<input id="vmax" placeholder="Maksimal User">
+<input id="vexp" placeholder="Expire (YYYY-MM-DD)">
+<button class="green" onclick="addVoucher()">Simpan Voucher</button>
 <div id="vouchers"></div>
-</div>
-
-<!-- USERS -->
-<div class="box">
-<h3>👤 Buat Akun User</h3>
+</div><!-- USER --><div class="box">
+<h3>Akun User</h3>
 <input id="user" placeholder="Username">
 <input id="pass" placeholder="Password">
-<button class="green" onclick="addUser()">BUAT AKUN</button>
-</div>
-
-<div class="box">
-<h3>📋 Daftar User</h3>
+<button class="green" onclick="addUser()">Simpan Akun</button>
 <div id="users"></div>
-</div>
-
-<!-- ORDERS -->
-<div class="box">
-<h3>🧾 ORDER MASUK (REALTIME)</h3>
+</div><!-- ORDER --><div class="box">
+<h3>ORDER REAL-TIME</h3>
 <div id="orders"></div>
-</div>
-
-<!-- LOG -->
-<div class="box">
-<h3>📜 LOG VOUCHER</h3>
-<div id="logs"></div>
-</div>
-
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-firebase.initializeApp({
+</div><!-- BROADCAST --><div class="box">
+<h3>Broadcast / Event Global</h3>
+<textarea id="broadcast" placeholder="Tulis pesan global / event"></textarea>
+<button class="green" onclick="sendBroadcast()">Kirim Global</button>
+</div><!-- FIREBASE --><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
+const firebaseConfig={
  apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
  authDomain:"rhf-gamestore.firebaseapp.com",
  databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -105,42 +54,36 @@ firebase.initializeApp({
  storageBucket:"rhf-gamestore.firebasestorage.app",
  messagingSenderId:"52065906934",
  appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
-});
+};
+firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-/* GLOBAL */
-function sendGlobal(){
- db.ref("global").set({
-  text:gtext.value,
-  time:new Date().toLocaleString("id-ID")
- });
- alert("Pesan global terkirim");
-}
+const itemsRef=db.ref("items");
+const vouchersRef=db.ref("vouchers");
+const usersRef=db.ref("users");
+const ordersRef=db.ref("orders");
+const broadcastRef=db.ref("broadcast");
 
 /* ITEM */
 function addItem(){
- db.ref("items").push({
+ itemsRef.push({
   game:game.value,
   name:name.value,
   price:parseInt(price.value),
   img:img.value
  });
 }
-db.ref("items").on("value",s=>{
+itemsRef.on("value",s=>{
  items.innerHTML="";
  s.forEach(c=>{
   const d=c.val();
-  items.innerHTML+=`
-   <div class="item">
-    <b>${d.game}</b> - ${d.name}<br>
-    Harga: Rp ${d.price.toLocaleString("id-ID")}
-   </div>`;
+  items.innerHTML+=`<div class='item'><b>${d.game}</b> - ${d.name}<br>Rp ${d.price.toLocaleString('id-ID')}</div>`;
  });
 });
 
 /* VOUCHER */
 function addVoucher(){
- db.ref("vouchers/"+vcode.value).set({
+ vouchersRef.child(vcode.value).set({
   code:vcode.value,
   disc:parseInt(vdisc.value),
   max:parseInt(vmax.value),
@@ -149,81 +92,50 @@ function addVoucher(){
   active:true
  });
 }
-db.ref("vouchers").on("value",s=>{
+vouchersRef.on("value",s=>{
  vouchers.innerHTML="";
  s.forEach(c=>{
   const d=c.val();
-  vouchers.innerHTML+=`
-   <div class="item">
-    <b>${d.code}</b><br>
-    Diskon: ${d.disc}%<br>
-    Dipakai: ${d.used}/${d.max}<br>
-    Aktif: ${d.active}
-   </div>`;
+  vouchers.innerHTML+=`<div class='item'><b>${d.code}</b> - ${d.disc}%<br>${d.used}/${d.max} | Aktif:${d.active}</div>`;
  });
 });
 
-/* USERS */
+/* USER */
 function addUser(){
- db.ref("users/"+user.value).set({
+ usersRef.child(user.value).set({
   user:user.value,
   pass:pass.value,
   status:"aktif",
   usedVoucher:false
  });
 }
-function ban(u){db.ref("users/"+u).update({status:"banned"})}
-function unban(u){db.ref("users/"+u).update({status:"aktif"})}
-function del(u){db.ref("users/"+u).remove()}
-
-db.ref("users").on("value",s=>{
+usersRef.on("value",s=>{
  users.innerHTML="";
  s.forEach(c=>{
   const d=c.val();
-  users.innerHTML+=`
-   <div class="item">
-    <b>${d.user}</b><br>
-    Pass: ${d.pass}<br>
-    Status: ${d.status}<br>
-    <button class="gray" onclick="ban('${c.key}')">BAN</button>
-    <button class="green" onclick="unban('${c.key}')">UNBAN</button>
-    <button class="red" onclick="del('${c.key}')">HAPUS</button>
-   </div>`;
+  users.innerHTML+=`<div class='item'><b>${d.user}</b><br>Password:${d.pass}<br>Status:${d.status}<br>
+  <button class='gray' onclick="banUser('${c.key}')">BAN</button>
+  <button class='green' onclick="unbanUser('${c.key}')">UNBAN</button>
+  <button class='red' onclick="deleteUser('${c.key}')">HAPUS</button></div>`;
  });
 });
+function banUser(u){usersRef.child(u).update({status:"banned"});}
+function unbanUser(u){usersRef.child(u).update({status:"aktif"});}
+function deleteUser(u){usersRef.child(u).remove();}
 
-/* ORDERS */
-db.ref("orders").on("value",s=>{
+/* ORDER */
+ordersRef.on("value",s=>{
  orders.innerHTML="";
  s.forEach(c=>{
   const d=c.val();
-  orders.innerHTML+=`
-   <div class="item">
-    <b>KODE:</b> ${d.kode}<br>
-    User: ${d.user}<br>
-    Item: ${d.item}<br>
-    Harga Akhir: Rp ${d.harga_akhir.toLocaleString("id-ID")}<br>
-    Voucher: ${d.voucher}<br>
-    Waktu: ${d.waktu}
-   </div>`;
+  orders.innerHTML+=`<div class='item'><b>${d.order_id}</b><br>User:${d.user}<br>Item:${d.item}<br>Harga:${d.harga_akhir.toLocaleString('id-ID')}<br>Voucher:${d.voucher}<br>Waktu:${d.waktu}</div>`;
  });
 });
 
-/* LOG */
-db.ref("logs").on("value",s=>{
- logs.innerHTML="";
- s.forEach(c=>{
-  const d=c.val();
-  logs.innerHTML+=`
-   <div class="item">
-    User: ${d.user}<br>
-    Voucher: ${d.voucher}<br>
-    Diskon: ${d.disc}%<br>
-    Waktu: ${d.time}
-   </div>`;
- });
-});
-</script>
-
-</body>
+/* BROADCAST */
+function sendBroadcast(){
+ broadcastRef.set({text:broadcast.value,time:Date.now()});
+ alert("Broadcast terkirim");
+}
+</script></body>
 </html>
