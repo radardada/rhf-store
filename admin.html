@@ -3,191 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel RHF</title>
+<title>Admin RHF Game Store</title>
 
 <style>
 body{
+  margin:0;
   font-family:Arial,Helvetica,sans-serif;
   background:#020617;
   color:#fff;
-  margin:0;
-  padding:20px;
 }
-h1{margin-bottom:16px}
-
+header{
+  padding:16px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  border-bottom:1px solid #1e293b;
+}
 .box{
+  margin:16px;
+  padding:16px;
   background:#020617;
   border:1px solid #1e293b;
   border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 6px 30px rgba(0,0,0,.4);
 }
-
-input,select,button{
+input,textarea,button{
   width:100%;
-  padding:10px;
+  padding:12px;
   margin-top:8px;
   border-radius:10px;
   border:none;
 }
-
-input,select{
+input,textarea{
   background:#020617;
   color:#fff;
   border:1px solid #1e293b;
 }
-
 button{
   background:#22c55e;
-  color:#000;
   font-weight:bold;
   cursor:pointer;
 }
-
-.user{
-  border-bottom:1px solid #1e293b;
-  padding:8px 0;
-  font-size:14px;
+.danger{
+  background:#ef4444;
+  color:#fff;
 }
-.small{color:#94a3b8;font-size:12px}
-.red{color:#f87171}
-.green{color:#22c55e}
+.item{
+  border-bottom:1px solid #1e293b;
+  padding:12px 0;
+}
+img{
+  width:100%;
+  border-radius:10px;
+  margin-top:8px;
+}
+.small{
+  font-size:13px;
+  color:#94a3b8;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🛠 Admin Panel RHF</h1>
+<header>🛠 ADMIN PANEL RHF</header>
 
-<!-- BUAT VOUCHER -->
+<!-- TAMBAH ITEM -->
 <div class="box">
-  <h3>Buat Voucher User</h3>
-  <input id="uid" placeholder="UID User">
-  <input id="code" placeholder="Kode Voucher">
-  <input id="value" placeholder="Diskon (%)">
-  <button onclick="createVoucher()">Simpan Voucher</button>
+  <h3>Tambah Item</h3>
+  <input id="game" placeholder="Nama Game">
+  <input id="name" placeholder="Nama Item">
+  <textarea id="desc" placeholder="Deskripsi"></textarea>
+  <input id="price" placeholder="Harga (contoh: 50000)">
+  <input id="img" placeholder="Link Gambar (imgur)">
+  <button onclick="addItem()">SIMPAN ITEM</button>
+  <p class="small">Item langsung tampil di web pembeli</p>
 </div>
 
-<!-- USER LIST -->
+<!-- DAFTAR ITEM -->
 <div class="box">
-  <h3>Daftar User</h3>
-  <div id="users"></div>
-</div>
-
-<!-- LOG VOUCHER -->
-<div class="box">
-  <h3>Log Voucher</h3>
-  <div id="logs"></div>
+  <h3>Daftar Item</h3>
+  <div id="items"></div>
 </div>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-/* ============ CONFIG ============ */
-const firebaseConfig = {
+// ================= FIREBASE =================
+firebase.initializeApp({
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-firebase.initializeApp(firebaseConfig);
-
-/* ============ AUTH ADMIN ============ */
-firebase.auth().onAuthStateChanged(user=>{
-  if(!user){
-    alert("Login admin dulu");
-    location.href="index.html";
-    return;
-  }
-
-  firebase.database()
-    .ref("users/"+user.uid+"/role")
-    .once("value")
-    .then(s=>{
-      if(s.val() !== "admin"){
-        alert("Bukan admin");
-        location.href="index.html";
-      }
-    });
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 
-/* ============ BUAT VOUCHER ============ */
-function createVoucher(){
-  if(!uid.value || !code.value || !value.value){
+const db = firebase.database();
+const ref = db.ref("items");
+
+// ================= TAMBAH ITEM =================
+function addItem(){
+  if(!game.value || !name.value || !price.value){
     alert("Lengkapi data");
     return;
   }
 
-  const data = {
-    type:"percent",
-    value:Number(value.value),
-    active:true,
-    used:false,
-    created_at:Date.now()
-  };
+  ref.push({
+    game: game.value,
+    name: name.value,
+    desc: desc.value,
+    price: price.value,
+    img: img.value
+  });
 
-  firebase.database()
-    .ref("user_vouchers/"+uid.value+"/"+code.value)
-    .set(data);
-
-  firebase.database()
-    .ref("voucher_logs/"+code.value+"/"+uid.value)
-    .set({
-      status:"active",
-      time:Date.now()
-    });
-
-  alert("Voucher berhasil dibuat");
-  code.value=value.value="";
+  game.value=name.value=desc.value=price.value=img.value="";
 }
 
-/* ============ LIST USER ============ */
-firebase.database().ref("users").on("value",snap=>{
-  users.innerHTML="";
-  snap.forEach(u=>{
-    const d=u.val();
-    users.innerHTML+=`
-      <div class="user">
-        <b>${d.name || "User"}</b><br>
-        <span class="small">UID: ${u.key}</span><br>
-        Status:
-        <b class="${d.status==='active'?'green':'red'}">${d.status}</b><br>
-        Voucher: ${d.voucher_count || 0}<br>
-        <button onclick="setStatus('${u.key}','active')">Aktif</button>
-        <button onclick="setStatus('${u.key}','frozen')">Freeze</button>
-        <button onclick="setStatus('${u.key}','banned')">Ban</button>
+// ================= LOAD & EDIT ITEM =================
+ref.on("value",snap=>{
+  items.innerHTML="";
+  snap.forEach(s=>{
+    const d=s.val();
+    const id=s.key;
+
+    items.innerHTML+=`
+      <div class="item">
+        <b>${d.game}</b><br>
+        ${d.name}<br>
+        Harga: Rp ${Number(d.price).toLocaleString("id-ID")}
+        <img src="${d.img}">
+        
+        <input id="p-${id}" value="${d.price}">
+        <button onclick="updatePrice('${id}')">UBAH HARGA</button>
+        <button class="danger" onclick="hapus('${id}')">HAPUS ITEM</button>
       </div>
     `;
   });
 });
 
-/* ============ SET STATUS USER ============ */
-function setStatus(uid,status){
-  firebase.database().ref("users/"+uid+"/status").set(status);
+// ================= UPDATE HARGA =================
+function updatePrice(id){
+  const val = document.getElementById("p-"+id).value;
+  ref.child(id).update({price:val});
 }
 
-/* ============ LOG VOUCHER ============ */
-firebase.database().ref("voucher_logs").on("value",snap=>{
-  logs.innerHTML="";
-  snap.forEach(c=>{
-    c.forEach(u=>{
-      logs.innerHTML+=`
-        <div class="user">
-          <b>${c.key}</b><br>
-          UID: ${u.key}<br>
-          Status: ${u.val().status}
-        </div>
-      `;
-    });
-  });
-});
+// ================= HAPUS =================
+function hapus(id){
+  if(confirm("Yakin hapus item?")){
+    ref.child(id).remove();
+  }
+}
 </script>
 
 </body>
