@@ -27,8 +27,8 @@ button{
   cursor:pointer;
   font-weight:bold;
 }
-.loginBtn{background:#22c55e;color:#000}
-.logoutBtn{background:#ef4444;color:#fff}
+.green{background:#22c55e;color:#000}
+.red{background:#ef4444;color:#fff}
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
@@ -51,14 +51,13 @@ button{
   font-weight:bold;
   color:#22c55e;
 }
-#loginBox,#voucherBox{
+.box{
   background:#020617;
   border:1px solid #1e293b;
   border-radius:12px;
   padding:14px;
   margin:14px;
 }
-.hidden{display:none}
 input{
   width:100%;
   padding:8px;
@@ -68,6 +67,8 @@ input{
   background:#020617;
   color:#fff;
 }
+.hidden{display:none}
+small{color:#94a3b8}
 </style>
 </head>
 
@@ -76,27 +77,34 @@ input{
 <header>
   <b>RHF GAME STORE</b>
   <div>
-    <button class="loginBtn" id="loginBtn" onclick="showLogin()">LOGIN</button>
-    <button class="logoutBtn hidden" id="logoutBtn" onclick="logout()">LOGOUT</button>
+    <button id="loginBtn" class="green" onclick="toggleLogin()">LOGIN</button>
+    <button id="logoutBtn" class="red hidden" onclick="logout()">LOGOUT</button>
   </div>
 </header>
 
+<!-- INFO GUEST -->
+<div id="guestInfo" class="box">
+  <b>INFO</b><br>
+  Pengguna tanpa akun tetap bisa beli.<br>
+  Login untuk mendapatkan <b>voucher & diskon</b>.
+</div>
+
 <!-- LOGIN -->
-<div id="loginBox" class="hidden">
+<div id="loginBox" class="box hidden">
   <h3>Login Akun</h3>
   <input id="lu" placeholder="Username">
   <input id="lp" type="password" placeholder="Password">
-  <button class="loginBtn" onclick="login()">LOGIN</button>
+  <button class="green" onclick="login()">LOGIN</button>
   <p id="loginInfo"></p>
   <hr>
-  <button onclick="waReg()">REGISTRASI VIA WHATSAPP</button>
+  <button onclick="waReg()">Registrasi via WhatsApp</button>
 </div>
 
 <!-- VOUCHER -->
-<div id="voucherBox" class="hidden">
-  <h3>Gunakan Voucher</h3>
+<div id="voucherBox" class="box hidden">
+  <h3>Voucher</h3>
   <input id="voucherInput" placeholder="Masukkan kode voucher">
-  <button class="loginBtn" onclick="pakaiVoucher()">PAKAI</button>
+  <button class="green" onclick="pakaiVoucher()">PAKAI VOUCHER</button>
   <p id="voucherInfo"></p>
 </div>
 
@@ -114,27 +122,28 @@ firebase.initializeApp({
 });
 
 const db = firebase.database();
-let currentUser = localStorage.getItem("user") || null;
+let currentUser = localStorage.getItem("user");
 let voucherAktif = null;
 
-// FORMAT RUPIAH
+// format rupiah
 function rupiah(n){
   return Number(n).toLocaleString("id-ID");
 }
 
-// LOGIN STATUS
+// status login
 if(currentUser){
   loginBtn.classList.add("hidden");
   logoutBtn.classList.remove("hidden");
   voucherBox.classList.remove("hidden");
+  guestInfo.classList.add("hidden");
 }
 
-// LOAD ITEM REAL-TIME
+// load item real-time
 db.ref("items").on("value", snap=>{
   items.innerHTML="";
   snap.forEach(s=>{
     const d=s.val();
-    let harga=d.price;
+    let harga = d.price;
 
     if(voucherAktif){
       harga = Math.floor(d.price - (d.price * voucherAktif.diskon/100));
@@ -145,15 +154,15 @@ db.ref("items").on("value", snap=>{
         <img src="${d.img}">
         <b>${d.game}</b><br>
         ${d.name}<br>
-        <span class="price">Rp ${rupiah(harga)}</span><br>
+        <span class="price">Rp ${rupiah(harga)}</span><br><br>
         <button onclick="beli('${d.name}')">BELI</button>
       </div>
     `;
   });
 });
 
-// LOGIN
-function showLogin(){
+// login
+function toggleLogin(){
   loginBox.classList.toggle("hidden");
 }
 
@@ -165,7 +174,7 @@ function login(){
       if(d.user===lu.value && d.pass===lp.value){
         if(d.status!=="active"){
           loginInfo.innerText="Akun diblokir";
-          ok=true;return;
+          ok=true; return;
         }
         localStorage.setItem("user",d.user);
         location.reload();
@@ -181,19 +190,19 @@ function logout(){
   location.reload();
 }
 
-// REGIS WA
+// registrasi wa
 function waReg(){
   location.href="https://wa.me/6285135993982?text=REGISTER%20RHF%20NAMA%20:";
 }
 
-// VOUCHER
+// voucher
 function pakaiVoucher(){
   if(!currentUser){
     voucherInfo.innerText="Login dulu";
     return;
   }
 
-  const kode=voucherInput.value.trim();
+  const kode = voucherInput.value.trim();
   db.ref("vouchers/"+kode).once("value", snap=>{
     if(!snap.exists()){
       voucherInfo.innerText="Voucher tidak valid";
@@ -206,6 +215,16 @@ function pakaiVoucher(){
       return;
     }
 
+    if(Date.now()>v.expire){
+      voucherInfo.innerText="Voucher kadaluarsa";
+      return;
+    }
+
+    if(v.used>=v.max){
+      voucherInfo.innerText="Voucher habis";
+      return;
+    }
+
     db.ref("used/"+currentUser+"/"+kode).once("value", u=>{
       if(u.exists()){
         voucherInfo.innerText="Voucher sudah dipakai";
@@ -214,16 +233,23 @@ function pakaiVoucher(){
 
       voucherAktif=v;
       db.ref("used/"+currentUser+"/"+kode).set(true);
+      db.ref("vouchers/"+kode+"/used").set((v.used||0)+1);
+      db.ref("voucher_logs").push({
+        user: currentUser,
+        voucher: kode,
+        time: Date.now()
+      });
+
       voucherInfo.innerText="Voucher aktif ("+v.diskon+"%)";
     });
   });
 }
 
-// BELI
+// beli
 function beli(item){
-  let text="Halo saya mau beli "+item;
-  if(voucherAktif) text+=" (pakai voucher)";
-  location.href="https://wa.me/6285135993982?text="+encodeURIComponent(text);
+  let txt="Halo saya mau beli "+item;
+  if(voucherAktif) txt+=" (pakai voucher)";
+  location.href="https://wa.me/6285135993982?text="+encodeURIComponent(txt);
 }
 </script>
 
