@@ -29,41 +29,15 @@ button.danger{background:#ef4444;color:#fff}
 </div><div class="box">
 <h3>Daftar Item</h3>
 <div id="items"></div>
-</div><div class="box">
-<h3>Buat Akun Pembeli</h3>
+</div>function addVoucher(){if(!vcode.value||!vdisc.value){alert('Voucher belum lengkap');return;}vouchersRef.push({code:vcode.value,disc:vdisc.value,max:vmax.value||1,used:0,exp:vexp.value||null});vcode.value=vdisc.value=vmax.value=vexp.value='';}
+
+vouchersRef.on('value',s=>{vouchers.innerHTML='';s.forEach(c=>{const d=c.val();vouchers.innerHTML+=<div class='item'><b>${d.code}</b> - ${d.disc}%<br>Dipakai ${d.used}/${d.max}</div>;});}); // ======= AKUN PEMBELI (DIPINDAH KE PALING BAWAH) ======= usersRef.on('value',s=>{users.innerHTML='';s.forEach(c=>{const d=c.val();users.innerHTML+=<div class='item'><b>${d.user}</b><br><span class="small">Password: ${d.pass}</span><br>(${d.status})<div class='flex'><button onclick=\"usersRef.child('${c.key}').update({status:'aktif'})\">Aktif</button><button class='danger' onclick=\"usersRef.child('${c.key}').update({status:'nonaktif'})\">Nonaktif</button></div></div>;});}); </script>
+
+<div class="box">
+<h3>Buat Akun Pembeli (Disimpan di Bawah)</h3>
 <input id="user" placeholder="Username">
 <input id="pass" placeholder="Password">
 <button onclick="addUser()">Simpan Akun</button>
 <div id="users"></div>
-</div><div class="box">
-<h3>Buat Voucher</h3>
-<input id="vcode" placeholder="Kode Voucher">
-<input id="vdisc" placeholder="Diskon % (contoh 10)">
-<input id="vmax" placeholder="Maksimal Pemakai">
-<input id="vexp" placeholder="Tanggal Expired (YYYY-MM-DD)">
-<button onclick="addVoucher()">Simpan Voucher</button>
-<div id="vouchers"></div>
-</div><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
-const firebaseConfig={apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",authDomain:"rhf-gamestore.firebaseapp.com",databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"rhf-gamestore",storageBucket:"rhf-gamestore.firebasestorage.app",messagingSenderId:"52065906934",appId:"1:52065906934:web:c15f0eff91cc937f787cd7"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-const itemsRef=db.ref('items');
-const usersRef=db.ref('users');
-const vouchersRef=db.ref('vouchers');
-
-function addItem(){
-const data={game:game.value,name:name.value,desc:desc.value,price:price.value,img:img.value,time:Date.now()};
-if(!data.game||!data.name||!data.price){alert('Data item belum lengkap');return;}
-itemsRef.push(data);
-game.value=name.value=desc.value=price.value=img.value='';}
-
-itemsRef.on('value',s=>{items.innerHTML='';s.forEach(c=>{const d=c.val();items.innerHTML+=`<div class='item'><b>${d.game}</b><br>${d.name}<br>Rp ${Number(d.price).toLocaleString('id-ID')}<div class='flex'><button class='danger' onclick="itemsRef.child('${c.key}').remove()">Hapus</button></div></div>`;});});
-
-function addUser(){if(!user.value||!pass.value){alert('User/Pass kosong');return;}usersRef.push({user:user.value,pass:pass.value,status:'aktif'});user.value=pass.value='';}
-usersRef.on('value',s=>{users.innerHTML='';s.forEach(c=>{const d=c.val();users.innerHTML+=`<div class='item'><b>${d.user}</b> (${d.status})<div class='flex'><button onclick="usersRef.child('${c.key}').update({status:'aktif'})">Aktif</button><button class='danger' onclick="usersRef.child('${c.key}').update({status:'nonaktif'})">Nonaktif</button></div></div>`;});});
-
-function addVoucher(){if(!vcode.value||!vdisc.value){alert('Voucher belum lengkap');return;}vouchersRef.push({code:vcode.value,disc:vdisc.value,max:vmax.value||1,used:0,exp:vexp.value||null});vcode.value=vdisc.value=vmax.value=vexp.value='';}
-
-vouchersRef.on('value',s=>{vouchers.innerHTML='';s.forEach(c=>{const d=c.val();vouchers.innerHTML+=`<div class='item'><b>${d.code}</b> - ${d.disc}%<br>Dipakai ${d.used}/${d.max}</div>`;});});
-</script></body>
+</div></body>
 </html>
