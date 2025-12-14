@@ -2,123 +2,147 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Panel RHF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel RHF Game Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
       background:#020617;
       color:#fff;
-      font-family:Arial,Helvetica,sans-serif;
       padding:20px;
     }
-    .box {
+    h1{margin-bottom:5px}
+    p{color:#94a3b8}
+
+    .box{
+      background:#020617;
       border:1px solid #1e293b;
-      border-radius:12px;
+      border-radius:14px;
       padding:16px;
-      margin-bottom:16px;
+      margin-bottom:18px;
     }
-    input, textarea, button {
+
+    input, textarea, button{
       width:100%;
-      margin-top:8px;
+      margin-top:10px;
       padding:10px;
       border-radius:8px;
       border:none;
+      font-size:14px;
     }
-    input, textarea {
+
+    input, textarea{
       background:#020617;
       color:#fff;
       border:1px solid #1e293b;
     }
-    button {
+
+    button{
       background:#22c55e;
       color:#000;
       font-weight:bold;
+      cursor:pointer;
     }
-    .item {
+
+    .item{
       border-bottom:1px solid #1e293b;
-      padding:8px 0;
+      padding:10px 0;
+    }
+
+    .item img{
+      width:100%;
+      max-width:200px;
+      border-radius:10px;
+      margin-top:6px;
     }
   </style>
 </head>
 
 <body>
 
-<h1>Admin Panel RHF Game Store</h1>
+  <h1>Admin Panel RHF Game Store</h1>
+  <p>Tambah & edit item (real-time)</p>
 
-<div class="box">
-  <h3>Tambah Item</h3>
-  <input id="game" placeholder="Nama Game">
-  <input id="name" placeholder="Nama Item">
-  <textarea id="desc" placeholder="Deskripsi"></textarea>
-  <input id="price" placeholder="Harga">
-  <input id="img" placeholder="Link Gambar">
-  <button onclick="addItem()">Simpan Item</button>
-</div>
+  <div class="box">
+    <h3>Tambah Item</h3>
 
-<div class="box">
-  <h3>Daftar Item</h3>
-  <div id="items"></div>
-</div>
+    <input id="game" placeholder="Nama Game">
+    <input id="name" placeholder="Nama Item">
+    <textarea id="desc" placeholder="Deskripsi"></textarea>
+    <input id="price" placeholder="Harga (contoh: 25000)">
+    <input id="img" placeholder="Link Gambar">
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <button onclick="addItem()">Simpan Item</button>
+  </div>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-    authDomain: "rhf-gamestore.firebaseapp.com",
-    databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "rhf-gamestore",
-    storageBucket: "rhf-gamestore.firebasestorage.app",
-    messagingSenderId: "52065906934",
-    appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-  };
+  <div class="box">
+    <h3>Daftar Item</h3>
+    <div id="items"></div>
+  </div>
 
-  firebase.initializeApp(firebaseConfig);
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  const db = firebase.database();
-  const ref = db.ref("items");
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+      authDomain: "rhf-gamestore.firebaseapp.com",
+      databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "rhf-gamestore",
+      storageBucket: "rhf-gamestore.firebasestorage.app",
+      messagingSenderId: "52065906934",
+      appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+    };
 
-  function addItem() {
-    const game = document.getElementById("game");
-    const name = document.getElementById("name");
-    const desc = document.getElementById("desc");
-    const price = document.getElementById("price");
-    const img = document.getElementById("img");
+    firebase.initializeApp(firebaseConfig);
 
-    if (!game.value || !name.value || !price.value) {
-      alert("Data belum lengkap");
-      return;
+    const db = firebase.database();
+    const ref = db.ref("items");
+
+    function addItem(){
+      const game = document.getElementById("game").value;
+      const name = document.getElementById("name").value;
+      const desc = document.getElementById("desc").value;
+      const price = document.getElementById("price").value;
+      const img = document.getElementById("img").value;
+
+      if(!game || !name || !price){
+        alert("Nama game, item, dan harga wajib diisi");
+        return;
+      }
+
+      ref.push({
+        game, name, desc, price, img
+      });
+
+      document.getElementById("game").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("img").value = "";
     }
 
-    ref.push({
-      game: game.value,
-      name: name.value,
-      desc: desc.value,
-      price: price.value,
-      img: img.value
-    });
+    ref.on("value", snap=>{
+      const items = document.getElementById("items");
+      items.innerHTML = "";
 
-    game.value = name.value = desc.value = price.value = img.value = "";
-  }
-
-  ref.on("value", snap => {
-    const items = document.getElementById("items");
-    items.innerHTML = "";
-    snap.forEach(s => {
-      const d = s.val();
-      items.innerHTML += `
-        <div class="item">
-          <b>${d.game}</b><br>
-          ${d.name}<br>
-          Rp ${d.price}
-        </div>
-      `;
+      snap.forEach(s=>{
+        const d = s.val();
+        items.innerHTML += `
+          <div class="item">
+            <b>${d.game}</b><br>
+            ${d.name}<br>
+            Rp ${d.price}<br>
+            ${d.desc || ""}
+            ${d.img ? `<img src="${d.img}">` : ""}
+          </div>
+        `;
+      });
     });
-  });
-</script>
+  </script>
 
 </body>
 </html>
