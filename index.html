@@ -1,150 +1,120 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
 <style>
-body{margin:0;font-family:Arial;background:#020617;color:#fff}
-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #1e293b}
-.logo{font-weight:bold;font-size:18px}
-.loginBtn{background:#22c55e;color:#000;padding:8px 14px;border-radius:10px;font-weight:bold;cursor:pointer}
-.container{padding:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
-.card{background:#020617;border:1px solid #1e293b;border-radius:16px;overflow:hidden}
-.card img{width:100%;height:140px;object-fit:cover}
-.card .p{padding:10px}
-.price{font-weight:bold;margin-top:4px}
-.buy{margin-top:8px;background:#22c55e;color:#000;padding:8px;border-radius:10px;text-align:center;font-weight:bold;cursor:pointer}
-#loginBox,#orderBox{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
-.modal{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px;width:90%;max-width:380px}
-input{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none}
-button{margin-top:10px;width:100%;padding:10px;border-radius:10px;border:none;font-weight:bold;cursor:pointer}
-.green{background:#22c55e;color:#000}
-.gray{background:#334155;color:#fff}
-.notice{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:12px;margin-bottom:16px}
+body{background:#020617;color:#fff;font-family:Arial;margin:0;padding:16px}
+.card{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-bottom:16px}
+input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:10px}
+button{background:#22c55e;color:#000;font-weight:bold}
+small{color:#94a3b8}
+.hidden{display:none}
 </style>
 </head>
 <body>
-<header>
-<div class="logo">RHF Game Store</div>
-<div id="userArea"><div class="loginBtn" onclick="openLogin()">Login</div></div>
-</header><div class="container">
-<div id="broadcast" class="notice" style="display:none"></div>
-<div class="grid" id="items"></div>
-</div><!-- LOGIN --><div id="loginBox">
-<div class="modal">
+
+<h2>RHF GAME STORE</h2>
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
 <h3>Login Member</h3>
 <input id="luser" placeholder="Username">
 <input id="lpass" type="password" placeholder="Password">
-<button class="green" onclick="login()">Login</button>
-<button class="gray" onclick="closeLogin()">Tutup</button>
+<button onclick="login()">Login</button>
+<small id="loginMsg"></small>
 </div>
-</div><!-- ORDER --><div id="orderBox">
-<div class="modal">
-<h3>Konfirmasi Pesanan</h3>
-<div id="orderDetail"></div>
-<input id="voucherInput" placeholder="Kode Voucher (opsional)">
-<button class="green" onclick="confirmOrder()">Kirim Pesanan</button>
-<button class="gray" onclick="closeOrder()">Batal</button>
+
+<!-- STORE -->
+<div class="card hidden" id="store">
+<h3>Gunakan Voucher</h3>
+<input id="vcode" placeholder="Kode Voucher">
+<button onclick="applyVoucher()">Pakai Voucher</button>
+<small id="vinfo"></small>
+
+<hr>
+
+<h3>VIP + LUCK</h3>
+<p>Harga: <b id="price">Rp 50.000</b></p>
+<p>Total: <b id="final">Rp 50.000</b></p>
+<button onclick="order()">Beli</button>
 </div>
-</div><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
-const firebaseConfig={
- apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
- authDomain:"rhf-gamestore.firebaseapp.com",
- databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"rhf-gamestore",
- storageBucket:"rhf-gamestore.firebasestorage.app",
- messagingSenderId:"52065906934",
- appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+ authDomain: "rhf-gamestore.firebaseapp.com",
+ databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId: "rhf-gamestore",
+ appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-const itemsRef=db.ref("items");
-const vouchersRef=db.ref("vouchers");
-const usersRef=db.ref("users");
-const ordersRef=db.ref("orders");
-const broadcastRef=db.ref("broadcast");
+const db = firebase.database();
 
 let currentUser=null;
-let selectedItem=null;
+let basePrice=50000;
+let discount=0;
+let usedVoucher=null;
 
-broadcastRef.on("value",s=>{
- if(!s.exists())return;
- broadcast.style.display="block";
- broadcast.innerText=s.val().text;
-});
-
-itemsRef.on("value",snap=>{
- items.innerHTML="";
- snap.forEach(c=>{
-  const d=c.val();
-  items.innerHTML+=`
-  <div class="card">
-   <img src="${d.img}">
-   <div class="p">
-    <b>${d.name}</b><br>
-    <small>${d.game}</small>
-    <div class="price">Rp ${d.price.toLocaleString('id-ID')}</div>
-    <div class="buy" onclick='openOrder(${JSON.stringify(d)})'>Beli</div>
-   </div>
-  </div>`;
- });
-});
-
-function openLogin(){loginBox.style.display="flex"}
-function closeLogin(){loginBox.style.display="none"}
+function rupiah(n){return 'Rp '+n.toLocaleString('id-ID');}
 
 function login(){
- usersRef.child(luser.value).get().then(s=>{
-  if(!s.exists())return alert("Akun tidak ada");
+ const u=luser.value;
+ const p=lpass.value;
+ db.ref('users/'+u).once('value',s=>{
+  if(!s.exists()) return loginMsg.innerText='User tidak ada';
   const d=s.val();
-  if(d.pass!==lpass.value)return alert("Password salah");
-  if(d.status!=="aktif")return alert("Akun diblokir");
-  currentUser=luser.value;
-  localStorage.setItem("user",currentUser);
-  userArea.innerHTML="<b>"+currentUser+"</b>";
-  closeLogin();
+  if(d.pass!==p) return loginMsg.innerText='Password salah';
+  if(d.status!=='aktif') return loginMsg.innerText='Akun dibanned';
+  currentUser=u;
+  loginBox.classList.add('hidden');
+  store.classList.remove('hidden');
  });
 }
 
-function openOrder(item){
- selectedItem=item;
- orderDetail.innerHTML=`Item: <b>${item.name}</b><br>Harga: Rp ${item.price.toLocaleString('id-ID')}`;
- orderBox.style.display="flex";
-}
-function closeOrder(){orderBox.style.display="none"}
-
-function confirmOrder(){
- const orderId="ORDER-"+Date.now()+"-"+Math.floor(Math.random()*9999);
- const voucher=voucherInput.value||"-";
- let finalPrice=selectedItem.price;
-
- vouchersRef.child(voucher).get().then(v=>{
-  if(v.exists() && v.val().active){
-   const disc=v.val().disc;
-   finalPrice=finalPrice-(finalPrice*disc/100);
-   vouchersRef.child(voucher).update({used:v.val().used+1});
-  }
-
-  const data={
-   order_id:orderId,
-   user:currentUser||"GUEST",
-   item:selectedItem.name,
-   harga_awal:selectedItem.price,
-   harga_akhir:finalPrice,
-   voucher:voucher,
-   waktu:new Date().toLocaleString("id-ID")
-  };
-
-  ordersRef.child(orderId).set(data).then(()=>{
-   const wa=`ORDER RHF\nKode:${orderId}\nUser:${data.user}\nItem:${data.item}\nHarga:Rp ${finalPrice.toLocaleString('id-ID')}`;
-   window.location.href="https://wa.me/6285135993982?text="+encodeURIComponent(wa);
-  });
+function applyVoucher(){
+ db.ref('vouchers/'+vcode.value).once('value',s=>{
+  if(!s.exists()) return vinfo.innerText='Voucher tidak valid';
+  const v=s.val();
+  if(!v.active||v.used>=v.max) return vinfo.innerText='Voucher habis';
+  discount=v.disc;
+  usedVoucher=v.code;
+  updatePrice();
+  vinfo.innerText='Voucher aktif: diskon '+discount+'%';
  });
 }
 
-const savedUser=localStorage.getItem("user");
-if(savedUser){currentUser=savedUser;userArea.innerHTML="<b>"+savedUser+"</b>"}
-</script></body>
+function updatePrice(){
+ const finalP = basePrice - (basePrice*discount/100);
+ final.innerText=rupiah(finalP);
+}
+
+function order(){
+ const finalP = basePrice - (basePrice*discount/100);
+ const orderId='RHF-'+Date.now()+'-'+Math.floor(Math.random()*9999);
+
+ db.ref('orders').push({
+  orderId,
+  user:currentUser,
+  item:'VIP + LUCK',
+  price:basePrice,
+  disc:discount,
+  finalPrice:finalP,
+  voucher:usedVoucher,
+  time:new Date().toLocaleString('id-ID')
+ });
+
+ if(usedVoucher){
+  db.ref('vouchers/'+usedVoucher+'/used').transaction(n=>(n||0)+1);
+ }
+
+ window.location.href='https://wa.me/6285135993982?text='+encodeURIComponent(
+  `ORDER ${orderId}\nUSER:${currentUser}\nTOTAL:${rupiah(finalP)}`
+ );
+}
+</script>
+</body>
 </html>
