@@ -6,40 +6,171 @@
 <title>RHF Game Store</title>
 
 <style>
+:root{
+  --bg:#020617;
+  --card:#020617;
+  --border:#1e293b;
+  --accent:#22c55e;
+  --text:#ffffff;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
 body{
-  background:#020617;
-  color:#fff;
+  margin:0;
   font-family:Arial,Helvetica,sans-serif;
-  padding:20px;
+  background:linear-gradient(180deg,#020617,#020617);
+  color:var(--text);
 }
-.item{
-  border:1px solid #1e293b;
-  border-radius:12px;
-  padding:14px;
-  margin-bottom:14px;
+header{
+  padding:18px;
+  text-align:center;
 }
-.item img{
+header h1{
+  margin:0;
+  font-size:22px;
+}
+header p{
+  margin:6px 0 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.container{
+  padding:16px;
+  max-width:1200px;
+  margin:auto;
+}
+
+#banner{
   width:100%;
-  max-width:200px;
-  border-radius:10px;
+  border-radius:16px;
+  margin-bottom:16px;
+  display:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
-button{
-  background:#22c55e;
+
+/* VOUCHER BOX */
+.voucher-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:16px;
+}
+.voucher-box input{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+}
+.voucher-box button{
+  padding:12px 14px;
+  border-radius:10px;
   border:none;
-  padding:10px;
-  border-radius:8px;
+  background:var(--accent);
   font-weight:bold;
-  margin-top:10px;
+  cursor:pointer;
+}
+#voucherInfo{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--accent);
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:14px;
+}
+
+/* CARD */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  transition:.2s;
+}
+.card:hover{
+  transform:translateY(-3px);
+  border-color:#334155;
+}
+.card img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  border-radius:12px;
+}
+.card h3{
+  margin:8px 0 2px;
+  font-size:14px;
+}
+.card .game{
+  font-size:12px;
+  color:var(--muted);
+}
+.price-box{
+  margin-top:6px;
+}
+.old{
+  text-decoration:line-through;
+  font-size:12px;
+  color:var(--muted);
+}
+.price{
+  font-size:15px;
+  font-weight:bold;
+}
+.card button{
+  margin-top:auto;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  background:var(--accent);
+  font-weight:bold;
+  cursor:pointer;
+}
+footer{
+  text-align:center;
+  padding:20px;
+  font-size:12px;
+  color:var(--muted);
 }
 </style>
 </head>
 
 <body>
 
-<h1>RHF Game Store</h1>
-<p>Beli item game via WhatsApp</p>
+<header>
+  <h1>RHF GAME STORE</h1>
+  <p>Top Up • Item Game • Event & Voucher</p>
+</header>
 
-<div id="list"></div>
+<div class="container">
+
+<img id="banner">
+
+<div class="voucher-box">
+  <input id="voucherInput" placeholder="Masukkan kode voucher">
+  <button onclick="applyVoucher()">Pakai</button>
+</div>
+<div id="voucherInfo"></div>
+
+<div class="grid" id="items"></div>
+
+</div>
+
+<footer>
+  © RHF Game Store • Order via WhatsApp
+</footer>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -57,28 +188,76 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-const ref = firebase.database().ref("items");
-const list = document.getElementById("list");
+const itemRef = db.ref("items");
+const voucherRef = db.ref("vouchers");
+const eventRef = db.ref("events");
 
-ref.on("value", snap=>{
-  list.innerHTML = "";
+let voucherDiscount = 0;
+
+/* ITEMS */
+itemRef.on("value", snap=>{
+  items.innerHTML="";
   snap.forEach(s=>{
-    const d = s.val();
-    list.innerHTML += `
-      <div class="item">
-        <b>${d.game}</b><br>
-        ${d.name}<br>
-        Rp ${d.price}<br>
-        ${d.img ? `<img src="${d.img}">` : ""}
-        <br>
-        <a href="https://wa.me/6285135993982?text=Saya%20ingin%20beli%20${encodeURIComponent(d.name)}" target="_blank">
-          <button>Beli via WhatsApp</button>
-        </a>
+    const d=s.val();
+    const hargaAwal=parseInt(d.price);
+    const hargaAkhir = voucherDiscount
+      ? Math.round(hargaAwal - (hargaAwal * voucherDiscount / 100))
+      : hargaAwal;
+
+    items.innerHTML+=`
+      <div class="card">
+        <img src="${d.img}" onerror="this.style.display='none'">
+        <h3>${d.name}</h3>
+        <div class="game">${d.game}</div>
+        <div class="price-box">
+          ${voucherDiscount ? `<div class="old">Rp ${hargaAwal}</div>` : ""}
+          <div class="price">Rp ${hargaAkhir}</div>
+        </div>
+        <button onclick="order('${d.name}',${hargaAkhir})">Beli Sekarang</button>
       </div>
     `;
   });
 });
+
+/* VOUCHER */
+function applyVoucher(){
+  const code = voucherInput.value.toUpperCase();
+  voucherRef.child(code).once("value", snap=>{
+    if(snap.exists() && snap.val().active){
+      voucherDiscount = snap.val().discount;
+      voucherInfo.innerText = "Voucher aktif: -" + voucherDiscount + "%";
+      itemRef.once("value",()=>{});
+    }else{
+      voucherInfo.innerText = "Voucher tidak valid";
+    }
+  });
+}
+
+/* EVENT */
+eventRef.on("value", snap=>{
+  snap.forEach(s=>{
+    const e=s.val();
+    if(e.active){
+      if(e.banner){
+        banner.src=e.banner;
+        banner.style.display="block";
+      }
+      if(e.discount){
+        voucherDiscount=e.discount;
+        voucherInfo.innerText="EVENT AKTIF: Diskon "+e.discount+"%";
+      }
+    }
+  });
+});
+
+/* ORDER */
+function order(name,price){
+  const wa="6285135993982"; // GANTI NOMOR WA
+  const text=`Halo, saya mau beli ${name} harga Rp ${price}`;
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`);
+}
 </script>
 
 </body>
