@@ -1,182 +1,102 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RHF Game Store</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RHF Game Store</title>
 
-<style>
-:root{
-  --bg:#020617;
-  --card:#020617;
-  --border:#1e293b;
-  --accent:#22c55e;
-  --text:#ffffff;
-  --muted:#94a3b8;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:linear-gradient(180deg,#020617,#020617);
-  color:var(--text);
-}
-header{
-  padding:18px;
-  text-align:center;
-}
-header h1{
-  margin:0;
-  font-size:22px;
-}
-header p{
-  margin:6px 0 0;
-  font-size:13px;
-  color:var(--muted);
-}
+  <style>
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      background:#020617;
+      color:#fff;
+      margin:0;
+      padding:20px;
+    }
+    h1{margin-bottom:16px}
 
-.container{
-  padding:16px;
-  max-width:1200px;
-  margin:auto;
-}
+    .card{
+      background:#020617;
+      border:1px solid #1e293b;
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:16px;
+      box-shadow:0 6px 30px rgba(0,0,0,.4);
+    }
 
-#banner{
-  width:100%;
-  border-radius:16px;
-  margin-bottom:16px;
-  display:none;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-}
+    .price{
+      font-size:28px;
+      font-weight:bold;
+      margin-top:6px;
+    }
 
-/* VOUCHER BOX */
-.voucher-box{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-bottom:16px;
-}
-.voucher-box input{
-  flex:1;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--text);
-}
-.voucher-box button{
-  padding:12px 14px;
-  border-radius:10px;
-  border:none;
-  background:var(--accent);
-  font-weight:bold;
-  cursor:pointer;
-}
-#voucherInfo{
-  margin-top:6px;
-  font-size:12px;
-  color:var(--accent);
-}
+    .discount{
+      color:#22c55e;
+      font-weight:bold;
+    }
 
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:14px;
-}
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:12px;
+      border:none;
+      border-radius:12px;
+      background:#22c55e;
+      font-weight:bold;
+      cursor:pointer;
+    }
 
-/* CARD */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  transition:.2s;
-}
-.card:hover{
-  transform:translateY(-3px);
-  border-color:#334155;
-}
-.card img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-  border-radius:12px;
-}
-.card h3{
-  margin:8px 0 2px;
-  font-size:14px;
-}
-.card .game{
-  font-size:12px;
-  color:var(--muted);
-}
-.price-box{
-  margin-top:6px;
-}
-.old{
-  text-decoration:line-through;
-  font-size:12px;
-  color:var(--muted);
-}
-.price{
-  font-size:15px;
-  font-weight:bold;
-}
-.card button{
-  margin-top:auto;
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  background:var(--accent);
-  font-weight:bold;
-  cursor:pointer;
-}
-footer{
-  text-align:center;
-  padding:20px;
-  font-size:12px;
-  color:var(--muted);
-}
-</style>
+    button:disabled{
+      background:#334155;
+      cursor:not-allowed;
+    }
+
+    /* PROMO GUEST */
+    .promo{
+      position:fixed;
+      top:0;left:0;right:0;
+      background:linear-gradient(90deg,#22c55e,#16a34a);
+      color:#000;
+      padding:14px 40px 14px 16px;
+      z-index:9999;
+    }
+    .promo .close{
+      position:absolute;
+      right:12px;
+      top:8px;
+      font-size:20px;
+      cursor:pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  <h1>RHF GAME STORE</h1>
-  <p>Top Up • Item Game • Event & Voucher</p>
-</header>
-
-<div class="container">
-
-<img id="banner">
-
-<div class="voucher-box">
-  <input id="voucherInput" placeholder="Masukkan kode voucher">
-  <button onclick="applyVoucher()">Pakai</button>
-</div>
-<div id="voucherInfo"></div>
-
-<div class="grid" id="items"></div>
-
+<!-- PROMO GUEST -->
+<div id="promoBanner" class="promo" style="display:none">
+  <span class="close" onclick="closePromo()">✕</span>
+  <b>🎁 Login untuk diskon & voucher!</b><br>
+  <a href="#" onclick="loginWA()">Daftar via WhatsApp</a>
 </div>
 
-<footer>
-  © RHF Game Store • Order via WhatsApp
-</footer>
+<h1>🎮 RHF Game Store</h1>
+
+<div class="card">
+  <h3 id="itemName">Loading...</h3>
+
+  <div id="discount" class="discount"></div>
+  <div id="price" class="price">Rp 0</div>
+
+  <button id="buyBtn" onclick="buy()">Beli Sekarang</button>
+</div>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
+/* ================== CONFIG ================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -186,77 +106,114 @@ const firebaseConfig = {
   messagingSenderId: "52065906934",
   appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-const itemRef = db.ref("items");
-const voucherRef = db.ref("vouchers");
-const eventRef = db.ref("events");
+/* ================== VAR ================== */
+let uid = null;
+let basePrice = 0;
+let activeVoucher = null;
 
-let voucherDiscount = 0;
-
-/* ITEMS */
-itemRef.on("value", snap=>{
-  items.innerHTML="";
-  snap.forEach(s=>{
-    const d=s.val();
-    const hargaAwal=parseInt(d.price);
-    const hargaAkhir = voucherDiscount
-      ? Math.round(hargaAwal - (hargaAwal * voucherDiscount / 100))
-      : hargaAwal;
-
-    items.innerHTML+=`
-      <div class="card">
-        <img src="${d.img}" onerror="this.style.display='none'">
-        <h3>${d.name}</h3>
-        <div class="game">${d.game}</div>
-        <div class="price-box">
-          ${voucherDiscount ? `<div class="old">Rp ${hargaAwal}</div>` : ""}
-          <div class="price">Rp ${hargaAkhir}</div>
-        </div>
-        <button onclick="order('${d.name}',${hargaAkhir})">Beli Sekarang</button>
-      </div>
-    `;
-  });
+/* ================== AUTH ================== */
+firebase.auth().onAuthStateChanged(user=>{
+  if(user){
+    uid = user.uid;
+    hidePromo();
+    listenData();
+  }else{
+    showPromo();
+    document.getElementById("buyBtn").disabled = true;
+  }
 });
 
-/* VOUCHER */
-function applyVoucher(){
-  const code = voucherInput.value.toUpperCase();
-  voucherRef.child(code).once("value", snap=>{
-    if(snap.exists() && snap.val().active){
-      voucherDiscount = snap.val().discount;
-      voucherInfo.innerText = "Voucher aktif: -" + voucherDiscount + "%";
-      itemRef.once("value",()=>{});
-    }else{
-      voucherInfo.innerText = "Voucher tidak valid";
-    }
-  });
+/* ================== PROMO ================== */
+function showPromo(){
+  document.getElementById("promoBanner").style.display = "block";
+}
+function hidePromo(){
+  document.getElementById("promoBanner").style.display = "none";
+}
+function closePromo(){
+  document.getElementById("promoBanner").style.display = "none";
+}
+function loginWA(){
+  // ganti ke nomor WA kamu
+  window.location.href =
+    "https://wa.me/628XXXXXXXXX?text=REGISTER%20RHF";
 }
 
-/* EVENT */
-eventRef.on("value", snap=>{
-  snap.forEach(s=>{
-    const e=s.val();
-    if(e.active){
-      if(e.banner){
-        banner.src=e.banner;
-        banner.style.display="block";
-      }
-      if(e.discount){
-        voucherDiscount=e.discount;
-        voucherInfo.innerText="EVENT AKTIF: Diskon "+e.discount+"%";
-      }
-    }
-  });
-});
+/* ================== REALTIME ================== */
+function listenData(){
+  // ITEM
+  firebase.database()
+    .ref("items/item001")
+    .on("value", snap=>{
+      const d = snap.val();
+      if(!d) return;
+      document.getElementById("itemName").innerText = d.name;
+      basePrice = d.price;
+      updatePrice();
+    });
 
-/* ORDER */
-function order(name,price){
-  const wa="6285135993982"; // GANTI NOMOR WA
-  const text=`Halo, saya mau beli ${name} harga Rp ${price}`;
-  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`);
+  // VOUCHER USER
+  firebase.database()
+    .ref("user_vouchers/"+uid)
+    .on("value", snap=>{
+      activeVoucher = null;
+      snap.forEach(v=>{
+        if(v.val().active && !v.val().used){
+          activeVoucher = { ...v.val(), code:v.key };
+        }
+      });
+      updatePrice();
+    });
+}
+
+/* ================== PRICE ================== */
+function updatePrice(){
+  let final = basePrice;
+  let label = "";
+
+  if(activeVoucher){
+    final = basePrice - (basePrice * activeVoucher.value / 100);
+    label = `DAPAT POTONGAN ${activeVoucher.value}%`;
+  }
+
+  document.getElementById("discount").innerText = label;
+  document.getElementById("price").innerText =
+    "Rp " + Math.round(final).toLocaleString("id-ID");
+
+  document.getElementById("buyBtn").disabled = false;
+}
+
+/* ================== BUY ================== */
+function buy(){
+  if(!uid){
+    alert("Silakan login dulu");
+    return;
+  }
+  if(!activeVoucher){
+    alert("Tidak ada voucher aktif");
+    return;
+  }
+
+  // MATIKAN VOUCHER (1 KALI SAJA)
+  firebase.database()
+    .ref("user_vouchers/"+uid+"/"+activeVoucher.code)
+    .update({
+      active:false,
+      used:true,
+      used_at:Date.now()
+    });
+
+  // LOG
+  firebase.database()
+    .ref("voucher_logs/"+activeVoucher.code+"/"+uid)
+    .update({
+      status:"used",
+      time:Date.now()
+    });
+
+  alert("Pembelian berhasil!");
 }
 </script>
 
