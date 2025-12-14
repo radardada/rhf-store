@@ -1,264 +1,90 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ADMIN PANEL RHF – FULL CONTROL</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RHF SETORGAME – Game Item Store</title>
 <style>
-body{
-  background:#020617;
-  color:#fff;
-  font-family:Arial;
-  padding:16px
-}
-h2,h3{margin-bottom:10px}
-.box{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:20px
-}
-input,textarea,button{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border-radius:10px;
-  border:none
-}
-button{font-weight:bold;cursor:pointer}
-.green{background:#22c55e;color:#000}
-.red{background:#ef4444;color:#fff}
-.gray{background:#334155;color:#fff}
-.blue{background:#38bdf8;color:#000}
-.item{
-  border-bottom:1px solid #1e293b;
-  padding:10px 0
-}
-small{color:#94a3b8}
-code{color:#22c55e}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#0b1020;color:#fff}
+.header{position:sticky;top:0;z-index:1000;background:linear-gradient(90deg,#7c3aed,#2563eb);padding:12px 16px;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:#020617;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px}
+.search{flex:1}
+.search input{width:100%;padding:10px 14px;border-radius:20px;border:none;outline:none}
+.cart{font-size:22px;cursor:pointer}
+.banner{margin:16px;border-radius:18px;background:linear-gradient(120deg,#1e40af,#7c3aed);padding:24px}
+.banner h1{margin:0;font-size:22px}
+.banner p{margin:6px 0 0;color:#e5e7eb}
+.categories{display:flex;gap:12px;overflow-x:auto;padding:0 16px}
+.cat{min-width:90px;background:#020617;border:1px solid #1e293b;border-radius:14px;padding:12px;text-align:center;font-size:12px;cursor:pointer}
+.section-title{padding:16px 16px 8px;font-size:18px;font-weight:bold}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:0 16px 80px}
+.card{background:#020617;border-radius:16px;overflow:hidden;border:1px solid #1e293b;transition:.2s}
+.card:hover{transform:translateY(-4px)}
+.card img{width:100%;height:120px;object-fit:cover}
+.card .info{padding:10px}
+.card h3{margin:0;font-size:14px}
+.card p{margin:4px 0;font-size:11px;color:#94a3b8}
+.price{color:#22c55e;font-weight:bold;margin:6px 0}
+.btn{width:100%;padding:8px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;border-top:1px solid #1e293b;display:flex;justify-content:space-around;padding:8px 0}
+.nav div{font-size:12px;text-align:center;color:#94a3b8}
 </style>
 </head>
-
-<body>
-
-<h2>🛡️ ADMIN PANEL RHF (FULL CONTROL)</h2>
-
-<!-- ================= ITEM ================= -->
-<div class="box">
-<h3>📦 Item / Produk</h3>
-<input id="game" placeholder="Nama Game">
-<input id="name" placeholder="Nama Item">
-<input id="price" placeholder="Harga (angka)">
-<input id="img" placeholder="Link Gambar">
-<button class="green" onclick="addItem()">Simpan / Tambah Item</button>
-<div id="items"></div>
-</div>
-
-<!-- ================= VOUCHER ================= -->
-<div class="box">
-<h3>🎟️ Voucher</h3>
-<input id="vcode" placeholder="Kode Voucher">
-<input id="vdisc" placeholder="Diskon (%)">
-<input id="vmax" placeholder="Maksimal User">
-<input id="vexp" placeholder="Expire (YYYY-MM-DD)">
-<button class="green" onclick="addVoucher()">Simpan Voucher</button>
-<div id="vouchers"></div>
-</div>
-
-<!-- ================= USER ================= -->
-<div class="box">
-<h3>👤 Akun User</h3>
-<input id="user" placeholder="Username">
-<input id="pass" placeholder="Password">
-<button class="green" onclick="addUser()">Buat Akun</button>
-<div id="users"></div>
-</div>
-
-<!-- ================= EVENT / GLOBAL ================= -->
-<div class="box">
-<h3>📢 EVENT / SURAT GLOBAL</h3>
-<input id="eventTitle" placeholder="Judul Event">
-<textarea id="eventMsg" placeholder="Isi pesan / undangan / promo"></textarea>
-<input id="eventDisc" placeholder="Diskon Global (%) – opsional">
-<button class="blue" onclick="sendEvent()">KIRIM GLOBAL</button>
-<div id="events"></div>
-</div>
-
-<!-- ================= ORDER ================= -->
-<div class="box">
-<h3>🛒 ORDER REAL-TIME</h3>
-<div id="orders"></div>
-</div>
-
-<!-- ================= LOG ================= -->
-<div class="box">
-<h3>📜 LOG VOUCHER & AKTIVITAS</h3>
-<div id="logs"></div>
-</div>
-
-<!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+<body><div class="header">
+  <div class="logo">RHF</div>
+  <div class="search"><input id="search" placeholder="Cari skin, item, top up..."></div>
+  <div class="cart">🛒</div>
+</div><div id="banner" class="banner">
+  <h1>RHF SETORGAME</h1>
+  <p id="bannerText">Tempat Top Up, Skin & Item Game • Cepat • Aman • Realtime</p>
+</div><div id="categories" class="categories"></div><div class="section-title">🔥 Produk</div>
+<div id="products" class="products"></div><div class="nav">
+  <div>🏠<br>Home</div>
+  <div>🔥<br>Promo</div>
+  <div>📦<br>Pesanan</div>
+  <div>👤<br>Akun</div>
+</div><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
+const firebaseConfig={
+ apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+ authDomain:"rhf-gamestore.firebaseapp.com",
+ databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"rhf-gamestore",
+ storageBucket:"rhf-gamestore.firebasestorage.app",
+ messagingSenderId:"52065906934",
+ appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-const itemsRef   = db.ref("items");
-const usersRef   = db.ref("users");
-const vouchersRef= db.ref("vouchers");
-const ordersRef  = db.ref("orders");
-const logsRef    = db.ref("logs");
-const eventsRef  = db.ref("events");
+const itemsRef=db.ref('items');
+const promosRef=db.ref('promos');
 
-/* ================= ITEM ================= */
-function addItem(){
-  itemsRef.push({
-    game:game.value,
-    name:name.value,
-    price:parseInt(price.value),
-    img:img.value,
-    time:Date.now()
-  });
+let allItems=[];
+
+itemsRef.on('value',s=>{
+  allItems=[];products.innerHTML='';categories.innerHTML='';
+  const games=new Set();
+  s.forEach(c=>{allItems.push(c.val());games.add(c.val().game)});
+  games.forEach(g=>{categories.innerHTML+=`<div class='cat' onclick="filterGame('${g}')">${g}</div>`});
+  render(allItems);
+});
+
+function render(list){
+ products.innerHTML='';
+ list.forEach(d=>{
+  products.innerHTML+=`<div class='card'><img src='${d.img}'><div class='info'><h3>${d.name}</h3><p>${d.game}</p><div class='price'>Rp ${d.price.toLocaleString('id-ID')}</div><button class='btn'>Beli</button></div></div>`;
+ });
 }
 
-itemsRef.on("value",s=>{
-  items.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    items.innerHTML+=`
-      <div class="item">
-        <b>${d.game}</b> – ${d.name}<br>
-        Harga: Rp ${d.price.toLocaleString("id-ID")}
-      </div>`;
-  });
-});
+function filterGame(g){render(allItems.filter(i=>i.game===g));}
 
-/* ================= VOUCHER ================= */
-function addVoucher(){
-  vouchersRef.child(vcode.value).set({
-    code:vcode.value,
-    disc:parseInt(vdisc.value),
-    max:parseInt(vmax.value),
-    used:0,
-    expire:vexp.value,
-    active:true
-  });
+search.oninput=()=>{
+ const q=search.value.toLowerCase();
+ render(allItems.filter(i=>i.name.toLowerCase().includes(q)||i.game.toLowerCase().includes(q)));
 }
 
-vouchersRef.on("value",s=>{
-  vouchers.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    vouchers.innerHTML+=`
-      <div class="item">
-        <b>${d.code}</b><br>
-        Diskon: ${d.disc}%<br>
-        Dipakai: ${d.used}/${d.max}<br>
-        Aktif: ${d.active}
-      </div>`;
-  });
+promosRef.limitToLast(1).on('value',s=>{
+ s.forEach(c=>{bannerText.innerText=c.val().desc;});
 });
-
-/* ================= USER ================= */
-function addUser(){
-  usersRef.child(user.value).set({
-    user:user.value,
-    pass:pass.value,
-    status:"aktif",
-    usedVoucher:{}
-  });
-}
-
-usersRef.on("value",s=>{
-  users.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    users.innerHTML+=`
-      <div class="item">
-        <b>${d.user}</b><br>
-        Password: ${d.pass}<br>
-        Status: ${d.status}<br>
-        <button class="gray" onclick="banUser('${c.key}')">BAN</button>
-        <button class="green" onclick="unbanUser('${c.key}')">UNBAN</button>
-        <button class="red" onclick="deleteUser('${c.key}')">HAPUS</button>
-      </div>`;
-  });
-});
-
-function banUser(u){ usersRef.child(u).update({status:"banned"}); }
-function unbanUser(u){ usersRef.child(u).update({status:"aktif"}); }
-function deleteUser(u){ usersRef.child(u).remove(); }
-
-/* ================= EVENT ================= */
-function sendEvent(){
-  eventsRef.push({
-    title:eventTitle.value,
-    msg:eventMsg.value,
-    disc:eventDisc.value || 0,
-    time:new Date().toLocaleString()
-  });
-}
-
-eventsRef.on("value",s=>{
-  events.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    events.innerHTML+=`
-      <div class="item">
-        <b>${d.title}</b><br>
-        ${d.msg}<br>
-        Diskon Global: ${d.disc}%
-      </div>`;
-  });
-});
-
-/* ================= ORDER ================= */
-ordersRef.limitToLast(50).on("value",s=>{
-  orders.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    orders.innerHTML=`
-      <div class="item">
-        <b>ORDER ID:</b> <code>${d.orderId}</code><br>
-        User: ${d.user}<br>
-        Item: ${d.item}<br>
-        Harga: Rp ${d.price}<br>
-        Diskon: ${d.disc}%<br>
-        Total: <b>Rp ${d.total}</b><br>
-        Voucher: ${d.voucher || "-"}<br>
-        Waktu: ${d.time}
-      </div>` + orders.innerHTML;
-  });
-});
-
-/* ================= LOG ================= */
-logsRef.limitToLast(50).on("value",s=>{
-  logs.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    logs.innerHTML+=`
-      <div class="item">
-        User: ${d.user}<br>
-        Aksi: ${d.action}<br>
-        Detail: ${d.detail}<br>
-        Waktu: ${d.time}
-      </div>`;
-  });
-});
-</script>
-
-</body>
+</script></body>
 </html>
