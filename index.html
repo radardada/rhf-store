@@ -1,224 +1,137 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF Game Store</title>
-
-<style>
-body{
-  margin:0;
-  background:#020617;
-  color:#fff;
-  font-family:Arial
-}
-.center{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center
-}
-.box{
-  width:100%;
-  max-width:420px;
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:18px;
-  padding:24px
-}
-input,button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border-radius:12px;
-  border:none;
-  font-size:15px
-}
-button{font-weight:bold;cursor:pointer}
-.green{background:#22c55e;color:#000}
-.blue{background:#38bdf8;color:#000}
-.gray{background:#334155;color:#fff}
-.hidden{display:none}
-
-/* ===== STORE ===== */
-.header{
-  padding:16px;
-  font-size:20px;
-  font-weight:bold
-}
-.store{
-  padding:16px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:16px
-}
-.card{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:16px;
-  overflow:hidden;
-  cursor:pointer
-}
-.card img{
-  width:100%;
-  height:140px;
-  object-fit:cover
-}
-.card div{
-  padding:10px;
-  font-weight:bold;
-  text-align:center
-}
-
-/* ===== MODAL ===== */
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  align-items:center;
-  justify-content:center
-}
-.modal-box{
-  width:90%;
-  max-width:400px;
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:16px;
-  padding:20px
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
 </head>
 
 <body>
-
-<!-- ================= HALAMAN AWAL ================= -->
-<div class="center" id="home">
-  <div class="box">
-    <h2 style="text-align:center">🎮 RHF GAME STORE</h2>
-
-    <button class="green" onclick="openLogin()">LOGIN USER</button>
-    <button class="blue" onclick="openRegis()">REGISTRASI VIA WHATSAPP</button>
-
-    <small style="color:#94a3b8;display:block;text-align:center;margin-top:12px">
-      Login menggunakan akun dari admin
-    </small>
-  </div>
-</div>
-
-<!-- ================= LOGIN ================= -->
-<div class="center hidden" id="loginPage">
-  <div class="box">
-    <h3>🔐 Login User</h3>
-    <input id="luser" placeholder="Username">
-    <input id="lpass" type="password" placeholder="Password">
-    <button class="green" onclick="login()">MASUK</button>
-    <button class="gray" onclick="backHome()">KEMBALI</button>
-  </div>
-</div>
-
-<!-- ================= STORE ================= -->
-<div class="hidden" id="storePage">
-  <div class="header">🛒 Item Tersedia</div>
-  <div class="store" id="items"></div>
-</div>
-
-<!-- ================= MODAL ================= -->
-<div class="modal hidden" id="modal">
-  <div class="modal-box">
-    <h3 id="mName"></h3>
-    <img id="mImg" style="width:100%;border-radius:12px">
-    <p id="mDesc" style="color:#94a3b8"></p>
-    <b id="mPrice"></b>
-    <button class="green" onclick="buy()">BELI</button>
-    <button class="gray" onclick="closeModal()">TUTUP</button>
-  </div>
-</div>
-
-<!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const usersRef = db.ref("users");
-const itemsRef = db.ref("items");
-
-let currentUser=null;
-let selectedItem=null;
-
-/* ===== NAV ===== */
-function openLogin(){
-  home.classList.add("hidden");
-  loginPage.classList.remove("hidden");
-}
-function backHome(){
-  loginPage.classList.add("hidden");
-  home.classList.remove("hidden");
-}
-function openRegis(){
-  window.open(
-    "https://wa.me/6285135993982?text="+
-    encodeURIComponent("REGISTRASI AKUN RHF\nNama:\nUsername:"),
-    "_blank"
-  );
-}
-
-/* ===== LOGIN ===== */
-function login(){
-  usersRef.child(luser.value).once("value",s=>{
-    if(!s.exists()) return alert("User tidak ditemukan");
-    const d=s.val();
-    if(d.pass!==lpass.value) return alert("Password salah");
-    if(d.status!=="aktif") return alert("Akun diblokir");
-
-    currentUser=d.user;
-    loginPage.classList.add("hidden");
-    storePage.classList.remove("hidden");
-  });
-}
-
-/* ===== ITEM ===== */
-itemsRef.on("value",s=>{
-  items.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    items.innerHTML+=`
-      <div class="card" onclick='openItem(${JSON.stringify(d)})'>
-        <img src="${d.img}">
-        <div>${d.name}</div>
-      </div>
-    `;
-  });
-});
-
-function openItem(d){
-  selectedItem=d;
-  mName.innerText=d.name;
-  mImg.src=d.img;
-  mDesc.innerText=d.desc || "-";
-  mPrice.innerText="Rp "+d.price.toLocaleString("id-ID");
-  modal.classList.remove("hidden");
-}
-function closeModal(){
-  modal.classList.add("hidden");
-}
-function buy(){
-  alert("Pesanan dikirim ke admin");
-  closeModal();
-}
-</script>
-
+  
 </body>
+
 </html>
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RHF SETORGAME – Game Item Store</title><style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#0b1020;color:#fff}
+
+/* HEADER */
+.header{
+  position:sticky;top:0;z-index:1000;
+  background:linear-gradient(90deg,#7c3aed,#2563eb);
+  padding:12px 16px;
+  display:flex;align-items:center;gap:12px
+}
+.logo{
+  width:42px;height:42px;border-radius:12px;
+  background:#020617;display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:14px
+}
+.search{
+  flex:1
+}
+.search input{
+  width:100%;padding:10px 14px;border-radius:20px;border:none;outline:none
+}
+.cart{
+  font-size:22px;cursor:pointer
+}
+
+/* BANNER */
+.banner{
+  margin:16px;border-radius:18px;
+  background:linear-gradient(120deg,#1e40af,#7c3aed);
+  padding:24px
+}
+.banner h1{margin:0;font-size:22px}
+.banner p{margin:6px 0 0;color:#e5e7eb}
+
+/* CATEGORY */
+.categories{
+  display:flex;gap:12px;overflow-x:auto;padding:0 16px
+}
+.cat{
+  min-width:90px;background:#020617;border:1px solid #1e293b;
+  border-radius:14px;padding:12px;text-align:center;font-size:12px
+}
+
+/* PRODUCT GRID */
+.section-title{padding:16px 16px 8px;font-size:18px;font-weight:bold}
+.products{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;padding:0 16px 30px
+}
+.card{
+  background:#020617;border-radius:16px;overflow:hidden;
+  border:1px solid #1e293b;transition:.2s
+}
+.card:hover{transform:translateY(-4px)}
+.card img{width:100%;height:120px;object-fit:cover}
+.card .info{padding:10px}
+.card h3{margin:0;font-size:14px}
+.card p{margin:4px 0;font-size:11px;color:#94a3b8}
+.price{color:#22c55e;font-weight:bold;margin:6px 0}
+.btn{
+  width:100%;padding:8px;border:none;border-radius:10px;
+  background:#2563eb;color:#fff;font-weight:bold;cursor:pointer
+}
+
+/* BOTTOM NAV */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#020617;border-top:1px solid #1e293b;
+  display:flex;justify-content:space-around;padding:8px 0
+}
+.nav div{font-size:12px;text-align:center;color:#94a3b8}
+
+</style></head>
+<body><!-- HEADER --><div class="header">
+  <div class="logo">RHF</div>
+  <div class="search"><input placeholder="Cari skin, item, top up..."></div>
+  <div class="cart">🛒</div>
+</div><!-- BANNER --><div class="banner">
+  <h1>RHF SETORGAME</h1>
+  <p>Tempat Top Up, Skin & Item Game • Cepat • Aman • Realtime</p>
+</div><!-- CATEGORY --><div class="categories">
+  <div class="cat">Mobile Legends</div>
+  <div class="cat">Free Fire</div>
+  <div class="cat">PUBG</div>
+  <div class="cat">Valorant</div>
+  <div class="cat">Genshin</div>
+</div><!-- PRODUCTS --><div class="section-title">🔥 Produk Terlaris</div>
+<div class="products">  <div class="card">
+    <img src="https://via.placeholder.com/300">
+    <div class="info">
+      <h3>Skin Epic Dragon</h3>
+      <p>Mobile Legends</p>
+      <div class="price">Rp 25.000</div>
+      <button class="btn">Beli</button>
+    </div>
+  </div>  <div class="card">
+    <img src="https://via.placeholder.com/300">
+    <div class="info">
+      <h3>Weapon Neon</h3>
+      <p>Free Fire</p>
+      <div class="price">Rp 18.000</div>
+      <button class="btn">Beli</button>
+    </div>
+  </div>  <div class="card">
+    <img src="https://via.placeholder.com/300">
+    <div class="info">
+      <h3>UC Pack</h3>
+      <p>PUBG Mobile</p>
+      <div class="price">Rp 50.000</div>
+      <button class="btn">Beli</button>
+    </div>
+  </div></div><!-- BOTTOM NAV --><div class="nav">
+  <div>🏠<br>Home</div>
+  <div>🔥<br>Promo</div>
+  <div>📦<br>Pesanan</div>
+  <div>👤<br>Akun</div>
+</div></body>
+      </html>
