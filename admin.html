@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel RHF</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADMIN RHF GAME STORE</title>
 
 <style>
 body{
@@ -11,98 +11,91 @@ body{
   font-family:Arial,Helvetica,sans-serif;
   background:#020617;
   color:#fff;
+  padding:14px;
 }
-header{
-  padding:16px;
-  text-align:center;
-  font-size:20px;
-  font-weight:bold;
-  border-bottom:1px solid #1e293b;
-}
+h2{margin-top:24px}
 .box{
-  margin:16px;
-  padding:16px;
   background:#020617;
   border:1px solid #1e293b;
-  border-radius:14px;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:16px;
 }
-input,textarea,button{
+input,select,button{
   width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:10px;
+  padding:8px;
+  margin-top:6px;
+  border-radius:8px;
   border:none;
 }
-input,textarea{
+input,select{
   background:#020617;
   color:#fff;
   border:1px solid #1e293b;
 }
 button{
   background:#22c55e;
+  color:#000;
   font-weight:bold;
   cursor:pointer;
 }
-.danger{
-  background:#ef4444;
-}
-.small{
-  font-size:13px;
-  color:#94a3b8;
-}
-.item{
-  border-bottom:1px solid #1e293b;
-  padding:12px 0;
-}
-img{
-  width:100%;
-  border-radius:10px;
-  margin-top:8px;
-}
-hr{
-  border:1px solid #1e293b;
-  margin:16px 0;
-}
+.red{background:#ef4444;color:#fff}
+.item{border-bottom:1px solid #1e293b;padding:6px 0}
+small{color:#94a3b8}
 </style>
 </head>
 
 <body>
 
-<header>🛠 ADMIN PANEL RHF</header>
+<h1>ADMIN PANEL RHF</h1>
+<small>Kontrol penuh item, akun, voucher (real-time)</small>
 
-<!-- ================= USER ================= -->
+<!-- ITEM -->
 <div class="box">
-  <h3>Buat Akun Pembeli</h3>
-  <input id="u" placeholder="Username">
-  <input id="p" placeholder="Password">
-  <button onclick="buatUser()">BUAT AKUN</button>
-  <p class="small">Akun langsung aktif</p>
+<h2>Tambah Item</h2>
+<input id="igame" placeholder="Nama Game">
+<input id="iname" placeholder="Nama Item">
+<input id="iprice" placeholder="Harga (angka)">
+<input id="iimg" placeholder="Link Gambar (https://i.imgur.com/...)">
+<button onclick="addItem()">SIMPAN ITEM</button>
 </div>
 
 <div class="box">
-  <h3>Daftar Akun</h3>
-  <div id="users"></div>
+<h2>Daftar Item</h2>
+<div id="itemList"></div>
 </div>
 
-<hr>
-
-<!-- ================= ITEM ================= -->
+<!-- USER -->
 <div class="box">
-  <h3>Tambah Item</h3>
-  <input id="game" placeholder="Nama Game">
-  <input id="name" placeholder="Nama Item">
-  <textarea id="desc" placeholder="Deskripsi"></textarea>
-  <input id="price" placeholder="Harga (contoh: 50000)">
-  <input id="img" placeholder="Link Gambar (imgur)">
-  <button onclick="addItem()">SIMPAN ITEM</button>
+<h2>Buat Akun Pembeli</h2>
+<input id="uuser" placeholder="Username">
+<input id="upass" placeholder="Password">
+<button onclick="addUser()">BUAT AKUN</button>
 </div>
 
 <div class="box">
-  <h3>Daftar Item</h3>
-  <div id="items"></div>
+<h2>Daftar Akun</h2>
+<div id="userList"></div>
 </div>
 
-<!-- ================= FIREBASE ================= -->
+<!-- VOUCHER -->
+<div class="box">
+<h2>Buat Voucher</h2>
+<input id="vkode" placeholder="Kode Voucher (contoh: RHF50)">
+<input id="vdiskon" placeholder="Diskon % (contoh: 10)">
+<select id="vaktif">
+  <option value="true">Aktif</option>
+  <option value="false">Nonaktif</option>
+</select>
+<button onclick="addVoucher()">SIMPAN VOUCHER</button>
+</div>
+
+<div class="box">
+<h2>Daftar Voucher</h2>
+<div id="voucherList"></div>
+</div>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -113,86 +106,89 @@ firebase.initializeApp({
 });
 
 const db = firebase.database();
-const userRef = db.ref("users");
-const itemRef = db.ref("items");
 
-// ================= USER =================
-function buatUser(){
-  if(!u.value || !p.value){
-    alert("Lengkapi data");
-    return;
-  }
-  userRef.push({
-    user: u.value,
-    pass: p.value,
-    status: "active"
-  });
-  u.value = p.value = "";
-}
-
-userRef.on("value", snap=>{
-  users.innerHTML = "";
-  snap.forEach(s=>{
-    const d = s.val();
-    users.innerHTML += `
-      <div class="item">
-        <b>${d.user}</b><br>
-        Status: <b>${d.status}</b><br>
-        <button onclick="setUser('${s.key}','active')">Aktif</button>
-        <button onclick="setUser('${s.key}','inactive')">Nonaktif</button>
-      </div>
-    `;
-  });
-});
-
-function setUser(id,status){
-  userRef.child(id).update({status});
-}
-
-// ================= ITEM =================
+/* ================= ITEM ================= */
 function addItem(){
-  if(!game.value || !name.value || !price.value){
-    alert("Lengkapi data item");
-    return;
-  }
-  itemRef.push({
-    game: game.value,
-    name: name.value,
-    desc: desc.value,
-    price: price.value,
-    img: img.value
+  if(!igame.value||!iname.value||!iprice.value) return alert("Lengkapi data");
+  db.ref("items").push({
+    game: igame.value,
+    name: iname.value,
+    price: Number(iprice.value),
+    img: iimg.value
   });
-  game.value = name.value = desc.value = price.value = img.value = "";
+  igame.value=iname.value=iprice.value=iimg.value="";
 }
 
-itemRef.on("value", snap=>{
-  items.innerHTML = "";
-  snap.forEach(s=>{
-    const d = s.val();
-    const id = s.key;
-    items.innerHTML += `
-      <div class="item">
-        <b>${d.game}</b><br>
-        ${d.name}<br>
-        Harga: Rp ${Number(d.price).toLocaleString("id-ID")}
-        <img src="${d.img}">
-        <input id="p-${id}" value="${d.price}">
-        <button onclick="updatePrice('${id}')">UBAH HARGA</button>
-        <button class="danger" onclick="hapusItem('${id}')">HAPUS ITEM</button>
-      </div>
-    `;
+db.ref("items").on("value", s=>{
+  itemList.innerHTML="";
+  s.forEach(x=>{
+    const d=x.val();
+    itemList.innerHTML+=`
+    <div class="item">
+      <b>${d.game}</b> - ${d.name}<br>
+      Rp ${Number(d.price).toLocaleString("id-ID")}<br>
+      <button class="red" onclick="del('items','${x.key}')">HAPUS</button>
+    </div>`;
   });
 });
 
-function updatePrice(id){
-  const val = document.getElementById("p-"+id).value;
-  itemRef.child(id).update({price: val});
+/* ================= USER ================= */
+function addUser(){
+  if(!uuser.value||!upass.value) return alert("Lengkapi");
+  db.ref("users").push({
+    user:uuser.value,
+    pass:upass.value,
+    status:"active"
+  });
+  uuser.value=upass.value="";
 }
 
-function hapusItem(id){
-  if(confirm("Yakin hapus item?")){
-    itemRef.child(id).remove();
-  }
+db.ref("users").on("value", s=>{
+  userList.innerHTML="";
+  s.forEach(x=>{
+    const d=x.val();
+    userList.innerHTML+=`
+    <div class="item">
+      <b>${d.user}</b> (${d.status})<br>
+      <button onclick="setStatus('${x.key}','active')">AKTIF</button>
+      <button class="red" onclick="setStatus('${x.key}','blocked')">BLOKIR</button>
+    </div>`;
+  });
+});
+
+function setStatus(id,val){
+  db.ref("users/"+id+"/status").set(val);
+}
+
+/* ================= VOUCHER ================= */
+function addVoucher(){
+  if(!vkode.value||!vdiskon.value) return alert("Lengkapi");
+  db.ref("vouchers/"+vkode.value).set({
+    diskon:Number(vdiskon.value),
+    aktif:vaktif.value==="true"
+  });
+  vkode.value=vdiskon.value="";
+}
+
+db.ref("vouchers").on("value", s=>{
+  voucherList.innerHTML="";
+  s.forEach(x=>{
+    const d=x.val();
+    voucherList.innerHTML+=`
+    <div class="item">
+      <b>${x.key}</b> - ${d.diskon}% (${d.aktif?"AKTIF":"OFF"})<br>
+      <button onclick="toggleVoucher('${x.key}',${!d.aktif})">TOGGLE</button>
+      <button class="red" onclick="del('vouchers','${x.key}')">HAPUS</button>
+    </div>`;
+  });
+});
+
+/* ================= UTIL ================= */
+function del(path,id){
+  if(confirm("Yakin hapus?")) db.ref(path+"/"+id).remove();
+}
+function toggleVoucher(k,v){
+  db.ref("vouchers/"+k+"/aktif").set(v);
 }
 </script>
 
