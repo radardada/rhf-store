@@ -2,233 +2,201 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<title>Admin Panel — RHF Game Store</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF ADMIN PANEL</title>
 
 <style>
 body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#020617;
+  background:#0b0f1a;
   color:#fff;
+  font-family:Arial;
+  margin:0;
+  padding:20px;
 }
-header{
-  padding:14px;
-  background:#020617;
-  border-bottom:1px solid #1e293b;
-}
-section{
-  padding:14px;
-}
+h1,h2{margin-top:0}
 .box{
-  background:#020617;
-  border:1px solid #1e293b;
+  background:#11162a;
+  padding:15px;
   border-radius:12px;
-  padding:14px;
-  margin-bottom:14px;
+  margin-bottom:20px;
 }
 input,select{
   width:100%;
-  padding:8px;
-  margin-top:6px;
+  padding:10px;
+  margin:6px 0;
   border-radius:8px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#fff;
+  border:none;
 }
 button{
-  margin-top:8px;
-  padding:8px 12px;
+  padding:10px 15px;
   border:none;
   border-radius:8px;
   cursor:pointer;
   font-weight:bold;
 }
-.green{background:#22c55e;color:#000}
-.red{background:#ef4444;color:#fff}
-.blue{background:#38bdf8;color:#000}
-.list{
-  display:grid;
-  gap:8px;
-}
+.green{background:#2ecc71;color:#000}
+.red{background:#e74c3c;color:#fff}
+.gray{background:#bdc3c7;color:#000}
 .item{
-  border:1px solid #1e293b;
-  border-radius:10px;
+  border:1px solid #333;
   padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
 }
-.hidden{display:none}
-small{color:#94a3b8}
+small{opacity:.7}
 </style>
 </head>
 
 <body>
 
-<header>
-  <b>RHF ADMIN PANEL</b>
-</header>
+<h1>Admin Panel — RHF</h1>
 
-<section>
-
-<!-- BARANG -->
+<!-- ================= AKUN ================= -->
 <div class="box">
-<h3>Tambah Barang</h3>
-<input id="gGame" placeholder="Game">
-<input id="gName" placeholder="Nama Item">
-<input id="gPrice" type="number" placeholder="Harga">
-<input id="gImg" placeholder="Link Gambar">
-<button class="green" onclick="addItem()">TAMBAH</button>
+<h2>Buat Akun Pembeli</h2>
+<input id="user" placeholder="Username">
+<input id="pass" placeholder="Password">
+<button class="green" onclick="saveUser()">SIMPAN AKUN</button>
+<button class="gray" onclick="showUsers()">LIHAT AKUN</button>
 </div>
 
-<div class="box">
-<h3>Daftar Barang</h3>
-<div id="itemList" class="list"></div>
+<div class="box" id="userBox" style="display:none">
+<h2>Daftar Akun</h2>
+<div id="userList"></div>
+<button class="red" onclick="closeUsers()">TUTUP</button>
 </div>
 
-<!-- VOUCHER -->
+<!-- ================= VOUCHER ================= -->
 <div class="box">
-<h3>Buat Voucher</h3>
-<input id="vCode" placeholder="Kode Voucher">
-<input id="vDisc" type="number" placeholder="Diskon %">
-<input id="vMax" type="number" placeholder="Maks Pemakai">
-<input id="vDays" type="number" placeholder="Aktif (hari)">
-<button class="blue" onclick="addVoucher()">BUAT VOUCHER</button>
+<h2>Buat Voucher</h2>
+<input id="vcode" placeholder="Kode Voucher">
+<input id="vdiscount" type="number" placeholder="Potongan (%)">
+<input id="vmax" type="number" placeholder="Maksimal Pemakai">
+<input id="vexp" type="date">
+<button class="green" onclick="createVoucher()">BUAT VOUCHER</button>
 </div>
 
 <div class="box">
-<h3>Voucher Aktif</h3>
-<div id="voucherList" class="list"></div>
+<h2>Daftar Voucher</h2>
+<div id="voucherList"></div>
 </div>
 
-<!-- AKUN -->
-<div class="box">
-<h3>Buat Akun Pembeli</h3>
-<input id="uUser" placeholder="Username">
-<input id="uPass" placeholder="Password">
-<button class="green" onclick="addUser()">SIMPAN AKUN</button>
-<button onclick="openAccounts()">LIHAT AKUN</button>
-</div>
-
-</section>
-
-<!-- HALAMAN AKUN -->
-<div id="accountsPage" class="hidden">
-<section>
-<h3>Daftar Akun</h3>
-<div id="userList" class="list"></div>
-<button class="red" onclick="closeAccounts()">TUTUP</button>
-</section>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebase.app"
-});
-const db=firebase.database();
+const firebaseConfig = {
+  apiKey: "API_KEY_KAMU",
+  authDomain: "PROJECT.firebaseapp.com",
+  databaseURL: "https://PROJECT.firebaseio.com",
+  projectId: "PROJECT"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-// BARANG
-function addItem(){
-  db.ref("items").push({
-    game:gGame.value,
-    name:gName.value,
-    price:Number(gPrice.value),
-    img:gImg.value
-  });
-  gGame.value=gName.value=gPrice.value=gImg.value="";
-}
+/* ================= USER ================= */
 
-db.ref("items").on("value",snap=>{
-  itemList.innerHTML="";
-  snap.forEach(s=>{
-    const d=s.val();
-    itemList.innerHTML+=`
-      <div class="item">
-        <b>${d.name}</b><br>
-        Rp ${d.price.toLocaleString("id-ID")}<br>
-        <button class="red" onclick="delItem('${s.key}')">HAPUS</button>
-      </div>
-    `;
-  });
-});
+function saveUser(){
+  const u = user.value.trim();
+  const p = pass.value.trim();
+  if(!u||!p) return alert("Lengkapi data");
 
-function delItem(id){
-  db.ref("items/"+id).remove();
-}
-
-// VOUCHER
-function addVoucher(){
-  const exp=Date.now()+Number(vDays.value)*86400000;
-  db.ref("vouchers/"+vCode.value).set({
-    diskon:Number(vDisc.value),
-    max:Number(vMax.value),
-    used:0,
-    expire:exp,
-    aktif:true
-  });
-}
-
-db.ref("vouchers").on("value",snap=>{
-  voucherList.innerHTML="";
-  snap.forEach(s=>{
-    const v=s.val();
-    voucherList.innerHTML+=`
-      <div class="item">
-        <b>${s.key}</b><br>
-        Diskon ${v.diskon}%<br>
-        Used ${v.used}/${v.max}<br>
-        <button onclick="toggleVoucher('${s.key}',${v.aktif})">
-          ${v.aktif?"NONAKTIF":"AKTIFKAN"}
-        </button>
-      </div>
-    `;
-  });
-});
-
-function toggleVoucher(k,s){
-  db.ref("vouchers/"+k+"/aktif").set(!s);
-}
-
-// AKUN
-function addUser(){
-  db.ref("users").push({
-    user:uUser.value,
-    pass:uPass.value,
+  db.ref("users/"+u).set({
+    user:u,
+    pass:p,
     status:"active"
+  }).then(()=>{
+    alert("Akun tersimpan");
+    user.value="";
+    pass.value="";
   });
-  uUser.value=uPass.value="";
 }
 
-function openAccounts(){
-  accountsPage.classList.remove("hidden");
+function showUsers(){
+  userBox.style.display="block";
+  loadUsers();
 }
 
-function closeAccounts(){
-  accountsPage.classList.add("hidden");
+function closeUsers(){
+  userBox.style.display="none";
 }
 
-db.ref("users").on("value",snap=>{
-  userList.innerHTML="";
-  snap.forEach(s=>{
-    const u=s.val();
-    userList.innerHTML+=`
-      <div class="item">
-        <b>${u.user}</b><br>
-        Status: ${u.status}<br>
-        <button onclick="toggleUser('${s.key}','${u.status}')">
-          ${u.status==="active"?"BLOKIR":"AKTIFKAN"}
-        </button>
-      </div>
-    `;
+function loadUsers(){
+  userList.innerHTML="Memuat...";
+  db.ref("users").once("value",snap=>{
+    userList.innerHTML="";
+    if(!snap.exists()){
+      userList.innerHTML="<small>Belum ada akun</small>";
+      return;
+    }
+    snap.forEach(s=>{
+      const u=s.val();
+      userList.innerHTML+=`
+        <div class="item">
+          <b>${u.user}</b><br>
+          Status: ${u.status}<br><br>
+          <button onclick="toggleUser('${u.user}','${u.status}')">
+            ${u.status==="active"?"NONAKTIFKAN":"AKTIFKAN"}
+          </button>
+        </div>`;
+    });
   });
-});
-
-function toggleUser(id,st){
-  db.ref("users/"+id+"/status").set(st==="active"?"blocked":"active");
 }
+
+function toggleUser(u,st){
+  db.ref("users/"+u+"/status").set(
+    st==="active"?"blocked":"active"
+  ).then(loadUsers);
+}
+
+/* ================= VOUCHER ================= */
+
+function createVoucher(){
+  const c=vcode.value.trim();
+  const d=parseInt(vdiscount.value);
+  const m=parseInt(vmax.value);
+  const e=vexp.value;
+
+  if(!c||!d||!m||!e) return alert("Lengkapi data");
+
+  db.ref("vouchers/"+c).set({
+    code:c,
+    discount:d,
+    max:m,
+    used:0,
+    expire:e,
+    users:{}
+  }).then(()=>{
+    alert("Voucher dibuat");
+    vcode.value="";
+    vdiscount.value="";
+    vmax.value="";
+    loadVouchers();
+  });
+}
+
+function loadVouchers(){
+  voucherList.innerHTML="Memuat...";
+  db.ref("vouchers").on("value",snap=>{
+    voucherList.innerHTML="";
+    if(!snap.exists()){
+      voucherList.innerHTML="<small>Tidak ada voucher</small>";
+      return;
+    }
+    snap.forEach(s=>{
+      const v=s.val();
+      voucherList.innerHTML+=`
+        <div class="item">
+          <b>${v.code}</b><br>
+          Potongan: ${v.discount}%<br>
+          Digunakan: ${v.used}/${v.max}<br>
+          Exp: ${v.expire}
+        </div>`;
+    });
+  });
+}
+loadVouchers();
 </script>
 
 </body>
