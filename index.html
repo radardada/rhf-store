@@ -1,26 +1,51 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>RHF Game Store</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RHF Game Store</title>
+
+<style>
+body{
+  background:#020617;
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
+  padding:20px;
+}
+.item{
+  border:1px solid #1e293b;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.item img{
+  width:100%;
+  max-width:200px;
+  border-radius:10px;
+}
+button{
+  background:#22c55e;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  font-weight:bold;
+  margin-top:10px;
+}
+</style>
 </head>
+
 <body>
 
-<h2>RHF Game Store</h2>
+<h1>RHF Game Store</h1>
+<p>Beli item game via WhatsApp</p>
+
 <div id="list"></div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-  // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -28,31 +53,32 @@ const firebaseConfig = {
   projectId: "rhf-gamestore",
   storageBucket: "rhf-gamestore.firebasestorage.app",
   messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7",
-  measurementId: "G-RYFR9D5R5H"
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+firebase.initializeApp(firebaseConfig);
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+const ref = firebase.database().ref("items");
+const list = document.getElementById("list");
 
-  db.ref('items').on('value', snap => {
-    list.innerHTML = '';
-    snap.forEach(s => {
-      const d = s.val();
-      list.innerHTML += `
-        <div onclick="window.open('https://wa.me/62 85135993982?text=Saya mau beli ${d.name}')">
-          <b>${d.game}</b><br>
-          ${d.name}<br>
-          Rp ${d.price}
-          <hr>
-        </div>
-      `;
-    });
+ref.on("value", snap=>{
+  list.innerHTML = "";
+  snap.forEach(s=>{
+    const d = s.val();
+    list.innerHTML += `
+      <div class="item">
+        <b>${d.game}</b><br>
+        ${d.name}<br>
+        Rp ${d.price}<br>
+        ${d.img ? `<img src="${d.img}">` : ""}
+        <br>
+        <a href="https://wa.me/6285135993982?text=Saya%20ingin%20beli%20${encodeURIComponent(d.name)}" target="_blank">
+          <button>Beli via WhatsApp</button>
+        </a>
+      </div>
+    `;
   });
+});
 </script>
 
 </body>
