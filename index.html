@@ -1,96 +1,224 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
+
 <style>
-*{box-sizing:border-box}
 body{
-  margin:0;min-height:100vh;
-  background:radial-gradient(circle at top,#020617,#000);
-  color:#fff;font-family:Arial
+  margin:0;
+  background:#020617;
+  color:#fff;
+  font-family:Arial
 }
-.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.card{
-  width:100%;max-width:420px;
-  background:#020617;border:1px solid #1e293b;
-  border-radius:20px;padding:22px;box-shadow:0 0 40px rgba(0,0,0,.6)
+.center{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center
 }
-h1{text-align:center;margin:0 0 8px}
-small{text-align:center;display:block;color:#94a3b8;margin-bottom:16px}
-button,input{
-  width:100%;padding:14px;margin-top:10px;
-  border:none;border-radius:14px;font-size:15px
+.box{
+  width:100%;
+  max-width:420px;
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:24px
 }
-input{background:#020617;border:1px solid #1e293b;color:#fff}
-.green{background:#22c55e;color:#000;font-weight:bold}
-.blue{background:#38bdf8;color:#000;font-weight:bold}
+input,button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border-radius:12px;
+  border:none;
+  font-size:15px
+}
+button{font-weight:bold;cursor:pointer}
+.green{background:#22c55e;color:#000}
+.blue{background:#38bdf8;color:#000}
 .gray{background:#334155;color:#fff}
 .hidden{display:none}
+
+/* ===== STORE ===== */
+.header{
+  padding:16px;
+  font-size:20px;
+  font-weight:bold
+}
+.store{
+  padding:16px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:16px
+}
+.card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer
+}
+.card img{
+  width:100%;
+  height:140px;
+  object-fit:cover
+}
+.card div{
+  padding:10px;
+  font-weight:bold;
+  text-align:center
+}
+
+/* ===== MODAL ===== */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.modal-box{
+  width:90%;
+  max-width:400px;
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:16px;
+  padding:20px
+}
 </style>
 </head>
-<body><!-- PILIHAN AWAL --><div class="center" id="selectBox">
-  <div class="card">
-    <h1>🎮 RHF GAME STORE</h1>
-    <small>Silakan pilih metode masuk</small>
-    <button class="green" onclick="showLogin()">LOGIN USER</button>
-    <button class="blue" onclick="regisWA()">REGISTRASI VIA WHATSAPP</button>
+
+<body>
+
+<!-- ================= HALAMAN AWAL ================= -->
+<div class="center" id="home">
+  <div class="box">
+    <h2 style="text-align:center">🎮 RHF GAME STORE</h2>
+
+    <button class="green" onclick="openLogin()">LOGIN USER</button>
+    <button class="blue" onclick="openRegis()">REGISTRASI VIA WHATSAPP</button>
+
+    <small style="color:#94a3b8;display:block;text-align:center;margin-top:12px">
+      Login menggunakan akun dari admin
+    </small>
   </div>
-</div><!-- LOGIN --><div class="center hidden" id="loginBox">
-  <div class="card">
-    <h1>🔐 Login User</h1>
+</div>
+
+<!-- ================= LOGIN ================= -->
+<div class="center hidden" id="loginPage">
+  <div class="box">
+    <h3>🔐 Login User</h3>
     <input id="luser" placeholder="Username">
     <input id="lpass" type="password" placeholder="Password">
     <button class="green" onclick="login()">MASUK</button>
-    <button class="gray" onclick="back()">KEMBALI</button>
+    <button class="gray" onclick="backHome()">KEMBALI</button>
   </div>
-</div><!-- HALAMAN ITEM --><div class="center hidden" id="shopBox">
-  <div class="card">
-    <h1>🛒 Item Store</h1>
-    <div id="items">Memuat item...</div>
+</div>
+
+<!-- ================= STORE ================= -->
+<div class="hidden" id="storePage">
+  <div class="header">🛒 Item Tersedia</div>
+  <div class="store" id="items"></div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal hidden" id="modal">
+  <div class="modal-box">
+    <h3 id="mName"></h3>
+    <img id="mImg" style="width:100%;border-radius:12px">
+    <p id="mDesc" style="color:#94a3b8"></p>
+    <b id="mPrice"></b>
+    <button class="green" onclick="buy()">BELI</button>
+    <button class="gray" onclick="closeModal()">TUTUP</button>
   </div>
-</div><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
-const firebaseConfig={
- apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
- authDomain:"rhf-gamestore.firebaseapp.com",
- databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"rhf-gamestore",
- appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
+</div>
+
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-const usersRef=db.ref("users");
-const itemsRef=db.ref("items");
+const db = firebase.database();
 
-function showLogin(){selectBox.classList.add('hidden');loginBox.classList.remove('hidden')}
-function back(){loginBox.classList.add('hidden');selectBox.classList.remove('hidden')}
+const usersRef = db.ref("users");
+const itemsRef = db.ref("items");
 
-function regisWA(){
- const wa="https://wa.me/6285135993982?text="+encodeURIComponent("REGISTRASI AKUN RHF\nNama:\nUsername:\n");
- window.open(wa,'_blank');
+let currentUser=null;
+let selectedItem=null;
+
+/* ===== NAV ===== */
+function openLogin(){
+  home.classList.add("hidden");
+  loginPage.classList.remove("hidden");
+}
+function backHome(){
+  loginPage.classList.add("hidden");
+  home.classList.remove("hidden");
+}
+function openRegis(){
+  window.open(
+    "https://wa.me/6285135993982?text="+
+    encodeURIComponent("REGISTRASI AKUN RHF\nNama:\nUsername:"),
+    "_blank"
+  );
 }
 
+/* ===== LOGIN ===== */
 function login(){
- usersRef.child(luser.value).once('value',s=>{
-  if(!s.exists())return alert('User tidak ditemukan');
-  const d=s.val();
-  if(d.pass!==lpass.value)return alert('Password salah');
-  if(d.status!=='aktif')return alert('Akun diblokir');
-  loginBox.classList.add('hidden');
-  shopBox.classList.remove('hidden');
- });
+  usersRef.child(luser.value).once("value",s=>{
+    if(!s.exists()) return alert("User tidak ditemukan");
+    const d=s.val();
+    if(d.pass!==lpass.value) return alert("Password salah");
+    if(d.status!=="aktif") return alert("Akun diblokir");
+
+    currentUser=d.user;
+    loginPage.classList.add("hidden");
+    storePage.classList.remove("hidden");
+  });
 }
 
-itemsRef.on('value',s=>{
- items.innerHTML='';
- s.forEach(c=>{
-  const d=c.val();
-  items.innerHTML+=`
-   <div style="border-bottom:1px solid #1e293b;padding:12px 0">
-    <b>${d.name}</b><br>
-    Rp ${d.price.toLocaleString('id-ID')}
-   </div>`;
- });
+/* ===== ITEM ===== */
+itemsRef.on("value",s=>{
+  items.innerHTML="";
+  s.forEach(c=>{
+    const d=c.val();
+    items.innerHTML+=`
+      <div class="card" onclick='openItem(${JSON.stringify(d)})'>
+        <img src="${d.img}">
+        <div>${d.name}</div>
+      </div>
+    `;
+  });
 });
-</script></body>
+
+function openItem(d){
+  selectedItem=d;
+  mName.innerText=d.name;
+  mImg.src=d.img;
+  mDesc.innerText=d.desc || "-";
+  mPrice.innerText="Rp "+d.price.toLocaleString("id-ID");
+  modal.classList.remove("hidden");
+}
+function closeModal(){
+  modal.classList.add("hidden");
+}
+function buy(){
+  alert("Pesanan dikirim ke admin");
+  closeModal();
+}
+</script>
+
+</body>
 </html>
