@@ -7,36 +7,86 @@
 
 <style>
 body{
-  background:#020617;
+  background:linear-gradient(180deg,#020617,#020617);
   color:#fff;
-  font-family:Arial;
+  font-family:'Segoe UI',Arial;
   padding:16px
 }
+h2{margin-bottom:10px}
 .box{
   background:#020617;
   border:1px solid #1e293b;
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:20px
+  border-radius:20px;
+  padding:18px;
+  margin-bottom:22px
 }
 input,button{
   width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:12px;
-  border:none
+  padding:14px;
+  margin-top:10px;
+  border-radius:14px;
+  border:none;
+  font-size:15px
 }
-button{font-weight:bold;cursor:pointer}
+button{font-weight:600;cursor:pointer}
 .green{background:#22c55e;color:#000}
 .blue{background:#38bdf8;color:#000}
 .gray{background:#334155;color:#fff}
-.item{
-  border-bottom:1px solid #1e293b;
-  padding:12px 0
-}
 .hidden{display:none}
 small{color:#94a3b8}
-code{color:#22c55e}
+
+/* GRID ITEM */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:16px;
+}
+.card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.25s;
+}
+.card:hover{
+  transform:translateY(-5px);
+  border-color:#38bdf8;
+}
+.card img{
+  width:100%;
+  height:150px;
+  object-fit:cover;
+}
+.card .name{
+  padding:12px;
+  font-weight:600;
+  text-align:center;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
+}
+.modal-box{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:20px;
+  padding:18px;
+  max-width:380px;
+  width:92%;
+}
+.modal-box img{
+  width:100%;
+  border-radius:16px;
+  margin-bottom:12px;
+}
 </style>
 </head>
 
@@ -44,48 +94,61 @@ code{color:#22c55e}
 
 <h2>🎮 RHF GAME STORE</h2>
 
-<!-- ========== LOGIN ========== -->
+<!-- LOGIN -->
 <div class="box" id="loginBox">
 <h3>🔐 Login User</h3>
 <input id="luser" placeholder="Username">
-<input id="lpass" placeholder="Password" type="password">
+<input id="lpass" type="password" placeholder="Password">
 <button class="green" onclick="login()">LOGIN</button>
 
-<!-- REGISTRASI VIA WHATSAPP -->
-<button class="gray" onclick="regisWA()">REGISTRASI VIA WHATSAPP</button>
 <small>
-Belum punya akun? Registrasi manual lewat admin (aman & resmi)
+Belum punya akun?<br>
+<a href="https://wa.me/6285135993982?text=DAFTAR%20AKUN%20RHF" target="_blank" style="color:#38bdf8">
+Daftar via WhatsApp
+</a>
 </small>
 </div>
 
-<!-- ========== EVENT GLOBAL ========== -->
+<!-- EVENT -->
 <div class="box hidden" id="eventBox">
 <h3>📢 INFO & EVENT</h3>
 <div id="events"></div>
 </div>
 
-<!-- ========== VOUCHER ========== -->
+<!-- VOUCHER -->
 <div class="box hidden" id="voucherBox">
-<h3>🎟️ Gunakan Voucher</h3>
+<h3>🎟️ Voucher</h3>
 <input id="voucherInput" placeholder="Masukkan kode voucher">
-<button class="blue" onclick="useVoucher()">Pakai Voucher</button>
+<button class="blue" onclick="useVoucher()">Gunakan</button>
 <small id="voucherInfo"></small>
 </div>
 
-<!-- ========== ITEM ========== -->
+<!-- ITEM -->
 <div class="box hidden" id="itemBox">
-<h3>🛒 Item Tersedia</h3>
-<div id="items"></div>
+<h3>🛒 Pilih Item</h3>
+<div id="items" class="grid"></div>
 </div>
 
-<!-- ========== KONFIRMASI ========== -->
+<!-- KONFIRMASI -->
 <div class="box hidden" id="confirmBox">
 <h3>✅ Konfirmasi Pesanan</h3>
 <div id="confirmData"></div>
-<button class="green" onclick="confirmOrder()">KIRIM PESANAN</button>
+<button class="green" onclick="confirmOrder()">LANJUT KE WA</button>
 </div>
 
-<!-- ========== FIREBASE ========== -->
+<!-- MODAL ITEM -->
+<div class="modal hidden" id="itemModal">
+  <div class="modal-box">
+    <img id="mImg">
+    <h3 id="mName"></h3>
+    <small id="mDesc"></small><br><br>
+    <b id="mPrice"></b>
+    <button class="green" onclick="buyNow()">BELI</button>
+    <button class="gray" onclick="closeModal()">TUTUP</button>
+  </div>
+</div>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -103,18 +166,18 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const usersRef   = db.ref("users");
-const itemsRef   = db.ref("items");
-const vouchersRef= db.ref("vouchers");
-const ordersRef  = db.ref("orders");
-const logsRef    = db.ref("logs");
-const eventsRef  = db.ref("events");
+const usersRef=db.ref("users");
+const itemsRef=db.ref("items");
+const vouchersRef=db.ref("vouchers");
+const ordersRef=db.ref("orders");
+const logsRef=db.ref("logs");
+const eventsRef=db.ref("events");
 
 let currentUser=null;
-let activeVoucher=null;
 let selectedItem=null;
+let activeVoucher=null;
 
-/* ========== LOGIN ========== */
+/* LOGIN */
 function login(){
   usersRef.child(luser.value).once("value",s=>{
     if(!s.exists()) return alert("User tidak ditemukan");
@@ -130,19 +193,7 @@ function login(){
   });
 }
 
-/* ========== REGISTRASI VIA WA ========== */
-function regisWA(){
-  const msg =
-`REGISTRASI RHF GAME STORE
-Nama:
-Username yang diinginkan:
-Catatan:`;
-
-  const wa = "https://wa.me/6285135993982?text=" + encodeURIComponent(msg);
-  window.open(wa,"_blank");
-}
-
-/* ========== EVENT ========== */
+/* EVENT */
 eventsRef.limitToLast(5).on("value",s=>{
   events.innerHTML="";
   s.forEach(c=>{
@@ -156,70 +207,68 @@ eventsRef.limitToLast(5).on("value",s=>{
   });
 });
 
-/* ========== ITEM ========== */
+/* ITEM */
 itemsRef.on("value",s=>{
   items.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
     items.innerHTML+=`
-      <div class="item">
-        <b>${d.name}</b><br>
-        Rp ${d.price.toLocaleString("id-ID")}<br>
-        <button class="green" onclick='selectItem(${JSON.stringify(d)})'>BELI</button>
+      <div class="card" onclick='openItem(${JSON.stringify(d)})'>
+        <img src="${d.img}">
+        <div class="name">${d.name}</div>
       </div>`;
   });
 });
 
-function selectItem(item){
-  selectedItem=item;
-  showConfirm();
+function openItem(d){
+  selectedItem=d;
+  mImg.src=d.img;
+  mName.innerText=d.name;
+  mDesc.innerText=d.desc || "Tidak ada deskripsi";
+  mPrice.innerText="Rp "+d.price.toLocaleString("id-ID");
+  itemModal.classList.remove("hidden");
 }
+function closeModal(){ itemModal.classList.add("hidden"); }
+function buyNow(){ closeModal(); showConfirm(); }
 
-/* ========== VOUCHER ========== */
+/* VOUCHER */
 function useVoucher(){
-  const code=voucherInput.value;
-  vouchersRef.child(code).once("value",s=>{
+  vouchersRef.child(voucherInput.value).once("value",s=>{
     if(!s.exists()) return alert("Voucher tidak valid");
     const d=s.val();
-    if(!d.active) return alert("Voucher tidak aktif");
-    if(d.used>=d.max) return alert("Voucher habis");
-
-    activeVoucher={...d,code};
-    voucherInfo.innerText=`Voucher aktif: diskon ${d.disc}%`;
+    if(!d.active||d.used>=d.max) return alert("Voucher tidak tersedia");
+    activeVoucher=d;
+    voucherInfo.innerText="Diskon "+d.disc+"% aktif";
   });
 }
 
-/* ========== KONFIRMASI ========== */
+/* KONFIRMASI */
 function showConfirm(){
   let price=selectedItem.price;
-  let disc=activeVoucher ? activeVoucher.disc : 0;
-  let total=Math.floor(price - (price*disc/100));
+  let disc=activeVoucher?activeVoucher.disc:0;
+  let total=Math.floor(price-(price*disc/100));
 
   confirmData.innerHTML=`
-    Item: ${selectedItem.name}<br>
-    Harga: Rp ${price.toLocaleString("id-ID")}<br>
-    Diskon: ${disc}%<br>
-    <b>Total: Rp ${total.toLocaleString("id-ID")}</b>
-  `;
+  Item: ${selectedItem.name}<br>
+  Harga: Rp ${price.toLocaleString("id-ID")}<br>
+  Diskon: ${disc}%<br>
+  <b>Total: Rp ${total.toLocaleString("id-ID")}</b>`;
   confirmBox.classList.remove("hidden");
 }
 
-/* ========== ORDER ========== */
+/* ORDER */
 function confirmOrder(){
   const orderId="RHF-"+Date.now()+"-"+Math.floor(Math.random()*9999);
-
-  const price=selectedItem.price;
-  const disc=activeVoucher ? activeVoucher.disc : 0;
-  const total=Math.floor(price - (price*disc/100));
+  let price=selectedItem.price;
+  let disc=activeVoucher?activeVoucher.disc:0;
+  let total=Math.floor(price-(price*disc/100));
 
   ordersRef.push({
     orderId,
     user:currentUser,
     item:selectedItem.name,
-    price,
-    disc,
-    total,
-    voucher:activeVoucher ? activeVoucher.code : null,
+    price,disc,total,
+    voucher:activeVoucher?activeVoucher.code:null,
     time:new Date().toLocaleString()
   });
 
@@ -230,21 +279,14 @@ function confirmOrder(){
     time:new Date().toLocaleString()
   });
 
-  if(activeVoucher){
-    vouchersRef.child(activeVoucher.code).update({
-      used:firebase.database.ServerValue.increment(1)
-    });
-  }
-
   const wa=`https://wa.me/6285135993982?text=`+
-    encodeURIComponent(
+  encodeURIComponent(
 `ORDER RHF
 ID:${orderId}
 User:${currentUser}
 Item:${selectedItem.name}
-Total:Rp ${total.toLocaleString("id-ID")}`
-    );
-
+Total:Rp ${total}`
+  );
   window.open(wa,"_blank");
 }
 </script>
