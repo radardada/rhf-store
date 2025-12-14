@@ -1,220 +1,190 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RHF Game Store</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RHF Game Store</title>
 
-  <style>
-    body{
-      font-family:Arial,Helvetica,sans-serif;
-      background:#020617;
-      color:#fff;
-      margin:0;
-      padding:20px;
-    }
-    h1{margin-bottom:16px}
-
-    .card{
-      background:#020617;
-      border:1px solid #1e293b;
-      border-radius:14px;
-      padding:16px;
-      margin-bottom:16px;
-      box-shadow:0 6px 30px rgba(0,0,0,.4);
-    }
-
-    .price{
-      font-size:28px;
-      font-weight:bold;
-      margin-top:6px;
-    }
-
-    .discount{
-      color:#22c55e;
-      font-weight:bold;
-    }
-
-    button{
-      width:100%;
-      padding:12px;
-      margin-top:12px;
-      border:none;
-      border-radius:12px;
-      background:#22c55e;
-      font-weight:bold;
-      cursor:pointer;
-    }
-
-    button:disabled{
-      background:#334155;
-      cursor:not-allowed;
-    }
-
-    /* PROMO GUEST */
-    .promo{
-      position:fixed;
-      top:0;left:0;right:0;
-      background:linear-gradient(90deg,#22c55e,#16a34a);
-      color:#000;
-      padding:14px 40px 14px 16px;
-      z-index:9999;
-    }
-    .promo .close{
-      position:absolute;
-      right:12px;
-      top:8px;
-      font-size:20px;
-      cursor:pointer;
-    }
-  </style>
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#020617;
+  color:#fff;
+}
+header{
+  padding:16px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  border-bottom:1px solid #1e293b;
+}
+.box{
+  margin:16px;
+  padding:16px;
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:14px;
+}
+.item{
+  margin-bottom:16px;
+  padding-bottom:16px;
+  border-bottom:1px solid #1e293b;
+}
+img{
+  width:100%;
+  border-radius:12px;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:none;
+}
+input{
+  background:#020617;
+  color:#fff;
+  border:1px solid #1e293b;
+}
+button{
+  background:#22c55e;
+  font-weight:bold;
+  cursor:pointer;
+}
+.small{
+  font-size:13px;
+  color:#94a3b8;
+}
+.warn{
+  font-size:13px;
+  color:#facc15;
+}
+.hidden{display:none}
+</style>
 </head>
 
 <body>
 
-<!-- PROMO GUEST -->
-<div id="promoBanner" class="promo" style="display:none">
-  <span class="close" onclick="closePromo()">✕</span>
-  <b>🎁 Login untuk diskon & voucher!</b><br>
-  <a href="#" onclick="loginWA()">Daftar via WhatsApp</a>
+<header>🎮 RHF Game Store</header>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+  <h3>Login (Opsional)</h3>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
+  <p class="small">Login untuk voucher & event</p>
 </div>
 
-<h1>🎮 RHF Game Store</h1>
-
-<div class="card">
-  <h3 id="itemName">Loading...</h3>
-
-  <div id="discount" class="discount"></div>
-  <div id="price" class="price">Rp 0</div>
-
-  <button id="buyBtn" onclick="buy()">Beli Sekarang</button>
+<!-- ITEM LIST -->
+<div class="box">
+  <h3>Daftar Item</h3>
+  <div id="items"></div>
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-/* ================== CONFIG ================== */
-const firebaseConfig = {
+// ================= FIREBASE =================
+firebase.initializeApp({
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-firebase.initializeApp(firebaseConfig);
-
-/* ================== VAR ================== */
-let uid = null;
-let basePrice = 0;
-let activeVoucher = null;
-
-/* ================== AUTH ================== */
-firebase.auth().onAuthStateChanged(user=>{
-  if(user){
-    uid = user.uid;
-    hidePromo();
-    listenData();
-  }else{
-    showPromo();
-    document.getElementById("buyBtn").disabled = true;
-  }
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 
-/* ================== PROMO ================== */
-function showPromo(){
-  document.getElementById("promoBanner").style.display = "block";
-}
-function hidePromo(){
-  document.getElementById("promoBanner").style.display = "none";
-}
-function closePromo(){
-  document.getElementById("promoBanner").style.display = "none";
-}
-function loginWA(){
-  // ganti ke nomor WA kamu
-  window.location.href =
-    "https://wa.me/628XXXXXXXXX?text=REGISTER%20RHF";
+const db = firebase.database();
+const itemRef = db.ref("items");
+const userRef = db.ref("users");
+
+// ================= STATE =================
+let isLogin = false;
+let currentUser = "";
+
+// ================= FORMAT RUPIAH =================
+function rupiah(x){
+  return Number(x).toLocaleString("id-ID");
 }
 
-/* ================== REALTIME ================== */
-function listenData(){
-  // ITEM
-  firebase.database()
-    .ref("items/item001")
-    .on("value", snap=>{
-      const d = snap.val();
-      if(!d) return;
-      document.getElementById("itemName").innerText = d.name;
-      basePrice = d.price;
-      updatePrice();
+// ================= LOGIN =================
+function login(){
+  const u = user.value.trim();
+  const p = pass.value.trim();
+  if(!u || !p){ alert("Lengkapi data"); return; }
+
+  userRef.once("value",snap=>{
+    let ok=false;
+    snap.forEach(s=>{
+      const d=s.val();
+      if(d.user===u && d.pass===p && d.status==="active"){
+        ok=true;
+        currentUser=u;
+      }
     });
 
-  // VOUCHER USER
-  firebase.database()
-    .ref("user_vouchers/"+uid)
-    .on("value", snap=>{
-      activeVoucher = null;
-      snap.forEach(v=>{
-        if(v.val().active && !v.val().used){
-          activeVoucher = { ...v.val(), code:v.key };
-        }
-      });
-      updatePrice();
+    if(ok){
+      isLogin=true;
+      loginBox.classList.add("hidden");
+      alert("Login berhasil, fitur lengkap aktif");
+      loadItems();
+    }else{
+      alert("Login gagal / akun nonaktif");
+    }
+  });
+}
+
+// ================= LOAD ITEM =================
+function loadItems(){
+  itemRef.on("value",snap=>{
+    items.innerHTML="";
+    snap.forEach(s=>{
+      const d=s.val();
+      const id=s.key;
+
+      items.innerHTML+=`
+        <div class="item">
+          <img src="${d.img}">
+          <h4>${d.name}</h4>
+          <p>Harga: <b>Rp ${rupiah(d.price)}</b></p>
+
+          ${
+            isLogin ? `
+              <input id="v-${id}" placeholder="Kode Voucher">
+              <button onclick="pakaiVoucher('${id}',${d.price})">
+                Pakai Voucher
+              </button>
+            ` : `
+              <p class="warn">Login untuk voucher & event</p>
+            `
+          }
+
+          <button onclick="beli('${d.name}',${d.price})">
+            Beli Sekarang
+          </button>
+        </div>
+      `;
     });
+  });
 }
 
-/* ================== PRICE ================== */
-function updatePrice(){
-  let final = basePrice;
-  let label = "";
-
-  if(activeVoucher){
-    final = basePrice - (basePrice * activeVoucher.value / 100);
-    label = `DAPAT POTONGAN ${activeVoucher.value}%`;
-  }
-
-  document.getElementById("discount").innerText = label;
-  document.getElementById("price").innerText =
-    "Rp " + Math.round(final).toLocaleString("id-ID");
-
-  document.getElementById("buyBtn").disabled = false;
+// ================= BELI (SEMUA BISA) =================
+function beli(nama,harga){
+  const wa="6285135993982"; // GANTI NOMOR KAMU
+  const text=`Saya mau beli ${nama}\nHarga: Rp ${rupiah(harga)}`;
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`);
 }
 
-/* ================== BUY ================== */
-function buy(){
-  if(!uid){
-    alert("Silakan login dulu");
+// ================= VOUCHER (LOGIN SAJA) =================
+function pakaiVoucher(id,harga){
+  if(!isLogin){
+    alert("Login dulu");
     return;
   }
-  if(!activeVoucher){
-    alert("Tidak ada voucher aktif");
-    return;
-  }
-
-  // MATIKAN VOUCHER (1 KALI SAJA)
-  firebase.database()
-    .ref("user_vouchers/"+uid+"/"+activeVoucher.code)
-    .update({
-      active:false,
-      used:true,
-      used_at:Date.now()
-    });
-
-  // LOG
-  firebase.database()
-    .ref("voucher_logs/"+activeVoucher.code+"/"+uid)
-    .update({
-      status:"used",
-      time:Date.now()
-    });
-
-  alert("Pembelian berhasil!");
+  alert("Logika voucher aktif (siap dikembangkan)");
 }
+
+// LOAD AWAL
+loadItems();
 </script>
 
 </body>
