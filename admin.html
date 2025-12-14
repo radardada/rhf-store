@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin RHF Game Store</title>
+<title>Admin Panel RHF</title>
 
 <style>
 body{
@@ -45,7 +45,10 @@ button{
 }
 .danger{
   background:#ef4444;
-  color:#fff;
+}
+.small{
+  font-size:13px;
+  color:#94a3b8;
 }
 .item{
   border-bottom:1px solid #1e293b;
@@ -56,9 +59,9 @@ img{
   border-radius:10px;
   margin-top:8px;
 }
-.small{
-  font-size:13px;
-  color:#94a3b8;
+hr{
+  border:1px solid #1e293b;
+  margin:16px 0;
 }
 </style>
 </head>
@@ -67,7 +70,23 @@ img{
 
 <header>🛠 ADMIN PANEL RHF</header>
 
-<!-- TAMBAH ITEM -->
+<!-- ================= USER ================= -->
+<div class="box">
+  <h3>Buat Akun Pembeli</h3>
+  <input id="u" placeholder="Username">
+  <input id="p" placeholder="Password">
+  <button onclick="buatUser()">BUAT AKUN</button>
+  <p class="small">Akun langsung aktif</p>
+</div>
+
+<div class="box">
+  <h3>Daftar Akun</h3>
+  <div id="users"></div>
+</div>
+
+<hr>
+
+<!-- ================= ITEM ================= -->
 <div class="box">
   <h3>Tambah Item</h3>
   <input id="game" placeholder="Nama Game">
@@ -76,79 +95,103 @@ img{
   <input id="price" placeholder="Harga (contoh: 50000)">
   <input id="img" placeholder="Link Gambar (imgur)">
   <button onclick="addItem()">SIMPAN ITEM</button>
-  <p class="small">Item langsung tampil di web pembeli</p>
 </div>
 
-<!-- DAFTAR ITEM -->
 <div class="box">
   <h3>Daftar Item</h3>
   <div id="items"></div>
 </div>
 
-<!-- FIREBASE -->
+<!-- ================= FIREBASE ================= -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// ================= FIREBASE =================
 firebase.initializeApp({
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 
 const db = firebase.database();
-const ref = db.ref("items");
+const userRef = db.ref("users");
+const itemRef = db.ref("items");
 
-// ================= TAMBAH ITEM =================
-function addItem(){
-  if(!game.value || !name.value || !price.value){
+// ================= USER =================
+function buatUser(){
+  if(!u.value || !p.value){
     alert("Lengkapi data");
     return;
   }
+  userRef.push({
+    user: u.value,
+    pass: p.value,
+    status: "active"
+  });
+  u.value = p.value = "";
+}
 
-  ref.push({
+userRef.on("value", snap=>{
+  users.innerHTML = "";
+  snap.forEach(s=>{
+    const d = s.val();
+    users.innerHTML += `
+      <div class="item">
+        <b>${d.user}</b><br>
+        Status: <b>${d.status}</b><br>
+        <button onclick="setUser('${s.key}','active')">Aktif</button>
+        <button onclick="setUser('${s.key}','inactive')">Nonaktif</button>
+      </div>
+    `;
+  });
+});
+
+function setUser(id,status){
+  userRef.child(id).update({status});
+}
+
+// ================= ITEM =================
+function addItem(){
+  if(!game.value || !name.value || !price.value){
+    alert("Lengkapi data item");
+    return;
+  }
+  itemRef.push({
     game: game.value,
     name: name.value,
     desc: desc.value,
     price: price.value,
     img: img.value
   });
-
-  game.value=name.value=desc.value=price.value=img.value="";
+  game.value = name.value = desc.value = price.value = img.value = "";
 }
 
-// ================= LOAD & EDIT ITEM =================
-ref.on("value",snap=>{
-  items.innerHTML="";
+itemRef.on("value", snap=>{
+  items.innerHTML = "";
   snap.forEach(s=>{
-    const d=s.val();
-    const id=s.key;
-
-    items.innerHTML+=`
+    const d = s.val();
+    const id = s.key;
+    items.innerHTML += `
       <div class="item">
         <b>${d.game}</b><br>
         ${d.name}<br>
         Harga: Rp ${Number(d.price).toLocaleString("id-ID")}
         <img src="${d.img}">
-        
         <input id="p-${id}" value="${d.price}">
         <button onclick="updatePrice('${id}')">UBAH HARGA</button>
-        <button class="danger" onclick="hapus('${id}')">HAPUS ITEM</button>
+        <button class="danger" onclick="hapusItem('${id}')">HAPUS ITEM</button>
       </div>
     `;
   });
 });
 
-// ================= UPDATE HARGA =================
 function updatePrice(id){
   const val = document.getElementById("p-"+id).value;
-  ref.child(id).update({price:val});
+  itemRef.child(id).update({price: val});
 }
 
-// ================= HAPUS =================
-function hapus(id){
+function hapusItem(id){
   if(confirm("Yakin hapus item?")){
-    ref.child(id).remove();
+    itemRef.child(id).remove();
   }
 }
 </script>
