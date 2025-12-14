@@ -1,3 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel RHF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      background:#020617;
+      color:#fff;
+      font-family:Arial,Helvetica,sans-serif;
+      padding:20px;
+    }
+    .box {
+      border:1px solid #1e293b;
+      border-radius:12px;
+      padding:16px;
+      margin-bottom:16px;
+    }
+    input, textarea, button {
+      width:100%;
+      margin-top:8px;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+    }
+    input, textarea {
+      background:#020617;
+      color:#fff;
+      border:1px solid #1e293b;
+    }
+    button {
+      background:#22c55e;
+      color:#000;
+      font-weight:bold;
+    }
+    .item {
+      border-bottom:1px solid #1e293b;
+      padding:8px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Admin Panel RHF Game Store</h1>
+
+<div class="box">
+  <h3>Tambah Item</h3>
+  <input id="game" placeholder="Nama Game">
+  <input id="name" placeholder="Nama Item">
+  <textarea id="desc" placeholder="Deskripsi"></textarea>
+  <input id="price" placeholder="Harga">
+  <input id="img" placeholder="Link Gambar">
+  <button onclick="addItem()">Simpan Item</button>
+</div>
+
+<div class="box">
+  <h3>Daftar Item</h3>
+  <div id="items"></div>
+</div>
+
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -19,26 +82,30 @@
   const ref = db.ref("items");
 
   function addItem() {
-    const data = {
-      game: document.getElementById("game").value,
-      name: document.getElementById("name").value,
-      desc: document.getElementById("desc").value,
-      price: document.getElementById("price").value,
-      img: document.getElementById("img").value
-    };
+    const game = document.getElementById("game");
+    const name = document.getElementById("name");
+    const desc = document.getElementById("desc");
+    const price = document.getElementById("price");
+    const img = document.getElementById("img");
 
-    if (!data.game || !data.name || !data.price) {
+    if (!game.value || !name.value || !price.value) {
       alert("Data belum lengkap");
       return;
     }
 
-    ref.push(data);
-    alert("Item tersimpan");
+    ref.push({
+      game: game.value,
+      name: name.value,
+      desc: desc.value,
+      price: price.value,
+      img: img.value
+    });
 
     game.value = name.value = desc.value = price.value = img.value = "";
   }
 
   ref.on("value", snap => {
+    const items = document.getElementById("items");
     items.innerHTML = "";
     snap.forEach(s => {
       const d = s.val();
@@ -51,4 +118,7 @@
       `;
     });
   });
-    </script>
+</script>
+
+</body>
+</html>
