@@ -6,78 +6,52 @@
 <title>RHF Game Store</title>
 
 <style>
-body{
-  background:#020617;
-  color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
-  padding:16px;
-}
-h2{margin-bottom:6px}
-.box{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:16px;
-}
-.item{
-  border:1px solid #1e293b;
-  border-radius:14px;
-  padding:12px;
-  margin-bottom:14px;
-}
-.item img{
-  width:100%;
-  max-height:160px;
-  object-fit:cover;
-  border-radius:10px;
-  margin-bottom:8px;
-}
-button,input{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border-radius:10px;
-  border:none;
-  font-size:14px;
-}
-input{
-  background:#020617;
-  color:#fff;
-  border:1px solid #1e293b;
-}
-.green{background:#22c55e;color:#000;font-weight:bold}
-.gray{background:#334155;color:#fff}
-.small{font-size:12px;opacity:.7}
+body{margin:0;background:#020617;color:#fff;font-family:Arial}
+header{padding:16px;font-size:20px;font-weight:bold}
+.container{padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:12px}
+.card img{width:100%;height:120px;object-fit:cover;border-radius:8px}
+.price{font-weight:bold;margin-top:6px}
+input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none}
+button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+.small{font-size:12px;color:#94a3b8}
+.loginBox{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:16px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<h2>RHF Game Store</h2>
-<p class="small">Beli item game via WhatsApp</p>
+<header>RHF Game Store</header>
+
+<div class="container">
 
 <!-- LOGIN -->
-<div class="box">
-<h3>Login (Opsional)</h3>
-<input id="luser" placeholder="Username">
-<input id="lpass" placeholder="Password">
-<button class="green" onclick="login()">Login</button>
-<p id="loginStatus" class="small"></p>
+<div class="loginBox" id="loginBox">
+  <h3>Login (Opsional)</h3>
+  <input id="luser" placeholder="Username">
+  <input id="lpass" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <div class="small">Belum login tetap bisa beli (tanpa voucher)</div>
+</div>
+
+<div class="loginBox hidden" id="userBox">
+  Login sebagai: <b id="uname"></b>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <!-- VOUCHER -->
-<div class="box">
-<h3>Voucher</h3>
-<input id="voucherInput" placeholder="Masukkan kode voucher">
-<button class="gray" onclick="applyVoucher()">Gunakan Voucher</button>
-<p id="voucherInfo" class="small"></p>
+<div class="loginBox">
+  <h3>Gunakan Voucher</h3>
+  <input id="voucherCode" placeholder="Masukkan kode voucher">
+  <button onclick="applyVoucher()">Pakai Voucher</button>
+  <div class="small" id="voucherInfo"></div>
 </div>
 
 <!-- ITEM -->
-<div class="box">
-<h3>Daftar Item</h3>
-<div id="items"></div>
+<div class="grid" id="items"></div>
+
 </div>
 
 <!-- FIREBASE -->
@@ -85,7 +59,7 @@ input{
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
   databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -93,14 +67,14 @@ const firebaseConfig = {
   storageBucket: "rhf-gamestore.firebasestorage.app",
   messagingSenderId: "52065906934",
   appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
 const itemsRef = db.ref("items");
 const vouchersRef = db.ref("vouchers");
 const usersRef = db.ref("users");
+const userVoucherRef = db.ref("user_vouchers");
+const logsRef = db.ref("voucher_logs");
 
 let currentUser = null;
 let activeVoucher = null;
@@ -112,80 +86,112 @@ function rupiah(n){
 
 /* LOGIN */
 function login(){
-  usersRef.once("value",s=>{
-    let found=false;
+  usersRef.once("value", s=>{
+    let ok=false;
     s.forEach(c=>{
       const d=c.val();
       if(d.user===luser.value && d.pass===lpass.value && d.status==="aktif"){
         currentUser=d.user;
-        found=true;
+        ok=true;
       }
     });
-    loginStatus.innerText = found
-      ? "Login berhasil sebagai "+currentUser
-      : "Login gagal";
+    if(ok){
+      loginBox.classList.add("hidden");
+      userBox.classList.remove("hidden");
+      uname.innerText=currentUser;
+    }else{
+      alert("Login gagal / akun tidak aktif");
+    }
   });
+}
+
+function logout(){
+  currentUser=null;
+  activeVoucher=null;
+  voucherInfo.innerText="";
+  loginBox.classList.remove("hidden");
+  userBox.classList.add("hidden");
 }
 
 /* VOUCHER */
 function applyVoucher(){
   if(!currentUser){
-    voucherInfo.innerText="Login dulu untuk pakai voucher";
+    alert("Login dulu untuk pakai voucher");
     return;
   }
-  vouchersRef.once("value",s=>{
-    let ok=false;
-    s.forEach(c=>{
-      const d=c.val();
-      if(
-        d.code===voucherInput.value.toUpperCase() &&
-        d.used < d.max
-      ){
-        activeVoucher=d;
-        activeVoucher._key=c.key;
-        ok=true;
-      }
+
+  const code=voucherCode.value.trim();
+  if(!code) return;
+
+  // CEK PER USER (ANTI ULANG)
+  userVoucherRef.child(currentUser+"/"+code).once("value", snap=>{
+    if(snap.exists()){
+      alert("Voucher ini sudah pernah kamu pakai");
+      return;
+    }
+
+    vouchersRef.once("value", s=>{
+      let found=false;
+      s.forEach(c=>{
+        const d=c.val();
+        if(d.code===code && d.active){
+          found=true;
+          if(d.used>=d.max){
+            alert("Voucher habis");
+            return;
+          }
+
+          // SIMPAN JEJAK USER
+          userVoucherRef.child(currentUser+"/"+code).set(true);
+
+          // UPDATE VOUCHER
+          vouchersRef.child(c.key).update({
+            used:d.used+1
+          });
+
+          // SIMPAN LOG ADMIN
+          logsRef.push({
+            user:currentUser,
+            voucher:code,
+            time:Date.now(),
+            used:d.used+1,
+            max:d.max
+          });
+
+          activeVoucher=d.disc;
+          voucherInfo.innerText="Voucher aktif: diskon "+d.disc+"%";
+        }
+      });
+      if(!found) alert("Voucher tidak valid");
     });
-    voucherInfo.innerText = ok
-      ? "Voucher aktif: "+activeVoucher.disc+"%"
-      : "Voucher tidak valid";
   });
 }
 
-/* ITEM LIST */
-itemsRef.on("value",s=>{
+/* ITEM */
+itemsRef.on("value", s=>{
   items.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
-    let price = Number(d.price);
-    let finalPrice = price;
-
+    let price=d.price;
     if(activeVoucher){
-      finalPrice = price - (price * activeVoucher.disc / 100);
+      price = Math.floor(d.price - (d.price*activeVoucher/100));
     }
-
     items.innerHTML+=`
-      <div class="item">
-        ${d.img ? `<img src="${d.img}">` : ``}
-        <b>${d.game}</b><br>
-        ${d.name}<br>
-        <b>${rupiah(finalPrice)}</b><br>
-        <button class="green"
-          onclick="buy('${d.game}','${d.name}',${finalPrice})">
-          Beli via WhatsApp
-        </button>
+      <div class="card">
+        <img src="${d.img}">
+        <div>${d.game}</div>
+        <div class="small">${d.name}</div>
+        <div class="price">${rupiah(price)}</div>
+        <button onclick="buy('${d.name}')">Beli</button>
       </div>
     `;
   });
 });
 
 /* BELI */
-function buy(game,name,price){
-  let text = `Halo admin, saya mau beli:\n${game} - ${name}\nHarga: ${rupiah(price)}`;
-  window.open(
-    `https://wa.me/62XXXXXXXXXX?text=${encodeURIComponent(text)}`,
-    "_blank"
-  );
+function buy(item){
+  const msg = encodeURIComponent("Saya mau beli: "+item);
+  window.location.href="https://wa.me/62XXXXXXXXXX?text="+msg;
 }
 </script>
 
