@@ -1,112 +1,137 @@
-<!-- INDEX.HTML – TERHUBUNG LANGSUNG KE ADMIN PANEL (FIREBASE) --><!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RHF SETORGAME</title><style>
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:#0b1020;color:#fff}
+<title>RHF SETORGAME</title>
 
+<style>
+body{
+  margin:0;
+  background:#0b1020;
+  color:white;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+/* PAGE SYSTEM */
+.page{display:none;padding:16px 16px 90px}
+.page.active{display:block}
+
+/* HEADER */
 .header{
-  position:sticky;top:0;z-index:10;
+  padding:14px;
   background:linear-gradient(90deg,#7c3aed,#2563eb);
-  padding:12px;display:flex;align-items:center;gap:12px
+  display:flex;align-items:center;gap:10px;
 }
 .logo{
-  width:42px;height:42px;border-radius:12px;background:#020617;
-  display:flex;align-items:center;justify-content:center;font-weight:bold
+  width:40px;height:40px;border-radius:12px;
+  background:#020617;display:flex;
+  align-items:center;justify-content:center;
+  font-weight:bold;
 }
 .search{flex:1}
-.search input{width:100%;padding:10px 14px;border-radius:20px;border:none}
+.search input{
+  width:100%;padding:10px;border-radius:20px;border:none;
+}
 
-.banner{margin:16px;border-radius:18px;padding:24px}
+/* BANNER */
+.banner{
+  margin:16px;
+  border-radius:18px;
+  padding:20px;
+  background:linear-gradient(120deg,#1e40af,#7c3aed);
+}
 
-.categories{display:flex;gap:12px;overflow-x:auto;padding:0 16px}
-.cat{min-width:100px;background:#020617;border:1px solid #1e293b;border-radius:14px;padding:12px;text-align:center}
-
-.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:16px}
-.card{background:#020617;border-radius:16px;border:1px solid #1e293b;overflow:hidden}
-.card img{width:100%;height:120px;object-fit:cover}
-.card .info{padding:10px}
+/* PRODUCT */
+.card{
+  background:#020617;
+  border-radius:16px;
+  padding:12px;
+  margin-top:14px;
+}
 .price{color:#22c55e;font-weight:bold}
-.btn{width:100%;padding:8px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:bold}
 
-.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;border-top:1px solid #1e293b;display:flex;justify-content:space-around;padding:8px 0}
-.nav a{text-decoration:none;color:#94a3b8;font-size:12px;text-align:center}
-</style></head>
-<body><div class="header">
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#020617;
+  border-top:1px solid #1e293b;
+  display:flex;
+}
+.nav div{
+  flex:1;
+  text-align:center;
+  padding:10px 0;
+  color:#94a3b8;
+  cursor:pointer;
+}
+.nav .active{color:#60a5fa}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
   <div class="logo">RHF</div>
-  <div class="search"><input id="search" placeholder="Cari skin, item, top up..."></div>
-</div><div id="banner" class="banner"></div><div class="categories" id="categories"></div><h3 style="padding:16px">🔥 Produk</h3>
-<div class="products" id="products"></div><div class="nav">
-  <a href="#">🏠<br>Home</a>
-  <a href="#promo">🔥<br>Promo</a>
-  <a href="#order">📦<br>Pesanan</a>
-  <a href="#akun">👤<br>Akun</a>
-</div><!-- FIREBASE --><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
+  <div class="search">
+    <input placeholder="Cari skin, item, top up...">
+  </div>
+</div>
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+<!-- HOME -->
+<div id="home" class="page active">
+  <div class="banner">
+    <h2>RHF SETORGAME</h2>
+    <p>Top Up • Skin • Item Game</p>
+  </div>
 
-// BANNER
-const bannerRef = db.ref('site/banner');
-bannerRef.on('value',s=>{
-  if(!s.exists()) return;
-  const d=s.val();
-  banner.style.background=d.bg;
-  banner.innerHTML=`<h1>${d.title}</h1><p>${d.desc}</p>`;
-});
-
-// CATEGORIES
-const catRef=db.ref('categories');
-catRef.on('value',s=>{
-  categories.innerHTML='';
-  s.forEach(c=>{
-    categories.innerHTML+=`<div class="cat" onclick="filter('${c.key}')">${c.val().name}</div>`;
-  });
-});
-
-// PRODUCTS
-let allProducts={};
-const prodRef=db.ref('products');
-prodRef.on('value',s=>{
-  allProducts={};products.innerHTML='';
-  s.forEach(c=>{
-    allProducts[c.key]=c.val();
-    renderProduct(c.val());
-  });
-});
-
-function renderProduct(d){
-  products.innerHTML+=`
   <div class="card">
-    <img src="${d.img}">
-    <div class="info">
-      <b>${d.name}</b><br><small>${d.game}</small>
-      <div class="price">Rp ${d.price.toLocaleString('id-ID')}</div>
-      <button class="btn">Beli</button>
-    </div>
-  </div>`;
-}
+    <h3>Skin Epic Dragon</h3>
+    <p>Mobile Legends</p>
+    <div class="price">Rp 25.000</div>
+  </div>
+</div>
 
-function filter(game){
-  products.innerHTML='';
-  Object.values(allProducts).filter(p=>p.game==game).forEach(renderProduct);
-}
+<!-- PROMO -->
+<div id="promo" class="page">
+  <h2>🔥 Promo</h2>
+  <div class="card">
+    <h3>DISKON 20%</h3>
+    <p>Kode: RHF20</p>
+  </div>
+</div>
 
-// SEARCH
-search.oninput=()=>{
-  const q=search.value.toLowerCase();
-  products.innerHTML='';
-  Object.values(allProducts).filter(p=>p.name.toLowerCase().includes(q)).forEach(renderProduct);
+<!-- PESANAN -->
+<div id="pesanan" class="page">
+  <h2>📦 Pesanan</h2>
+  <p>Belum ada pesanan</p>
+</div>
+
+<!-- AKUN -->
+<div id="akun" class="page">
+  <h2>👤 Akun</h2>
+  <p>Login akan ditambahkan nanti</p>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div onclick="showPage('home')" class="active">🏠<br>Home</div>
+  <div onclick="showPage('promo')">🔥<br>Promo</div>
+  <div onclick="showPage('pesanan')">📦<br>Pesanan</div>
+  <div onclick="showPage('akun')">👤<br>Akun</div>
+</div>
+
+<script>
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav div').forEach(n=>n.classList.remove('active'));
+
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
 }
-</script></body>
+</script>
+
+</body>
 </html>
