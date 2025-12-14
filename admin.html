@@ -7,14 +7,14 @@
 
 <style>
 body{background:#020617;color:#fff;font-family:Arial;padding:16px}
-h2,h3{margin-bottom:8px}
+h2,h3{margin:8px 0}
 .box{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:16px}
 input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none}
 button{font-weight:bold;cursor:pointer}
 .green{background:#22c55e;color:#000}
 .red{background:#ef4444;color:#fff}
-.orange{background:#f59e0b;color:#000}
 .blue{background:#3b82f6;color:#fff}
+.orange{background:#f59e0b;color:#000}
 .item{border-bottom:1px solid #1e293b;padding:8px 0;font-size:14px}
 .small{font-size:12px;color:#94a3b8}
 </style>
@@ -22,12 +22,12 @@ button{font-weight:bold;cursor:pointer}
 
 <body>
 
-<h2>ADMIN PANEL RHF (FULL CONTROL)</h2>
+<h2>ADMIN PANEL RHF – FULL CONTROL</h2>
 
 <!-- ITEM -->
 <div class="box">
-<h3>Tambah / Edit Item</h3>
-<input id="game" placeholder="Game">
+<h3>Tambah Item</h3>
+<input id="game" placeholder="Nama Game">
 <input id="name" placeholder="Nama Item">
 <input id="price" placeholder="Harga Normal">
 <input id="img" placeholder="Link Gambar">
@@ -35,7 +35,7 @@ button{font-weight:bold;cursor:pointer}
 </div>
 
 <div class="box">
-<h3>Daftar Item (Bisa Ubah Harga)</h3>
+<h3>Daftar Item (Edit Harga Real-Time)</h3>
 <div id="items"></div>
 </div>
 
@@ -44,9 +44,13 @@ button{font-weight:bold;cursor:pointer}
 <h3>Buat Voucher</h3>
 <input id="vcode" placeholder="Kode Voucher">
 <input id="vdisc" placeholder="Diskon (%)">
-<input id="vmax" placeholder="Maksimal Pakai">
+<input id="vmax" placeholder="Maksimal Pemakai">
 <input id="vdays" placeholder="Aktif (hari)">
 <button class="green" onclick="addVoucher()">Simpan Voucher</button>
+</div>
+
+<div class="box">
+<h3>Manajemen Voucher</h3>
 <div id="vouchers"></div>
 </div>
 
@@ -59,14 +63,14 @@ button{font-weight:bold;cursor:pointer}
 </div>
 
 <div class="box">
-<h3>Daftar User (Realtime)</h3>
+<h3>Daftar User (Pantauan)</h3>
 <div id="users"></div>
 </div>
 
 <!-- LOG -->
 <div class="box">
-<h3>Aktivitas & Pemakaian Voucher</h3>
-<div id="logs"></div>
+<h3>Log Pemakaian Voucher (Realtime)</h3>
+<div id="voucherLogs"></div>
 </div>
 
 <!-- FIREBASE -->
@@ -88,98 +92,110 @@ const db = firebase.database();
 const itemsRef = db.ref("items");
 const vouchersRef = db.ref("vouchers");
 const usersRef = db.ref("users");
-const logsRef = db.ref("logs");
+const logsRef = db.ref("voucher_logs");
 
-/* ITEM */
+/* ================= ITEM ================= */
 function addItem(){
   itemsRef.push({
     game:game.value,
     name:name.value,
     price:Number(price.value),
-    img:img.value,
-    discount:0
+    img:img.value
   });
 }
 
-/* UPDATE HARGA ITEM */
-function updatePrice(id){
-  const newPrice = prompt("Masukkan harga baru:");
-  if(!newPrice) return;
-  itemsRef.child(id).update({ price:Number(newPrice) });
+function editPrice(id){
+  const p = prompt("Harga baru:");
+  if(!p) return;
+  itemsRef.child(id).update({price:Number(p)});
 }
 
-/* VOUCHER */
+itemsRef.on("value", s=>{
+  items.innerHTML="";
+  s.forEach(c=>{
+    const d=c.val();
+    items.innerHTML+=`
+      <div class="item">
+        <b>${d.game}</b><br>
+        ${d.name}<br>
+        Harga: Rp ${d.price}<br>
+        <button class="blue" onclick="editPrice('${c.key}')">Ubah Harga</button>
+      </div>`;
+  });
+});
+
+/* ================= VOUCHER ================= */
 function addVoucher(){
   vouchersRef.push({
     code:vcode.value,
     disc:Number(vdisc.value),
     max:Number(vmax.value),
     used:0,
-    expire:Date.now() + (Number(vdays.value)*86400000),
-    active:true
+    active:true,
+    expire: Date.now() + (Number(vdays.value)*86400000)
   });
 }
 
-/* USER */
-function addUser(){
-  usersRef.push({
-    user:user.value,
-    pass:pass.value,
-    status:"aktif",
-    bannedUntil:0
+function toggleVoucher(id, now){
+  vouchersRef.child(id).update({active:!now});
+}
+
+function editVoucher(id){
+  const d = prompt("Diskon baru (%)");
+  const m = prompt("Maksimal pemakai");
+  if(!d || !m) return;
+  vouchersRef.child(id).update({
+    disc:Number(d),
+    max:Number(m)
   });
 }
 
-/* BAN & UNBAN */
-function banUser(id){
-  usersRef.child(id).update({
-    status:"banned",
-    bannedUntil:Date.now()+86400000
-  });
-  logsRef.push({text:"User "+id+" dibanned",time:Date.now()});
+function deleteVoucher(id){
+  if(confirm("Hapus voucher ini?")){
+    vouchersRef.child(id).remove();
+  }
 }
 
-function unbanUser(id){
-  usersRef.child(id).update({
-    status:"aktif",
-    bannedUntil:0
-  });
-  logsRef.push({text:"User "+id+" di-unban",time:Date.now()});
-}
-
-/* LIST ITEM */
-itemsRef.on("value",s=>{
-  items.innerHTML="";
-  s.forEach(c=>{
-    const d=c.val();
-    items.innerHTML+=`
-      <div class="item">
-        ${d.game} - ${d.name}<br>
-        Harga: Rp ${d.price}
-        <button class="blue" onclick="updatePrice('${c.key}')">Ubah Harga</button>
-      </div>`;
-  });
-});
-
-/* LIST VOUCHER */
-vouchersRef.on("value",s=>{
+vouchersRef.on("value", s=>{
   vouchers.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
-    if(d.used >= d.max || Date.now() > d.expire){
+    if(d.used>=d.max || Date.now()>d.expire){
       vouchersRef.child(c.key).update({active:false});
     }
     vouchers.innerHTML+=`
       <div class="item">
-        ${d.code} - ${d.disc}% 
-        (${d.used}/${d.max}) 
-        ${d.active ? "AKTIF" : "HABIS"}
+        <b>${d.code}</b><br>
+        Diskon: ${d.disc}%<br>
+        Pakai: ${d.used}/${d.max}<br>
+        Status: ${d.active?"AKTIF":"NONAKTIF"}<br>
+        <button class="orange" onclick="toggleVoucher('${c.key}',${d.active})">
+          ${d.active?"Matikan":"Aktifkan"}
+        </button>
+        <button class="blue" onclick="editVoucher('${c.key}')">Edit</button>
+        <button class="red" onclick="deleteVoucher('${c.key}')">Hapus</button>
       </div>`;
   });
 });
 
-/* LIST USER */
-usersRef.on("value",s=>{
+/* ================= USER ================= */
+function addUser(){
+  usersRef.push({
+    user:user.value,
+    pass:pass.value,
+    status:"aktif"
+  });
+}
+
+function banUser(id){
+  usersRef.child(id).update({status:"banned"});
+}
+
+function unbanUser(id){
+  usersRef.child(id).update({status:"aktif"});
+}
+
+usersRef.on("value", s=>{
   users.innerHTML="";
   s.forEach(c=>{
     const d=c.val();
@@ -187,21 +203,24 @@ usersRef.on("value",s=>{
       <div class="item">
         User: <b>${d.user}</b><br>
         Pass: ${d.pass}<br>
-        Status: ${d.status}
+        Status: ${d.status}<br>
         <button class="red" onclick="banUser('${c.key}')">BAN</button>
         <button class="green" onclick="unbanUser('${c.key}')">UNBAN</button>
       </div>`;
   });
 });
 
-/* LOG */
-logsRef.limitToLast(50).on("value",s=>{
-  logs.innerHTML="";
+/* ================= LOG ================= */
+logsRef.limitToLast(100).on("value", s=>{
+  voucherLogs.innerHTML="";
   s.forEach(c=>{
-    logs.innerHTML+=`
+    const d=c.val();
+    voucherLogs.innerHTML+=`
       <div class="item">
-        ${c.val().text}
-        <div class="small">${new Date(c.val().time).toLocaleString()}</div>
+        <b>User:</b> ${d.user}<br>
+        <b>Voucher:</b> ${d.voucher}<br>
+        <b>Waktu:</b> ${new Date(d.time).toLocaleString()}<br>
+        <b>Pakai:</b> ${d.used}/${d.max}
       </div>`;
   });
 });
