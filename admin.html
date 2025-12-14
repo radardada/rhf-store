@@ -1,148 +1,180 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel RHF Game Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel RHF</title>
 
-  <style>
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      background:#020617;
-      color:#fff;
-      padding:20px;
-    }
-    h1{margin-bottom:5px}
-    p{color:#94a3b8}
-
-    .box{
-      background:#020617;
-      border:1px solid #1e293b;
-      border-radius:14px;
-      padding:16px;
-      margin-bottom:18px;
-    }
-
-    input, textarea, button{
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      border-radius:8px;
-      border:none;
-      font-size:14px;
-    }
-
-    input, textarea{
-      background:#020617;
-      color:#fff;
-      border:1px solid #1e293b;
-    }
-
-    button{
-      background:#22c55e;
-      color:#000;
-      font-weight:bold;
-      cursor:pointer;
-    }
-
-    .item{
-      border-bottom:1px solid #1e293b;
-      padding:10px 0;
-    }
-
-    .item img{
-      width:100%;
-      max-width:200px;
-      border-radius:10px;
-      margin-top:6px;
-    }
-  </style>
+<style>
+body{
+  background:#020617;
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
+  padding:16px;
+}
+h1,h2{margin:10px 0}
+.box{
+  border:1px solid #1e293b;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:16px;
+}
+input,textarea,button{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+input,textarea{
+  background:#020617;
+  color:#fff;
+  border:1px solid #1e293b;
+}
+button{
+  background:#22c55e;
+  font-weight:bold;
+  cursor:pointer;
+}
+button.danger{background:#ef4444;color:#fff}
+.item{
+  border-bottom:1px solid #1e293b;
+  padding:10px 0;
+}
+.small{font-size:12px;color:#94a3b8}
+</style>
 </head>
 
 <body>
 
-  <h1>Admin Panel RHF Game Store</h1>
-  <p>Tambah & edit item (real-time)</p>
+<h1>ADMIN PANEL RHF GAME STORE</h1>
+<p class="small">Kendali penuh • Real-time • Firebase</p>
 
-  <div class="box">
-    <h3>Tambah Item</h3>
+<!-- TAMBAH ITEM -->
+<div class="box">
+<h2>Tambah Item</h2>
+<input id="game" placeholder="Nama Game">
+<input id="name" placeholder="Nama Item">
+<textarea id="desc" placeholder="Deskripsi"></textarea>
+<input id="price" placeholder="Harga">
+<input id="img" placeholder="Link Gambar (.jpg/.png)">
+<button onclick="addItem()">Simpan Item</button>
+</div>
 
-    <input id="game" placeholder="Nama Game">
-    <input id="name" placeholder="Nama Item">
-    <textarea id="desc" placeholder="Deskripsi"></textarea>
-    <input id="price" placeholder="Harga (contoh: 25000)">
-    <input id="img" placeholder="Link Gambar">
+<!-- DAFTAR ITEM -->
+<div class="box">
+<h2>Semua Item</h2>
+<div id="items"></div>
+</div>
 
-    <button onclick="addItem()">Simpan Item</button>
-  </div>
+<!-- VOUCHER -->
+<div class="box">
+<h2>Buat Voucher</h2>
+<input id="vcode" placeholder="Kode Voucher (contoh: RHF10)">
+<input id="vdisc" placeholder="Diskon % (contoh: 10)">
+<button onclick="addVoucher()">Simpan Voucher</button>
+<div id="vouchers"></div>
+</div>
 
-  <div class="box">
-    <h3>Daftar Item</h3>
-    <div id="items"></div>
-  </div>
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- FIREBASE -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+};
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-      authDomain: "rhf-gamestore.firebaseapp.com",
-      databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "rhf-gamestore",
-      storageBucket: "rhf-gamestore.firebasestorage.app",
-      messagingSenderId: "52065906934",
-      appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-    };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const itemRef = db.ref("items");
+const voucherRef = db.ref("vouchers");
 
-    firebase.initializeApp(firebaseConfig);
+/* ================= ITEM ================= */
 
-    const db = firebase.database();
-    const ref = db.ref("items");
+function addItem(){
+  const data = {
+    game: game.value,
+    name: name.value,
+    desc: desc.value,
+    price: price.value,
+    img: img.value
+  };
+  if(!data.game || !data.name || !data.price){
+    alert("Data belum lengkap");
+    return;
+  }
+  itemRef.push(data);
+  game.value = name.value = desc.value = price.value = img.value = "";
+}
 
-    function addItem(){
-      const game = document.getElementById("game").value;
-      const name = document.getElementById("name").value;
-      const desc = document.getElementById("desc").value;
-      const price = document.getElementById("price").value;
-      const img = document.getElementById("img").value;
+itemRef.on("value", snap=>{
+  items.innerHTML="";
+  snap.forEach(s=>{
+    const d=s.val();
+    const k=s.key;
+    items.innerHTML+=`
+      <div class="item">
+        <b>${d.game}</b><br>
+        ${d.name}<br>
+        Rp ${d.price}<br>
+        <input placeholder="Harga baru" id="p${k}">
+        <button onclick="updatePrice('${k}')">Ubah Harga</button>
+        <button class="danger" onclick="deleteItem('${k}')">Hapus Item</button>
+      </div>
+    `;
+  });
+});
 
-      if(!game || !name || !price){
-        alert("Nama game, item, dan harga wajib diisi");
-        return;
-      }
+function deleteItem(key){
+  if(confirm("Hapus item ini?")){
+    itemRef.child(key).remove();
+  }
+}
 
-      ref.push({
-        game, name, desc, price, img
-      });
+function updatePrice(key){
+  const newPrice=document.getElementById("p"+key).value;
+  if(newPrice){
+    itemRef.child(key).update({price:newPrice});
+  }
+}
 
-      document.getElementById("game").value = "";
-      document.getElementById("name").value = "";
-      document.getElementById("desc").value = "";
-      document.getElementById("price").value = "";
-      document.getElementById("img").value = "";
-    }
+/* ================= VOUCHER ================= */
 
-    ref.on("value", snap=>{
-      const items = document.getElementById("items");
-      items.innerHTML = "";
+function addVoucher(){
+  const code=vcode.value.toUpperCase();
+  const disc=vdisc.value;
+  if(!code||!disc){alert("Isi voucher");return;}
+  voucherRef.child(code).set({discount:disc,active:true});
+  vcode.value=vdisc.value="";
+}
 
-      snap.forEach(s=>{
-        const d = s.val();
-        items.innerHTML += `
-          <div class="item">
-            <b>${d.game}</b><br>
-            ${d.name}<br>
-            Rp ${d.price}<br>
-            ${d.desc || ""}
-            ${d.img ? `<img src="${d.img}">` : ""}
-          </div>
-        `;
-      });
-    });
-  </script>
+voucherRef.on("value",snap=>{
+  vouchers.innerHTML="";
+  snap.forEach(s=>{
+    const d=s.val();
+    const k=s.key;
+    vouchers.innerHTML+=`
+      <div class="item">
+        <b>${k}</b> - ${d.discount}% 
+        <button class="danger" onclick="deleteVoucher('${k}')">Hapus</button>
+      </div>
+    `;
+  });
+});
+
+function deleteVoucher(key){
+  if(confirm("Hapus voucher?")){
+    voucherRef.child(key).remove();
+  }
+}
+</script>
 
 </body>
 </html>
