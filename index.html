@@ -48,8 +48,14 @@ code{color:#22c55e}
 <div class="box" id="loginBox">
 <h3>🔐 Login User</h3>
 <input id="luser" placeholder="Username">
-<input id="lpass" placeholder="Password">
+<input id="lpass" placeholder="Password" type="password">
 <button class="green" onclick="login()">LOGIN</button>
+
+<!-- REGISTRASI VIA WHATSAPP -->
+<button class="gray" onclick="regisWA()">REGISTRASI VIA WHATSAPP</button>
+<small>
+Belum punya akun? Registrasi manual lewat admin (aman & resmi)
+</small>
 </div>
 
 <!-- ========== EVENT GLOBAL ========== -->
@@ -124,6 +130,18 @@ function login(){
   });
 }
 
+/* ========== REGISTRASI VIA WA ========== */
+function regisWA(){
+  const msg =
+`REGISTRASI RHF GAME STORE
+Nama:
+Username yang diinginkan:
+Catatan:`;
+
+  const wa = "https://wa.me/6285135993982?text=" + encodeURIComponent(msg);
+  window.open(wa,"_blank");
+}
+
 /* ========== EVENT ========== */
 eventsRef.limitToLast(5).on("value",s=>{
   events.innerHTML="";
@@ -166,7 +184,7 @@ function useVoucher(){
     if(!d.active) return alert("Voucher tidak aktif");
     if(d.used>=d.max) return alert("Voucher habis");
 
-    activeVoucher=d;
+    activeVoucher={...d,code};
     voucherInfo.innerText=`Voucher aktif: diskon ${d.disc}%`;
   });
 }
@@ -220,7 +238,11 @@ function confirmOrder(){
 
   const wa=`https://wa.me/6285135993982?text=`+
     encodeURIComponent(
-      `ORDER RHF\nID:${orderId}\nUser:${currentUser}\nItem:${selectedItem.name}\nTotal:${total}`
+`ORDER RHF
+ID:${orderId}
+User:${currentUser}
+Item:${selectedItem.name}
+Total:Rp ${total.toLocaleString("id-ID")}`
     );
 
   window.open(wa,"_blank");
