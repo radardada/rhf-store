@@ -1,15 +1,14 @@
 <!doctype html>
+
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-<script type="module">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, get, set, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, get, set, push, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 /* ===== FIREBASE ===== */
 const firebaseConfig = {
@@ -24,59 +23,81 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const storage = getStorage(app);
 
-/* ===== UTIL ===== */
+/* ===== AUTH ===== */
+let user = localStorage.getItem('user');
+
 async function hash(t){
   const e=new TextEncoder().encode(t);
-  const b=await crypto.subtle.digest("SHA-256",e);
-  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
+  const b=await crypto.subtle.digest('SHA-256',e);
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 
-let user = localStorage.getItem("user");
-
-/* ===== LOGIN & REGIS ===== */
 window.auth = async(mode)=>{
-  const u = username.value.trim();
-  const p = password.value.trim();
-  if(u.length<4||p.length<6) return alert("Username / Password terlalu pendek");
+  const u = authUser.value.trim();
+  const p = authPass.value.trim();
+  if(u.length<4||p.length<6) return alert('Data tidak valid');
 
   const r = ref(db,'users/'+u);
   const s = await get(r);
   const h = await hash(p);
 
-  if(mode==="login"){
-    if(!s.exists() || s.val().passwordHash!==h) return alert("Login gagal");
+  if(mode==='login'){
+    if(!s.exists()||s.val().passwordHash!==h) return alert('Login gagal');
   }else{
-    if(s.exists()) return alert("Username sudah dipakai");
+    if(s.exists()) return alert('Username sudah ada');
     await set(r,{passwordHash:h,saldo:0,created:Date.now()});
   }
 
-  localStorage.setItem("user",u);
+  localStorage.setItem('user',u);
   location.reload();
 };
 
-/* ===== LOAD USER ===== */
-if(user){
-  authBox.style.display="none";
-  appBox.style.display="block";
-  onValue(ref(db,'users/'+user+'/saldo'),s=>saldo.innerText=s.val()||0);
+if(user){ authBox.style.display='none'; appBox.style.display='block'; loadHome(); }
+
+/* ===== NAV ===== */
+window.showPage = p=>{
+  document.querySelectorAll('.page').forEach(x=>x.style.display='none');
+  document.getElementById(p).style.display='block';
+};
+
+/* ===== HOME ===== */
+function loadHome(){
+  onValue(ref(db,'products'),snap=>{
+    homeGrid.innerHTML='';
+    snap.forEach(c=>{
+      const p=c.val();
+      if(!p.active) return;
+      homeGrid.innerHTML+=`
+      <div class="card">
+        <img src="${p.image||''}" />
+        <b>${p.name}</b>
+        <small>${p.game}</small>
+        <span>Rp ${p.price}</span>
+        <button onclick="buy('${c.key}',${p.price})">Beli</button>
+      </div>`;
+    });
+  });
 }
 
-/* ===== PRODUK ===== */
-onValue(ref(db,'products'),snap=>{
-  grid.innerHTML='';
-  snap.forEach(c=>{
-    const p=c.val();
-    if(!p.active) return;
-    grid.innerHTML+=`
-    <div class="card">
-      <img src="${p.image}">
-      <b>${p.name}</b>
-      <small>${p.game}</small>
-      <span>Rp ${p.price}</span>
-    </div>`;
-  });
-});
+window.buy=(id,price)=>{
+  alert('Pembelian dicatat, admin akan memproses');
+};
+
+/* ===== TOP UP ===== */
+window.sendTopup = async()=>{
+  const amt = topupAmount.value;
+  const file = topupFile.files[0];
+  if(!amt||!file) return alert('Lengkapi data');
+
+  const r = sRef(storage,'bukti/'+Date.now()+file.name);
+  await uploadBytes(r,file);
+  const url = await getDownloadURL(r);
+
+  await push(ref(db,'topup'),{user,amount:amt,bukti:url,status:'pending'});
+  alert('Top up dikirim');
+};
 
 /* ===== CS ===== */
 window.sendCS=()=>{
@@ -85,70 +106,42 @@ window.sendCS=()=>{
   csMsg.value='';
 };
 
-/* ===== TOP UP ===== */
-window.topup=()=>{
-  const j = topupAmount.value;
-  const b = topupProof.value;
-  if(!j||!b) return alert("Lengkapi data");
-  push(ref(db,'topup'),{user,jumlah:j,bukti:b,status:"pending"});
-  alert("Menunggu konfirmasi admin");
-};
-</script>
-
-<style>
+</script><style>
 *{box-sizing:border-box;font-family:Roboto}
 body{margin:0;background:#0f1115;color:#fff}
 header{padding:14px;background:#151821}
-#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px}
+nav div{color:#aaa;cursor:pointer}
+nav .active{color:#4cafef}
+.page{display:none;padding:14px}
+#homeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .card{background:#1b1f2a;padding:10px;border-radius:14px}
 .card img{width:100%;height:100px;object-fit:cover;border-radius:10px}
-nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px}
-nav div{color:#aaa}
-nav div.active{color:#4cafef}
-.box{padding:14px}
-input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
-button{background:#4cafef;color:#000;font-weight:700}
-</style>
-</head>
-
-<body>
-
-<!-- AUTH -->
-<div id="authBox" class="box">
-  <h2>Login / Registrasi</h2>
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
+button{width:100%;padding:8px;border:none;border-radius:8px;background:#4cafef;font-weight:700}
+input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
+</style></head>
+<body><!-- AUTH --><div id="authBox" class="page" style="display:block">
+  <h2>Login / Regis</h2>
+  <input id="authUser" placeholder="Username">
+  <input id="authPass" type="password" placeholder="Password">
   <button onclick="auth('login')">Login</button>
   <button onclick="auth('regis')">Registrasi</button>
-</div>
-
-<!-- APP -->
-<div id="appBox" style="display:none">
-<header>
-  <b>RHF Game Store</b><br>
-  Saldo: Rp <span id="saldo">0</span>
-</header>
-
-<div id="grid"></div>
-
-<div class="box">
-  <h3>Top Up</h3>
-  <input id="topupAmount" placeholder="Jumlah">
-  <input id="topupProof" placeholder="Link bukti transfer">
-  <button onclick="topup()">Kirim</button>
-
-  <h3>Customer Service</h3>
+</div><div id="appBox" style="display:none">
+<header>RHF Game Store</header><div id="home" class="page" style="display:block">
+  <div id="homeGrid"></div>
+</div><div id="promo" class="page">Promo akan tampil di sini</div><div id="cs" class="page">
   <input id="csMsg" placeholder="Tulis pesan">
   <button onclick="sendCS()">Kirim</button>
-</div>
-
-<nav>
-  <div class="active">Home</div>
-  <div>Promo</div>
-  <div>CS</div>
-  <div onclick="localStorage.clear();location.reload()">Akun</div>
+</div><div id="akun" class="page">
+  <h3>Top Up Saldo</h3>
+  <input id="topupAmount" placeholder="Jumlah">
+  <input id="topupFile" type="file" accept="image/*">
+  <button onclick="sendTopup()">Kirim Bukti</button>
+</div><nav>
+  <div onclick="showPage('home')">Home</div>
+  <div onclick="showPage('promo')">Promo</div>
+  <div onclick="showPage('cs')">CS</div>
+  <div onclick="showPage('akun')">Akun</div>
 </nav>
-</div>
-
-</body>
+</div></body>
 </html>
