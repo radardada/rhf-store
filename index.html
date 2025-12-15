@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><script type="module">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><!-- Firebase --><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, get, set, push, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-/* ===== FIREBASE ===== */
+// ================= FIREBASE CONFIG =================
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -25,123 +25,198 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-/* ===== AUTH ===== */
-let user = localStorage.getItem('user');
+// ================= STATE =================
+let currentUser = null; // {id, username}
 
-async function hash(t){
-  const e=new TextEncoder().encode(t);
-  const b=await crypto.subtle.digest('SHA-256',e);
-  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
-}
+// ================= UTIL =================
+const $ = q => document.querySelector(q);
+const $$ = q => document.querySelectorAll(q);
+const now = () => Date.now();
+const hash = async (str) => {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+};
 
-window.auth = async(mode)=>{
-  const u = authUser.value.trim();
-  const p = authPass.value.trim();
-  if(u.length<4||p.length<6) return alert('Data tidak valid');
+// ================= NAV =================
+window.showPage = (id) => {
+  $$('.page').forEach(p=>p.style.display='none');
+  $('#'+id).style.display='block';
+  $$('.nav div').forEach(n=>n.classList.remove('active'));
+  const map = {home:'navHome',promo:'navPromo',cs:'navCS',akun:'navAkun'};
+  if(map[id]) $('#'+map[id]).classList.add('active');
+};
 
-  const r = ref(db,'users/'+u);
-  const s = await get(r);
+// ================= AUTH =================
+window.login = async () => {
+  const u = $('#l_user').value.trim();
+  const p = $('#l_pass').value;
+  if(!u||!p) return alert('Lengkapi login');
   const h = await hash(p);
-
-  if(mode==='login'){
-    if(!s.exists()||s.val().passwordHash!==h) return alert('Login gagal');
-  }else{
-    if(s.exists()) return alert('Username sudah ada');
-    await set(r,{passwordHash:h,saldo:0,created:Date.now()});
-  }
-
-  localStorage.setItem('user',u);
-  location.reload();
+  onValue(ref(db,'users'), snap => {
+    let found=null;
+    snap.forEach(c=>{ const v=c.val(); if(v.username===u && v.passwordHash===h) found={id:c.key, username:u}; });
+    if(!found) return alert('Login gagal');
+    currentUser = found;
+    $('#auth').style.display='none';
+    $('#app').style.display='block';
+    showPage('home');
+    loadProducts();
+    loadSaldo();
+    loadCS();
+  }, {onlyOnce:true});
 };
 
-if(user){ authBox.style.display='none'; appBox.style.display='block'; loadHome(); }
-
-/* ===== NAV ===== */
-window.showPage = p=>{
-  document.querySelectorAll('.page').forEach(x=>x.style.display='none');
-  document.getElementById(p).style.display='block';
+window.regis = async () => {
+  const u = $('#r_user').value.trim();
+  const p = $('#r_pass').value;
+  if(!u||!p) return alert('Lengkapi regis');
+  const h = await hash(p);
+  onValue(ref(db,'users'), snap => {
+    let exist=false;
+    snap.forEach(c=>{ if(c.val().username===u) exist=true; });
+    if(exist) return alert('Username sudah dipakai');
+    const id = push(ref(db,'users')).key;
+    set(ref(db,'users/'+id),{username:u,passwordHash:h,saldo:0,createdAt:now()});
+    alert('Registrasi berhasil, silakan login');
+    $('#r_user').value=''; $('#r_pass').value='';
+  }, {onlyOnce:true});
 };
 
-/* ===== HOME ===== */
-function loadHome(){
-  onValue(ref(db,'products'),snap=>{
-    homeGrid.innerHTML='';
+// ================= PRODUCTS =================
+function loadProducts(){
+  onValue(ref(db,'products'), snap => {
+    const grid = $('#grid'); grid.innerHTML='';
     snap.forEach(c=>{
-      const p=c.val();
-      if(!p.active) return;
-      homeGrid.innerHTML+=`
-      <div class="card">
-        <img src="${p.image||''}" />
+      const p=c.val(); if(!p.active) return;
+      const d=document.createElement('div'); d.className='product';
+      d.innerHTML=`
+        <img src="${p.image}" onerror="this.src='https://via.placeholder.com/300x180?text=RHF'">
         <b>${p.name}</b>
-        <small>${p.game}</small>
+        <small>${p.game||''}</small>
         <span>Rp ${p.price}</span>
-        <button onclick="buy('${c.key}',${p.price})">Beli</button>
-      </div>`;
+        <button onclick="buy('${c.key}','${p.name}',${p.price})">Beli</button>`;
+      grid.appendChild(d);
     });
   });
 }
 
-window.buy=(id,price)=>{
-  alert('Pembelian dicatat, admin akan memproses');
+window.buy = (id,name,price) => {
+  alert('Pembelian dicatat. Gunakan saldo.');
 };
 
-/* ===== TOP UP ===== */
-window.sendTopup = async()=>{
-  const amt = topupAmount.value;
-  const file = topupFile.files[0];
-  if(!amt||!file) return alert('Lengkapi data');
+// ================= SALDO =================
+function loadSaldo(){
+  onValue(ref(db,'users/'+currentUser.id+'/saldo'), s=>$('#saldo').innerText='Rp '+(s.val()||0));
+}
 
-  const r = sRef(storage,'bukti/'+Date.now()+file.name);
-  await uploadBytes(r,file);
-  const url = await getDownloadURL(r);
-
-  await push(ref(db,'topup'),{user,amount:amt,bukti:url,status:'pending'});
-  alert('Top up dikirim');
+// ================= TOP UP =================
+window.submitTopup = async () => {
+  const amt = parseInt($('#tu_amount').value);
+  const file = $('#tu_file').files[0];
+  if(!amt || !file) return alert('Isi jumlah & upload bukti');
+  const id = push(ref(db,'topup')).key;
+  const path = `bukti/${currentUser.id}/${id}.jpg`;
+  await uploadBytes(sRef(storage,path), file);
+  const url = await getDownloadURL(sRef(storage,path));
+  set(ref(db,'topup/'+id),{userId:currentUser.id,username:currentUser.username,jumlah:amt,bukti:url,status:'pending',time:now()});
+  alert('Top up terkirim (PENDING)');
+  $('#tu_amount').value=''; $('#tu_file').value='';
 };
 
-/* ===== CS ===== */
-window.sendCS=()=>{
-  if(!csMsg.value) return;
-  push(ref(db,'cs'),{user,msg:csMsg.value,time:Date.now()});
-  csMsg.value='';
+// ================= CS =================
+function loadCS(){
+  const box = $('#chat'); box.innerHTML='';
+  onValue(ref(db,'cs/'+currentUser.id+'/messages'), snap=>{
+    box.innerHTML='';
+    snap.forEach(c=>{
+      const m=c.val();
+      const b=document.createElement('div'); b.className='bubble '+(m.from==='admin'?'right':'left');
+      b.innerText=m.text; box.appendChild(b);
+    }); box.scrollTop=box.scrollHeight;
+  });
+}
+window.sendCS = () => {
+  const t=$('#cs_text').value.trim(); if(!t) return;
+  push(ref(db,'cs/'+currentUser.id+'/messages'),{from:'user',text:t,time:now()});
+  $('#cs_text').value='';
 };
-
 </script><style>
 *{box-sizing:border-box;font-family:Roboto}
 body{margin:0;background:#0f1115;color:#fff}
+.hidden{display:none}
+#auth{padding:20px}
+.card{background:#151821;border-radius:14px;padding:16px;margin-bottom:12px}
+input,button{width:100%;padding:10px;border:none;border-radius:10px;margin-top:8px}
+button{background:#4cafef;color:#000;font-weight:700}
+#app{display:none}
 header{padding:14px;background:#151821}
-nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px}
-nav div{color:#aaa;cursor:pointer}
-nav .active{color:#4cafef}
-.page{display:none;padding:14px}
-#homeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.card{background:#1b1f2a;padding:10px;border-radius:14px}
-.card img{width:100%;height:100px;object-fit:cover;border-radius:10px}
-button{width:100%;padding:8px;border:none;border-radius:8px;background:#4cafef;font-weight:700}
-input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
+#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+.product{background:#1b1f2a;padding:10px;border-radius:14px}
+.product img{width:100%;height:120px;object-fit:cover;border-radius:10px}
+.product button{margin-top:6px}
+.page{display:none;padding-bottom:80px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px 0}
+.nav div{color:#aaa}
+.nav .active{color:#4cafef}
+#chat{padding:10px;height:60vh;overflow:auto}
+.bubble{max-width:70%;padding:8px 12px;border-radius:14px;margin:6px 0}
+.left{background:#1b1f2a}
+.right{background:#4cafef;color:#000;margin-left:auto}
+.paybox{background:#1b1f2a;border-radius:14px;padding:12px}
+.payopt{border:1px dashed #4cafef;border-radius:12px;padding:12px;margin-top:10px}
+.small{color:#aaa;font-size:12px}
 </style></head>
-<body><!-- AUTH --><div id="authBox" class="page" style="display:block">
-  <h2>Login / Regis</h2>
-  <input id="authUser" placeholder="Username">
-  <input id="authPass" type="password" placeholder="Password">
-  <button onclick="auth('login')">Login</button>
-  <button onclick="auth('regis')">Registrasi</button>
-</div><div id="appBox" style="display:none">
-<header>RHF Game Store</header><div id="home" class="page" style="display:block">
-  <div id="homeGrid"></div>
-</div><div id="promo" class="page">Promo akan tampil di sini</div><div id="cs" class="page">
-  <input id="csMsg" placeholder="Tulis pesan">
-  <button onclick="sendCS()">Kirim</button>
-</div><div id="akun" class="page">
-  <h3>Top Up Saldo</h3>
-  <input id="topupAmount" placeholder="Jumlah">
-  <input id="topupFile" type="file" accept="image/*">
-  <button onclick="sendTopup()">Kirim Bukti</button>
-</div><nav>
-  <div onclick="showPage('home')">Home</div>
-  <div onclick="showPage('promo')">Promo</div>
-  <div onclick="showPage('cs')">CS</div>
-  <div onclick="showPage('akun')">Akun</div>
-</nav>
+<body><!-- AUTH --><div id="auth">
+  <div class="card">
+    <b>Login</b>
+    <input id="l_user" placeholder="Username">
+    <input id="l_pass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+  <div class="card">
+    <b>Registrasi</b>
+    <input id="r_user" placeholder="Username">
+    <input id="r_pass" type="password" placeholder="Password">
+    <button onclick="regis()">Daftar</button>
+  </div>
+</div><!-- APP --><div id="app">
+<header>
+  <b>RHF Game Store</b><br><small>Saldo: <span id="saldo">Rp 0</span></small>
+</header><!-- HOME --><div id="home" class="page">
+  <div id="grid"></div>
+</div><!-- PROMO --><div id="promo" class="page">
+  <div class="card">Belum ada promo</div>
+</div><!-- CS --><div id="cs" class="page">
+  <div class="card"><b>Customer Service</b><br><small class="small">Untuk pembayaran QRIS, silakan chat CS</small></div>
+  <div id="chat"></div>
+  <div class="card">
+    <input id="cs_text" placeholder="Tulis pesan...">
+    <button onclick="sendCS()">Kirim</button>
+  </div>
+</div><!-- AKUN --><div id="akun" class="page">
+  <div class="card">
+    <b>Top Up Saldo</b>
+    <div class="paybox">
+      <div class="payopt">
+        <b>Opsi 1: Transfer DANA / OVO / GOPAY</b>
+        <p class="small">Kirim ke nomor:</p>
+        <b>85124869641</b>
+        <input id="tu_amount" type="number" placeholder="Jumlah top up">
+        <input id="tu_file" type="file" accept="image/*">
+        <button onclick="submitTopup()">Kirim Bukti</button>
+      </div>
+      <div class="payopt">
+        <b>Opsi 2: QRIS</b>
+        <p class="small">Pembayaran QRIS dilakukan melalui CS</p>
+        <button onclick="showPage('cs')">Ke CS Pembayaran</button>
+      </div>
+    </div>
+  </div>
+</div><!-- NAV --><div class="nav">
+  <div id="navHome" class="active" onclick="showPage('home')">Home</div>
+  <div id="navPromo" onclick="showPage('promo')">Promo</div>
+  <div id="navCS" onclick="showPage('cs')">CS</div>
+  <div id="navAkun" onclick="showPage('akun')">Akun</div>
+</div>
 </div></body>
 </html>
