@@ -4,26 +4,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF Admin Control – CS</title>
-<style>
-body{margin:0;background:#0b0f14;color:#e5e7eb;font-family:Arial}
-.panel{max-width:900px;margin:30px auto}
-.card{background:#121826;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:12px}
-input,textarea,button{width:100%;padding:10px;border-radius:8px;border:none;margin:6px 0}
-button{background:#3b82f6;color:#fff}
-.ticket{border-bottom:1px dashed #1f2937;padding:8px 0}
-small{color:#9ca3af}
-</style>
-</head>
-<body><div class="panel">
-  <h2>RHF ADMIN CONTROL – CUSTOMER SERVICE</h2>  <div class="card">
-    <h4>Tiket Masuk (Realtime)</h4>
-    <div id="tickets"></div>
-  </div>
-</div><script type="module">
+<title>RHF Admin Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+/* ===== FIREBASE ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -37,24 +23,111 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// LOAD TICKET CS REALTIME
-const tickets=document.getElementById('tickets');
-onValue(ref(db,'support'), snap=>{
-  tickets.innerHTML='';
+/* ===== LOGIN ADMIN (PASSWORD ONLY) ===== */
+const ADMIN_PASS = "123456";
+window.adminLogin = ()=>{
+  if(adminPass.value!==ADMIN_PASS) return alert('Password salah');
+  localStorage.setItem('admin','ok');
+  location.reload();
+}
+
+if(localStorage.getItem('admin')==='ok'){
+  loginBox.style.display='none';
+  panel.style.display='block';
+}
+
+/* ===== PRODUK ===== */
+window.addProduct=()=>{
+  const data={
+    name:pName.value,
+    price:pPrice.value,
+    game:pGame.value,
+    category:pCat.value,
+    image:pImg.value,
+    active:true
+  };
+  push(ref(db,'products'),data);
+  alert('Produk ditambahkan');
+}
+
+onValue(ref(db,'products'),snap=>{
+  productList.innerHTML='';
+  snap.forEach(c=>{
+    const p=c.val();
+    productList.innerHTML+=`
+    <div class="item">
+      <b>${p.name}</b><br>
+      Rp ${p.price}<br>
+      <button onclick="toggle('${c.key}',${p.active})">${p.active?'NONAKTIF':'AKTIF'}</button>
+      <button onclick="remove(ref(db,'products/${c.key}'))">HAPUS</button>
+    </div>`;
+  });
+});
+
+window.toggle=(id,s)=>update(ref(db,'products/'+id),{active:!s});
+
+/* ===== TOP UP ===== */
+onValue(ref(db,'topup'),snap=>{
+  topupList.innerHTML='';
   snap.forEach(c=>{
     const t=c.val();
-    const d=document.createElement('div');
-    d.className='ticket';
-    d.innerHTML=`
-      <b>${t.judul}</b><br>
-      <small>User: ${t.user} | Status: ${t.status}</small>
-      <p>${t.pesan}</p>
-      <textarea id="r_${c.key}" placeholder="Balasan admin"></textarea><button onclick="reply('${c.key}')">Balas & Tandai Selesai</button>`;
-tickets.appendChild(d);
+    if(t.status!=='pending') return;
+    topupList.innerHTML+=`
+    <div class="item">
+      <b>${t.user}</b> - Rp ${t.jumlah}<br>
+      <a href="${t.bukti}" target="_blank">Bukti</a><br>
+      <button onclick="confirmTopup('${c.key}','${t.user}',${t.jumlah})">KONFIRM</button>
+      <button onclick="rejectTopup('${c.key}')">TOLAK</button>
+    </div>`;
+  });
+});
 
-}); });
+window.confirmTopup=(id,user,amt)=>{
+  update(ref(db,'users/'+user+'/saldo'),amt);
+  update(ref(db,'topup/'+id),{status:'ok'});
+}
 
-window.reply = (id)=>{ const msg=document.getElementById('r_'+id).value; update(ref(db,'support/'+id),{ reply: msg, status: 'SELESAI' }); } </script>
+window.rejectTopup=id=>update(ref(db,'topup/'+id),{status:'reject'});
 
-</body>
+/* ===== CS ===== */
+onValue(ref(db,'cs'),snap=>{
+  csList.innerHTML='';
+  snap.forEach(c=>{
+    const m=c.val();
+    csList.innerHTML+=`<div class="item"><b>${m.user}</b><br>${m.msg}</div>`;
+  });
+});
+</script><style>
+*{box-sizing:border-box;font-family:Roboto}
+body{margin:0;background:#0f1115;color:#fff}
+header{padding:14px;background:#151821;font-weight:700}
+section{padding:14px}
+input,button{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px}
+button{background:#4cafef;color:#000;font-weight:700}
+.item{background:#1b1f2a;padding:10px;border-radius:10px;margin-bottom:8px}
+</style></head>
+<body><div id="loginBox" class="section">
+  <h2>Admin Login</h2>
+  <input id="adminPass" type="password" placeholder="Password Admin">
+  <button onclick="adminLogin()">Masuk</button>
+</div><div id="panel" style="display:none">
+<header>RHF ADMIN PANEL</header><section>
+<h3>Tambah Produk</h3>
+<input id="pName" placeholder="Nama">
+<input id="pPrice" placeholder="Harga">
+<input id="pGame" placeholder="Game">
+<input id="pCat" placeholder="Kategori">
+<input id="pImg" placeholder="Link Gambar">
+<button onclick="addProduct()">Tambah</button>
+</section><section>
+<h3>Produk</h3>
+<div id="productList"></div>
+</section><section>
+<h3>Top Up Pending</h3>
+<div id="topupList"></div>
+</section><section>
+<h3>Customer Service</h3>
+<div id="csList"></div>
+</section>
+</div></body>
 </html>
