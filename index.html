@@ -1,56 +1,17 @@
 <!doctype html>
-
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF GameStore</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0b0f14;--card:#121826;--pri:#3b82f6;--txt:#e5e7eb;--mut:#9ca3af}
-*{box-sizing:border-box;font-family:Inter}
-body{margin:0;background:var(--bg);color:var(--txt)}
-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #1f2937}
-header img{width:36px;height:36px;border-radius:8px}
-header h1{font-size:18px;margin:0}
-main{padding:16px}
-.games{display:flex;gap:10px;overflow-x:auto;margin-bottom:16px}
-.games button{background:#1f2937;border:0;color:#fff;padding:8px 14px;border-radius:12px;white-space:nowrap}
-.games button.active{background:var(--pri)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:10px}
-.card img{width:100%;border-radius:12px}
-.card h3{font-size:14px;margin:8px 0 4px}
-.card p{font-size:12px;color:var(--mut);margin:0}
-.card .price{margin-top:8px;font-weight:700}
-button.buy{margin-top:8px;width:100%;background:var(--pri);border:0;color:#fff;padding:8px;border-radius:10px}
-#loginBox,#checkout{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center}
-.modal{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px;max-width:360px;width:100%}
-input{width:100%;padding:10px;border-radius:10px;border:1px solid #1f2937;background:#0f172a;color:#fff;margin:6px 0}
-</style>
-</head>
-<body>
-<header>
-  <img src="https://i.imgur.com/FFdFRPg.jpeg">
-  <h1>RHF GameStore</h1>
-</header>
-<main>
-  <div class="games" id="games"></div>
-  <div class="grid" id="items"></div>
-</main><div id="loginBox">
-  <div class="modal">
-    <h3>Login</h3>
-    <input id="lu" placeholder="Username">
-    <input id="lp" type="password" placeholder="Password">
-    <button class="buy" onclick="login()">Masuk</button>
-    <p style="font-size:12px">Registrasi via <a href="https://wa.me/6285135993982" target="_blank">WhatsApp</a></p>
-  </div>
-</div><div id="checkout">
-  <div class="modal" id="co"></div>
-</div><script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+<title>RHF Game Store</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, get, set, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+/* ===== FIREBASE ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -61,59 +22,133 @@ const firebaseConfig = {
   appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-let USER=null, GAME=null;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-// LOAD GAME
-onValue(ref(db,'games'),snap=>{
-  games.innerHTML='';
+/* ===== UTIL ===== */
+async function hash(t){
+  const e=new TextEncoder().encode(t);
+  const b=await crypto.subtle.digest("SHA-256",e);
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+let user = localStorage.getItem("user");
+
+/* ===== LOGIN & REGIS ===== */
+window.auth = async(mode)=>{
+  const u = username.value.trim();
+  const p = password.value.trim();
+  if(u.length<4||p.length<6) return alert("Username / Password terlalu pendek");
+
+  const r = ref(db,'users/'+u);
+  const s = await get(r);
+  const h = await hash(p);
+
+  if(mode==="login"){
+    if(!s.exists() || s.val().passwordHash!==h) return alert("Login gagal");
+  }else{
+    if(s.exists()) return alert("Username sudah dipakai");
+    await set(r,{passwordHash:h,saldo:0,created:Date.now()});
+  }
+
+  localStorage.setItem("user",u);
+  location.reload();
+};
+
+/* ===== LOAD USER ===== */
+if(user){
+  authBox.style.display="none";
+  appBox.style.display="block";
+  onValue(ref(db,'users/'+user+'/saldo'),s=>saldo.innerText=s.val()||0);
+}
+
+/* ===== PRODUK ===== */
+onValue(ref(db,'products'),snap=>{
+  grid.innerHTML='';
   snap.forEach(c=>{
-    const b=document.createElement('button');
-    b.textContent=c.val().name;
-    b.onclick=()=>selectGame(c.key,b);
-    games.appendChild(b);
-  })
+    const p=c.val();
+    if(!p.active) return;
+    grid.innerHTML+=`
+    <div class="card">
+      <img src="${p.image}">
+      <b>${p.name}</b>
+      <small>${p.game}</small>
+      <span>Rp ${p.price}</span>
+    </div>`;
+  });
 });
 
-function selectGame(id,btn){
-  GAME=id;
-  document.querySelectorAll('.games button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  loadItems();
-}
+/* ===== CS ===== */
+window.sendCS=()=>{
+  if(!csMsg.value) return;
+  push(ref(db,'cs'),{user,msg:csMsg.value,time:Date.now()});
+  csMsg.value='';
+};
 
-function loadItems(){
-  items.innerHTML='';
-  onValue(ref(db,'items'),snap=>{
-    items.innerHTML='';
-    snap.forEach(c=>{
-      const i=c.val();
-      if(i.game!==GAME||!i.active) return;
-      items.innerHTML+=`<div class=card><img src=${i.img}><h3>${i.name}</h3><p>${i.desc||''}</p><div class=price>Rp ${i.price}</div><button class=buy onclick=buy('${c.key}')>Beli</button></div>`;
-    })
-  })
-}
+/* ===== TOP UP ===== */
+window.topup=()=>{
+  const j = topupAmount.value;
+  const b = topupProof.value;
+  if(!j||!b) return alert("Lengkapi data");
+  push(ref(db,'topup'),{user,jumlah:j,bukti:b,status:"pending"});
+  alert("Menunggu konfirmasi admin");
+};
+</script>
 
-window.login=()=>{
-  onValue(ref(db,'users/'+lu.value),s=>{
-    if(s.exists()&&s.val().pass===lp.value){USER=lu.value;loginBox.style.display='none'}else alert('Login gagal')
-  },{onlyOnce:true})
-}
+<style>
+*{box-sizing:border-box;font-family:Roboto}
+body{margin:0;background:#0f1115;color:#fff}
+header{padding:14px;background:#151821}
+#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+.card{background:#1b1f2a;padding:10px;border-radius:14px}
+.card img{width:100%;height:100px;object-fit:cover;border-radius:10px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px}
+nav div{color:#aaa}
+nav div.active{color:#4cafef}
+.box{padding:14px}
+input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
+button{background:#4cafef;color:#000;font-weight:700}
+</style>
+</head>
 
-window.buy=id=>{
-  if(!USER){loginBox.style.display='flex';return}
-  onValue(ref(db,'items/'+id),s=>{
-    const i=s.val();
-    co.innerHTML=`<h3>${i.name}</h3><p>Harga: Rp ${i.price}</p><button class=buy onclick=order('${id}',${i.price})>Bayar</button>`;
-    checkout.style.display='flex';
-  },{onlyOnce:true})
-}
+<body>
 
-window.order=(id,price)=>{
-  push(ref(db,'orders'),{user:USER,item:id,price,status:'MENUNGGU',time:Date.now()});
-  checkout.style.display='none';
-  alert('Pesanan dibuat, menunggu admin');
-}
-</script></body>
-  </html>
+<!-- AUTH -->
+<div id="authBox" class="box">
+  <h2>Login / Registrasi</h2>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="auth('login')">Login</button>
+  <button onclick="auth('regis')">Registrasi</button>
+</div>
+
+<!-- APP -->
+<div id="appBox" style="display:none">
+<header>
+  <b>RHF Game Store</b><br>
+  Saldo: Rp <span id="saldo">0</span>
+</header>
+
+<div id="grid"></div>
+
+<div class="box">
+  <h3>Top Up</h3>
+  <input id="topupAmount" placeholder="Jumlah">
+  <input id="topupProof" placeholder="Link bukti transfer">
+  <button onclick="topup()">Kirim</button>
+
+  <h3>Customer Service</h3>
+  <input id="csMsg" placeholder="Tulis pesan">
+  <button onclick="sendCS()">Kirim</button>
+</div>
+
+<nav>
+  <div class="active">Home</div>
+  <div>Promo</div>
+  <div>CS</div>
+  <div onclick="localStorage.clear();location.reload()">Akun</div>
+</nav>
+</div>
+
+</body>
+</html>
