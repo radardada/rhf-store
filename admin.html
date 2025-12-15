@@ -1,208 +1,92 @@
-<!doctype html>
-
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF Admin Control</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><!-- ============ STYLE ============ --><style>
-*{box-sizing:border-box;font-family:Roboto}
-body{margin:0;background:#0f1115;color:#fff}
-header{background:#151821;padding:14px;font-size:18px;font-weight:700}
-nav{display:flex;gap:10px;padding:10px;background:#111}
-nav button{background:#222;color:#aaa;border:none;padding:8px 14px;border-radius:10px;cursor:pointer}
-nav button.active{background:#4cafef;color:#000}
-section{display:none;padding:14px}
-section.active{display:block}
-input,button{padding:8px;border:none;border-radius:8px;margin:4px 0}
-button.primary{background:#4cafef;color:#000;font-weight:700}
-.card{background:#1b1f2a;padding:12px;border-radius:12px;margin-bottom:10px}
-img.proof{max-width:220px;border-radius:10px;margin-top:6px}
-.flex{display:flex;gap:10px}
-.list{max-height:300px;overflow:auto}
-.chat{background:#0b0d12;padding:10px;border-radius:12px;height:320px;overflow:auto}
-.msg-user{background:#333;padding:6px 10px;border-radius:10px;margin:6px 0;max-width:70%}
-.msg-admin{background:#4cafef;color:#000;padding:6px 10px;border-radius:10px;margin:6px 0 6px auto;max-width:70%}
-</style><!-- ============ ADMIN PROTECTION ============ --><script>
-if(sessionStorage.getItem('RHF_ADMIN_LOGIN')!=='YES'){
-  alert('Akses ditolak');
-  location.href='admin.html';
-}
-</script><!-- ============ FIREBASE ============ --><script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, update, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
- authDomain:"rhf-gamestore.firebaseapp.com",
- databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"rhf-gamestore",
- storageBucket:"rhf-gamestore.firebasestorage.app",
- messagingSenderId:"52065906934",
- appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-
-/* ============ NAVIGATION ============ */
-window.showTab=id=>{
- document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
- document.getElementById(id).classList.add('active');
- document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
- document.getElementById('btn-'+id).classList.add('active');
-}
-
-/* ============ PRODUK ============ */
-window.addProduct=()=>{
- push(ref(db,'products'),{
-  name:pName.value,
-  price:Number(pPrice.value),
-  game:pGame.value,
-  category:pCat.value,
-  image:pImg.value,
-  active:true
- });
- alert('Produk ditambahkan');
-}
-
-onValue(ref(db,'products'),snap=>{
- prodList.innerHTML='';
- snap.forEach(c=>{
-  const p=c.val();
-  prodList.innerHTML+=`
-   <div class='card'>
-    <b>${p.name}</b> - Rp ${p.price}<br>
-    <button onclick="toggleProd('${c.key}',${p.active})">${p.active?'NONAKTIF':'AKTIF'}</button>
-    <button onclick="delProd('${c.key}')">HAPUS</button>
-   </div>`;
- });
-});
-
-window.toggleProd=(id,s)=>update(ref(db,'products/'+id),{active:!s});
-window.delProd=id=>remove(ref(db,'products/'+id));
-
-/* ============ TOP UP ============ */
-onValue(ref(db,'topups'),snap=>{
- topupList.innerHTML='';
- snap.forEach(c=>{
-  const t=c.val();
-  if(t.status!=='pending')return;
-  topupList.innerHTML+=`
-   <div class='card'>
-    User: ${t.userId}<br>
-    Jumlah: Rp ${t.amount}<br>
-    <img class='proof' src='${t.proofImage}'><br>
-    <button onclick="approveTopup('${c.key}','${t.userId}',${t.amount})">KONFIRM</button>
-    <button onclick="rejectTopup('${c.key}')">TOLAK</button>
-   </div>`;
- });
-});
-
-window.approveTopup=async(id,uid,amt)=>{
- const u=ref(db,'users/'+uid+'/saldo');
- const s=await get(u);
- const saldo=s.exists()?s.val():0;
- await update(ref(db,'users/'+uid),{saldo:saldo+amt});
- await update(ref(db,'topups/'+id),{status:'approved'});
-}
-window.rejectTopup=id=>update(ref(db,'topups/'+id),{status:'rejected'});
-
-/* ============ CS UMUM ============ */
-let curUser=null;
-onValue(ref(db,'csChats'),snap=>{
- csUsers.innerHTML='';
- snap.forEach(u=>{
-  csUsers.innerHTML+=`<div onclick="openChat('${u.key}')">${u.key}</div>`;
- });
-});
-
-window.openChat=uid=>{
- curUser=uid;
- onValue(ref(db,'csChats/'+uid+'/messages'),snap=>{
-  csChat.innerHTML='';
-  snap.forEach(c=>{
-   const m=c.val();
-   csChat.innerHTML+=`<div class='${m.from==='admin'?'msg-admin':'msg-user'}'>${m.text||''}</div>`;
-  });
- });
-}
-
-window.replyCS=()=>{
- if(!curUser||!csText.value)return;
- push(ref(db,'csChats/'+curUser+'/messages'),{from:'admin',text:csText.value,time:Date.now()});
- csText.value='';
-}
-
-/* ============ CS PEMBAYARAN (QRIS) ============ */
-let payUser=null;
-onValue(ref(db,'csPayment'),snap=>{
- payUsers.innerHTML='';
- snap.forEach(u=>{
-  payUsers.innerHTML+=`<div onclick="openPay('${u.key}')">${u.key}</div>`;
- });
-});
-
-window.openPay=uid=>{
- payUser=uid;
- onValue(ref(db,'csPayment/'+uid+'/messages'),snap=>{
-  payChat.innerHTML='';
-  snap.forEach(c=>{
-   const m=c.val();
-   if(m.text) payChat.innerHTML+=`<div>${m.from}: ${m.text}</div>`;
-   if(m.image) payChat.innerHTML+=`<img class='proof' src='${m.image}'>`;
-  });
- });
-}
-
-window.replyPay=()=>{
- if(!payUser)return;
- if(payText.value){push(ref(db,'csPayment/'+payUser+'/messages'),{from:'admin',text:payText.value,time:Date.now()});payText.value='';}
- if(payImg.files[0]){
-  const r=new FileReader();
-  r.onload=()=>push(ref(db,'csPayment/'+payUser+'/messages'),{from:'admin',image:r.result,time:Date.now()});
-  r.readAsDataURL(payImg.files[0]);payImg.value='';
- }
-}
-</script></head><body onload="showTab('produk')">
-<header>RHF Admin Control — Otak Sistem</header><nav>
- <button id="btn-produk" onclick="showTab('produk')">Produk</button>
- <button id="btn-topup" onclick="showTab('topup')">Top Up</button>
- <button id="btn-cs" onclick="showTab('cs')">CS</button>
- <button id="btn-qris" onclick="showTab('qris')">CS QRIS</button>
-</nav><section id="produk">
- <h3>Tambah Produk</h3>
- <input id="pName" placeholder="Nama">
- <input id="pPrice" placeholder="Harga">
- <input id="pGame" placeholder="Game">
- <input id="pCat" placeholder="Kategori">
- <input id="pImg" placeholder="Link gambar">
- <button class="primary" onclick="addProduct()">Tambah</button>
- <h3>Daftar Produk</h3>
- <div id="prodList"></div>
-</section><section id="topup">
- <h3>Top Up Pending</h3>
- <div id="topupList"></div>
-</section><section id="cs">
- <h3>Customer Service</h3>
- <div class="flex">
-  <div id="csUsers" class="list"></div>
-  <div style="flex:1">
-   <div id="csChat" class="chat"></div>
-   <input id="csText" placeholder="Balas pesan">
-   <button onclick="replyCS()">Kirim</button>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
+    .login,.panel{min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .box{background:#020617;padding:20px;border-radius:12px;width:100%;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+    h2{text-align:center;margin-bottom:15px}
+    input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none}
+    input{background:#020617;color:#fff;border:1px solid #1e293b}
+    button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+    button.red{background:#ef4444;color:#fff}
+    .hidden{display:none}
+    .top{display:flex;justify-content:space-between;align-items:center}
+    .menu{display:flex;gap:10px;margin:15px 0}
+    .menu button{flex:1;background:#1e293b;color:#fff}
+    .card{background:#020617;padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid #1e293b}
+    textarea{width:100%;min-height:70px;background:#020617;color:#fff;border:1px solid #1e293b;border-radius:8px;padding:8px}
+  </style>
+</head>
+<body><!-- LOGIN ADMIN --><div class="login" id="loginBox">
+  <div class="box">
+    <h2>Login Admin</h2>
+    <input type="password" id="adminPass" placeholder="Password admin">
+    <button onclick="loginAdmin()">Masuk</button>
   </div>
- </div>
-</section><section id="qris">
- <h3>CS Pembayaran QRIS</h3>
- <div class="flex">
-  <div id="payUsers" class="list"></div>
-  <div style="flex:1">
-   <div id="payChat" class="chat"></div>
-   <input id="payText" placeholder="Pesan">
-   <input type="file" id="payImg" accept="image/*">
-   <button onclick="replyPay()">Kirim</button>
+</div><!-- PANEL ADMIN --><div class="panel hidden" id="adminPanel">
+  <div class="box" style="max-width:600px">
+    <div class="top">
+      <b>ADMIN PANEL</b>
+      <button class="red" onclick="logout()">Logout</button>
+    </div><div class="menu">
+  <button onclick="show('cs')">CS</button>
+  <button onclick="show('pay')">Pembayaran</button>
+</div>
+
+<!-- CS -->
+<div id="cs" class="section">
+  <div class="card">
+    <b>Chat User</b>
+    <div id="chatBox">Belum ada pesan</div>
+    <textarea placeholder="Balas pesan..."></textarea>
+    <button>Kirim</button>
   </div>
- </div>
-</section></body>
+</div>
+
+<!-- PEMBAYARAN -->
+<div id="pay" class="section hidden">
+  <div class="card">
+    <b>Top Up Pending</b>
+    <p>User: contoh_user</p>
+    <p>Nominal: 50.000</p>
+    <button>Konfirmasi</button>
+    <button class="red">Tolak</button>
+  </div>
+</div>
+
+  </div>
+</div><script>
+  // PASSWORD ADMIN (GANTI JIKA MAU)
+  const ADMIN_PASSWORD = "RHF-ADMIN-2025";
+
+  function loginAdmin(){
+    const pass = document.getElementById('adminPass').value;
+    if(pass === ADMIN_PASSWORD){
+      localStorage.setItem('adminLogin','ok');
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('adminPanel').classList.remove('hidden');
+    }else{
+      alert('Akses ditolak');
+    }
+  }
+
+  function logout(){
+    localStorage.removeItem('adminLogin');
+    location.reload();
+  }
+
+  function show(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  // CEK LOGIN SAAT LOAD
+  if(localStorage.getItem('adminLogin')==='ok'){
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+  }
+</script></body>
 </html>
