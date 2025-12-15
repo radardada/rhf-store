@@ -1,18 +1,119 @@
-import { getDatabase, ref, onValue } from
-'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
+<!doctype html>
 
-const db = getDatabase(app);
-const grid = document.getElementById('grid');
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RHF GameStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--card:#121826;--pri:#3b82f6;--txt:#e5e7eb;--mut:#9ca3af}
+*{box-sizing:border-box;font-family:Inter}
+body{margin:0;background:var(--bg);color:var(--txt)}
+header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #1f2937}
+header img{width:36px;height:36px;border-radius:8px}
+header h1{font-size:18px;margin:0}
+main{padding:16px}
+.games{display:flex;gap:10px;overflow-x:auto;margin-bottom:16px}
+.games button{background:#1f2937;border:0;color:#fff;padding:8px 14px;border-radius:12px;white-space:nowrap}
+.games button.active{background:var(--pri)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:10px}
+.card img{width:100%;border-radius:12px}
+.card h3{font-size:14px;margin:8px 0 4px}
+.card p{font-size:12px;color:var(--mut);margin:0}
+.card .price{margin-top:8px;font-weight:700}
+button.buy{margin-top:8px;width:100%;background:var(--pri);border:0;color:#fff;padding:8px;border-radius:10px}
+#loginBox,#checkout{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center}
+.modal{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px;max-width:360px;width:100%}
+input{width:100%;padding:10px;border-radius:10px;border:1px solid #1f2937;background:#0f172a;color:#fff;margin:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://i.imgur.com/FFdFRPg.jpeg">
+  <h1>RHF GameStore</h1>
+</header>
+<main>
+  <div class="games" id="games"></div>
+  <div class="grid" id="items"></div>
+</main><div id="loginBox">
+  <div class="modal">
+    <h3>Login</h3>
+    <input id="lu" placeholder="Username">
+    <input id="lp" type="password" placeholder="Password">
+    <button class="buy" onclick="login()">Masuk</button>
+    <p style="font-size:12px">Registrasi via <a href="https://wa.me/6285135993982" target="_blank">WhatsApp</a></p>
+  </div>
+</div><div id="checkout">
+  <div class="modal" id="co"></div>
+</div><script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-onValue(ref(db,'games'),(snap)=>{
-  grid.innerHTML='';
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+let USER=null, GAME=null;
+
+// LOAD GAME
+onValue(ref(db,'games'),snap=>{
+  games.innerHTML='';
   snap.forEach(c=>{
-    const g=c.val();
-    if(!g.active) return;
-    grid.innerHTML+=`
-      <div class="card">
-        <img src="${g.logo}">
-        <div class="t">${g.name}</div>
-      </div>`;
-  });
+    const b=document.createElement('button');
+    b.textContent=c.val().name;
+    b.onclick=()=>selectGame(c.key,b);
+    games.appendChild(b);
+  })
 });
+
+function selectGame(id,btn){
+  GAME=id;
+  document.querySelectorAll('.games button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadItems();
+}
+
+function loadItems(){
+  items.innerHTML='';
+  onValue(ref(db,'items'),snap=>{
+    items.innerHTML='';
+    snap.forEach(c=>{
+      const i=c.val();
+      if(i.game!==GAME||!i.active) return;
+      items.innerHTML+=`<div class=card><img src=${i.img}><h3>${i.name}</h3><p>${i.desc||''}</p><div class=price>Rp ${i.price}</div><button class=buy onclick=buy('${c.key}')>Beli</button></div>`;
+    })
+  })
+}
+
+window.login=()=>{
+  onValue(ref(db,'users/'+lu.value),s=>{
+    if(s.exists()&&s.val().pass===lp.value){USER=lu.value;loginBox.style.display='none'}else alert('Login gagal')
+  },{onlyOnce:true})
+}
+
+window.buy=id=>{
+  if(!USER){loginBox.style.display='flex';return}
+  onValue(ref(db,'items/'+id),s=>{
+    const i=s.val();
+    co.innerHTML=`<h3>${i.name}</h3><p>Harga: Rp ${i.price}</p><button class=buy onclick=order('${id}',${i.price})>Bayar</button>`;
+    checkout.style.display='flex';
+  },{onlyOnce:true})
+}
+
+window.order=(id,price)=>{
+  push(ref(db,'orders'),{user:USER,item:id,price,status:'MENUNGGU',time:Date.now()});
+  checkout.style.display='none';
+  alert('Pesanan dibuat, menunggu admin');
+}
+</script></body>
+  </html>
