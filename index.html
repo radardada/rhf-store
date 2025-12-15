@@ -1,11 +1,12 @@
 <!doctype html>
-
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><style>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
 *{box-sizing:border-box;font-family:Roboto}
 body{margin:0;background:#0f1115;color:#fff;padding-bottom:70px}
 header{background:#151821;padding:14px;display:flex;justify-content:space-between;align-items:center}
@@ -35,9 +36,11 @@ header b{font-size:18px}
 .card{background:#1b1f2a;padding:12px;border-radius:12px;margin:10px}
 input,textarea{width:100%;padding:8px;border-radius:8px;border:none;margin:6px 0}
 button.primary{background:#4cafef;color:#000;border:none;padding:10px;border-radius:8px;font-weight:700;width:100%}
-</style><script type="module">
+</style>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig={
  apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
@@ -52,9 +55,30 @@ const firebaseConfig={
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
+/* ================= LOGIN SYSTEM (TAMBAHAN) ================= */
 let currentUser=localStorage.getItem('RHF_USER');
-if(!currentUser){currentUser='user_'+Date.now();localStorage.setItem('RHF_USER',currentUser)}
+if(!currentUser){
+ const u=prompt('Buat Username');
+ const p=prompt('Buat PIN');
+ if(!u||!p){alert('Login dibatalkan');location.reload();}
+ currentUser='user_'+Date.now();
+ localStorage.setItem('RHF_USER',currentUser);
+ localStorage.setItem('RHF_NAME',u);
+ localStorage.setItem('RHF_PIN',p);
+ set(ref(db,'users/'+currentUser),{name:u,saldo:0});
+}
 
+/* ================= SALDO SYSTEM (TAMBAHAN) ================= */
+const saldoBox=document.createElement('div');
+saldoBox.style.color='#4cafef';
+saldoBox.innerText='Saldo: Rp 0';
+document.querySelector('header').appendChild(saldoBox);
+
+onValue(ref(db,'users/'+currentUser+'/saldo'),s=>{
+ saldoBox.innerText='Saldo: Rp '+(s.exists()?s.val():0);
+});
+
+/* ================= KODE ASLI KAMU ================= */
 window.showPage=id=>{
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  document.getElementById(id).classList.add('active');
@@ -120,23 +144,36 @@ window.sendTopup=()=>{
  }
  r.readAsDataURL(proof.files[0]);
 }
-</script></head><body onload="showPage('home')">
+</script>
+</head>
+
+<body onload="showPage('home')">
 <header>
  <div><b>RHF Game Store</b><br><small>Game • Item • APK • Akun</small></div>
  <div class="search">Cari game atau item</div>
-</header><div id="home" class="page active">
+</header>
+
+<div id="home" class="page active">
  <div class="category">
   <button id="cat-all" class="active" onclick="filterCat('all')">Semua</button>
   <button id="cat-FIS IT" onclick="filterCat('FIS IT')">FIS IT</button>
  </div>
  <div id="grid"></div>
-</div><div id="promo" class="page"><div class="card">Promo akan segera hadir</div></div><div id="cs" class="page">
+</div>
+
+<div id="promo" class="page">
+ <div class="card">Promo akan segera hadir</div>
+</div>
+
+<div id="cs" class="page">
  <div class="card">
   <div id="csChat" class="chat"></div>
   <input id="csText" placeholder="Tulis pesan">
   <button class="primary" onclick="sendCS()">Kirim</button>
  </div>
-</div><div id="akun" class="page">
+</div>
+
+<div id="akun" class="page">
  <div class="card">
   <b id="orderInfo">Top Up Saldo</b>
   <input id="amount" placeholder="Jumlah top up">
@@ -144,7 +181,9 @@ window.sendTopup=()=>{
   <button class="primary" onclick="sendTopup()">Kirim Bukti</button>
   <small>Pembayaran: DANA / OVO / GOPAY<br>85124869641</small>
  </div>
-</div><div class="bottom">
+</div>
+
+<div class="bottom">
  <div id="btn-home" class="active" onclick="showPage('home')">Home</div>
  <div id="btn-promo" onclick="showPage('promo')">Promo</div>
  <div id="btn-cs" onclick="showPage('cs')">CS</div>
