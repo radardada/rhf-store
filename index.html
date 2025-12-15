@@ -5,218 +5,150 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Game Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><!-- Firebase --><script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-
-// ================= FIREBASE CONFIG =================
-const firebaseConfig = {
-  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-  authDomain: "rhf-gamestore.firebaseapp.com",
-  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app",
-  messagingSenderId: "52065906934",
-  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const storage = getStorage(app);
-
-// ================= STATE =================
-let currentUser = null; // {id, username}
-
-// ================= UTIL =================
-const $ = q => document.querySelector(q);
-const $$ = q => document.querySelectorAll(q);
-const now = () => Date.now();
-const hash = async (str) => {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-};
-
-// ================= NAV =================
-window.showPage = (id) => {
-  $$('.page').forEach(p=>p.style.display='none');
-  $('#'+id).style.display='block';
-  $$('.nav div').forEach(n=>n.classList.remove('active'));
-  const map = {home:'navHome',promo:'navPromo',cs:'navCS',akun:'navAkun'};
-  if(map[id]) $('#'+map[id]).classList.add('active');
-};
-
-// ================= AUTH =================
-window.login = async () => {
-  const u = $('#l_user').value.trim();
-  const p = $('#l_pass').value;
-  if(!u||!p) return alert('Lengkapi login');
-  const h = await hash(p);
-  onValue(ref(db,'users'), snap => {
-    let found=null;
-    snap.forEach(c=>{ const v=c.val(); if(v.username===u && v.passwordHash===h) found={id:c.key, username:u}; });
-    if(!found) return alert('Login gagal');
-    currentUser = found;
-    $('#auth').style.display='none';
-    $('#app').style.display='block';
-    showPage('home');
-    loadProducts();
-    loadSaldo();
-    loadCS();
-  }, {onlyOnce:true});
-};
-
-window.regis = async () => {
-  const u = $('#r_user').value.trim();
-  const p = $('#r_pass').value;
-  if(!u||!p) return alert('Lengkapi regis');
-  const h = await hash(p);
-  onValue(ref(db,'users'), snap => {
-    let exist=false;
-    snap.forEach(c=>{ if(c.val().username===u) exist=true; });
-    if(exist) return alert('Username sudah dipakai');
-    const id = push(ref(db,'users')).key;
-    set(ref(db,'users/'+id),{username:u,passwordHash:h,saldo:0,createdAt:now()});
-    alert('Registrasi berhasil, silakan login');
-    $('#r_user').value=''; $('#r_pass').value='';
-  }, {onlyOnce:true});
-};
-
-// ================= PRODUCTS =================
-function loadProducts(){
-  onValue(ref(db,'products'), snap => {
-    const grid = $('#grid'); grid.innerHTML='';
-    snap.forEach(c=>{
-      const p=c.val(); if(!p.active) return;
-      const d=document.createElement('div'); d.className='product';
-      d.innerHTML=`
-        <img src="${p.image}" onerror="this.src='https://via.placeholder.com/300x180?text=RHF'">
-        <b>${p.name}</b>
-        <small>${p.game||''}</small>
-        <span>Rp ${p.price}</span>
-        <button onclick="buy('${c.key}','${p.name}',${p.price})">Beli</button>`;
-      grid.appendChild(d);
-    });
-  });
-}
-
-window.buy = (id,name,price) => {
-  alert('Pembelian dicatat. Gunakan saldo.');
-};
-
-// ================= SALDO =================
-function loadSaldo(){
-  onValue(ref(db,'users/'+currentUser.id+'/saldo'), s=>$('#saldo').innerText='Rp '+(s.val()||0));
-}
-
-// ================= TOP UP =================
-window.submitTopup = async () => {
-  const amt = parseInt($('#tu_amount').value);
-  const file = $('#tu_file').files[0];
-  if(!amt || !file) return alert('Isi jumlah & upload bukti');
-  const id = push(ref(db,'topup')).key;
-  const path = `bukti/${currentUser.id}/${id}.jpg`;
-  await uploadBytes(sRef(storage,path), file);
-  const url = await getDownloadURL(sRef(storage,path));
-  set(ref(db,'topup/'+id),{userId:currentUser.id,username:currentUser.username,jumlah:amt,bukti:url,status:'pending',time:now()});
-  alert('Top up terkirim (PENDING)');
-  $('#tu_amount').value=''; $('#tu_file').value='';
-};
-
-// ================= CS =================
-function loadCS(){
-  const box = $('#chat'); box.innerHTML='';
-  onValue(ref(db,'cs/'+currentUser.id+'/messages'), snap=>{
-    box.innerHTML='';
-    snap.forEach(c=>{
-      const m=c.val();
-      const b=document.createElement('div'); b.className='bubble '+(m.from==='admin'?'right':'left');
-      b.innerText=m.text; box.appendChild(b);
-    }); box.scrollTop=box.scrollHeight;
-  });
-}
-window.sendCS = () => {
-  const t=$('#cs_text').value.trim(); if(!t) return;
-  push(ref(db,'cs/'+currentUser.id+'/messages'),{from:'user',text:t,time:now()});
-  $('#cs_text').value='';
-};
-</script><style>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><style>
 *{box-sizing:border-box;font-family:Roboto}
-body{margin:0;background:#0f1115;color:#fff}
-.hidden{display:none}
-#auth{padding:20px}
-.card{background:#151821;border-radius:14px;padding:16px;margin-bottom:12px}
-input,button{width:100%;padding:10px;border:none;border-radius:10px;margin-top:8px}
-button{background:#4cafef;color:#000;font-weight:700}
-#app{display:none}
-header{padding:14px;background:#151821}
-#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+body{margin:0;background:#0f1115;color:#fff;padding-bottom:70px}
+header{background:#151821;padding:14px;display:flex;justify-content:space-between;align-items:center}
+header b{font-size:18px}
+.search{background:#222;padding:8px 12px;border-radius:20px;color:#aaa}
+.category{display:flex;gap:8px;padding:10px}
+.category button{background:#222;color:#aaa;border:none;padding:8px 14px;border-radius:20px}
+.category button.active{background:#4cafef;color:#000}
+#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:10px}
 .product{background:#1b1f2a;padding:10px;border-radius:14px}
-.product img{width:100%;height:120px;object-fit:cover;border-radius:10px}
-.product button{margin-top:6px}
-.page{display:none;padding-bottom:80px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px 0}
-.nav div{color:#aaa}
-.nav .active{color:#4cafef}
-#chat{padding:10px;height:60vh;overflow:auto}
-.bubble{max-width:70%;padding:8px 12px;border-radius:14px;margin:6px 0}
-.left{background:#1b1f2a}
-.right{background:#4cafef;color:#000;margin-left:auto}
-.paybox{background:#1b1f2a;border-radius:14px;padding:12px}
-.payopt{border:1px dashed #4cafef;border-radius:12px;padding:12px;margin-top:10px}
-.small{color:#aaa;font-size:12px}
-</style></head>
-<body><!-- AUTH --><div id="auth">
-  <div class="card">
-    <b>Login</b>
-    <input id="l_user" placeholder="Username">
-    <input id="l_pass" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
-  <div class="card">
-    <b>Registrasi</b>
-    <input id="r_user" placeholder="Username">
-    <input id="r_pass" type="password" placeholder="Password">
-    <button onclick="regis()">Daftar</button>
-  </div>
-</div><!-- APP --><div id="app">
+.product img{width:100%;height:110px;object-fit:cover;border-radius:10px}
+.product b{display:block;margin-top:6px}
+.product span{color:#4cafef;font-weight:700}
+.product button{margin-top:6px;width:100%;background:#4cafef;color:#000;border:none;padding:8px;border-radius:8px;font-weight:700}
+
+.page{display:none}
+.page.active{display:block}
+
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px 0}
+.bottom div{color:#aaa}
+.bottom div.active{color:#4cafef}
+
+.chat{background:#0b0d12;border-radius:12px;padding:10px;height:320px;overflow:auto}
+.msg-user{background:#333;padding:6px 10px;border-radius:10px;margin:6px 0;max-width:70%}
+.msg-admin{background:#4cafef;color:#000;padding:6px 10px;border-radius:10px;margin:6px 0 6px auto;max-width:70%}
+
+.card{background:#1b1f2a;padding:12px;border-radius:12px;margin:10px}
+input,textarea{width:100%;padding:8px;border-radius:8px;border:none;margin:6px 0}
+button.primary{background:#4cafef;color:#000;border:none;padding:10px;border-radius:8px;font-weight:700;width:100%}
+</style><script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig={
+ apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+ authDomain:"rhf-gamestore.firebaseapp.com",
+ databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"rhf-gamestore",
+ storageBucket:"rhf-gamestore.firebasestorage.app",
+ messagingSenderId:"52065906934",
+ appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+let currentUser=localStorage.getItem('RHF_USER');
+if(!currentUser){currentUser='user_'+Date.now();localStorage.setItem('RHF_USER',currentUser)}
+
+window.showPage=id=>{
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.bottom div').forEach(b=>b.classList.remove('active'));
+ document.getElementById('btn-'+id).classList.add('active');
+}
+
+window.filterCat=cat=>{
+ document.querySelectorAll('.product').forEach(p=>{
+  p.style.display=(cat==='all'||p.dataset.cat===cat)?'block':'none';
+ });
+ document.querySelectorAll('.category button').forEach(b=>b.classList.remove('active'));
+ document.getElementById('cat-'+cat).classList.add('active');
+}
+
+onValue(ref(db,'products'),snap=>{
+ grid.innerHTML='';
+ snap.forEach(c=>{
+  const p=c.val();
+  if(!p.active) return;
+  grid.innerHTML+=`
+   <div class="product" data-cat="${p.category}">
+    <img src="${p.image}" onerror="this.src='https://via.placeholder.com/300'">
+    <b>${p.name}</b>
+    <small>${p.game}</small>
+    <span>Rp ${p.price}</span>
+    <button onclick="order('${p.name}',${p.price})">Beli</button>
+   </div>`;
+ });
+});
+
+window.order=(name,price)=>{
+ showPage('akun');
+ document.getElementById('orderInfo').innerText=`Pesanan: ${name} | Rp ${price}`;
+}
+
+window.sendCS=()=>{
+ if(!csText.value) return;
+ push(ref(db,'csChats/'+currentUser+'/messages'),{from:'user',text:csText.value,time:Date.now()});
+ csText.value='';
+}
+
+onValue(ref(db,'csChats/'+currentUser+'/messages'),snap=>{
+ csChat.innerHTML='';
+ snap.forEach(c=>{
+  const m=c.val();
+  csChat.innerHTML+=`<div class="${m.from==='admin'?'msg-admin':'msg-user'}">${m.text||''}</div>`;
+ });
+});
+
+window.sendTopup=()=>{
+ if(!amount.value||!proof.files[0]) return alert('Lengkapi data');
+ const r=new FileReader();
+ r.onload=()=>{
+  push(ref(db,'topups'),{
+   userId:currentUser,
+   amount:Number(amount.value),
+   proofImage:r.result,
+   status:'pending',
+   time:Date.now()
+  });
+  alert('Top up dikirim, menunggu konfirmasi');
+ }
+ r.readAsDataURL(proof.files[0]);
+}
+</script></head><body onload="showPage('home')">
 <header>
-  <b>RHF Game Store</b><br><small>Saldo: <span id="saldo">Rp 0</span></small>
-</header><!-- HOME --><div id="home" class="page">
-  <div id="grid"></div>
-</div><!-- PROMO --><div id="promo" class="page">
-  <div class="card">Belum ada promo</div>
-</div><!-- CS --><div id="cs" class="page">
-  <div class="card"><b>Customer Service</b><br><small class="small">Untuk pembayaran QRIS, silakan chat CS</small></div>
-  <div id="chat"></div>
-  <div class="card">
-    <input id="cs_text" placeholder="Tulis pesan...">
-    <button onclick="sendCS()">Kirim</button>
-  </div>
-</div><!-- AKUN --><div id="akun" class="page">
-  <div class="card">
-    <b>Top Up Saldo</b>
-    <div class="paybox">
-      <div class="payopt">
-        <b>Opsi 1: Transfer DANA / OVO / GOPAY</b>
-        <p class="small">Kirim ke nomor:</p>
-        <b>85124869641</b>
-        <input id="tu_amount" type="number" placeholder="Jumlah top up">
-        <input id="tu_file" type="file" accept="image/*">
-        <button onclick="submitTopup()">Kirim Bukti</button>
-      </div>
-      <div class="payopt">
-        <b>Opsi 2: QRIS</b>
-        <p class="small">Pembayaran QRIS dilakukan melalui CS</p>
-        <button onclick="showPage('cs')">Ke CS Pembayaran</button>
-      </div>
-    </div>
-  </div>
-</div><!-- NAV --><div class="nav">
-  <div id="navHome" class="active" onclick="showPage('home')">Home</div>
-  <div id="navPromo" onclick="showPage('promo')">Promo</div>
-  <div id="navCS" onclick="showPage('cs')">CS</div>
-  <div id="navAkun" onclick="showPage('akun')">Akun</div>
+ <div><b>RHF Game Store</b><br><small>Game • Item • APK • Akun</small></div>
+ <div class="search">Cari game atau item</div>
+</header><div id="home" class="page active">
+ <div class="category">
+  <button id="cat-all" class="active" onclick="filterCat('all')">Semua</button>
+  <button id="cat-FIS IT" onclick="filterCat('FIS IT')">FIS IT</button>
+ </div>
+ <div id="grid"></div>
+</div><div id="promo" class="page"><div class="card">Promo akan segera hadir</div></div><div id="cs" class="page">
+ <div class="card">
+  <div id="csChat" class="chat"></div>
+  <input id="csText" placeholder="Tulis pesan">
+  <button class="primary" onclick="sendCS()">Kirim</button>
+ </div>
+</div><div id="akun" class="page">
+ <div class="card">
+  <b id="orderInfo">Top Up Saldo</b>
+  <input id="amount" placeholder="Jumlah top up">
+  <input type="file" id="proof" accept="image/*">
+  <button class="primary" onclick="sendTopup()">Kirim Bukti</button>
+  <small>Pembayaran: DANA / OVO / GOPAY<br>85124869641</small>
+ </div>
+</div><div class="bottom">
+ <div id="btn-home" class="active" onclick="showPage('home')">Home</div>
+ <div id="btn-promo" onclick="showPage('promo')">Promo</div>
+ <div id="btn-cs" onclick="showPage('cs')">CS</div>
+ <div id="btn-akun" onclick="showPage('akun')">Akun</div>
 </div>
-</div></body>
+</body>
 </html>
