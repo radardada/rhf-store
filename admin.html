@@ -1,100 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Admin Control</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RHF Admin Control – CS</title>
 <style>
-body{background:#111;color:#fff;font-family:Arial;padding:20px}
-input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
-button{background:#f5c76a;font-weight:bold}
-.card{background:#1c1c1c;padding:10px;border-radius:10px;margin-top:10px}
-img{width:100%;border-radius:8px}
+body{margin:0;background:#0b0f14;color:#e5e7eb;font-family:Arial}
+.panel{max-width:900px;margin:30px auto}
+.card{background:#121826;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:12px}
+input,textarea,button{width:100%;padding:10px;border-radius:8px;border:none;margin:6px 0}
+button{background:#3b82f6;color:#fff}
+.ticket{border-bottom:1px dashed #1f2937;padding:8px 0}
+small{color:#9ca3af}
 </style>
 </head>
-<body>
-
-<h2>ADMIN CONTROL (OTAK)</h2>
-
-<input id="email" placeholder="Email Admin">
-<input id="pass" type="password" placeholder="Password">
-<button onclick="login()">LOGIN</button>
-
-<hr>
-
-<h3>➕ Tambah Game</h3>
-<input id="coldigan" placeholder="Coldigan Game">
-<input id="name" placeholder="Nama Game">
-<input type="file" id="logo">
-<button onclick="addGame()">Tambah Game</button>
-
-<h3>📋 List Game</h3>
-<div id="list"></div>
-
-<script type="module">
+<body><div class="panel">
+  <h2>RHF ADMIN CONTROL – CUSTOMER SERVICE</h2>  <div class="card">
+    <h4>Tiket Masuk (Realtime)</h4>
+    <div id="tickets"></div>
+  </div>
+</div><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
   databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "rhf-gamestore",
-  storageBucket: "rhf-gamestore.firebasestorage.app"
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getDatabase(app);
-const storage = getStorage(app);
-const gameRef = ref(db,'games');
 
-window.login = ()=> {
-  signInWithEmailAndPassword(auth,email.value,pass.value)
-    .then(()=>alert('Login sukses'))
-    .catch(()=>alert('Login gagal'));
-}
-
-window.addGame = async ()=>{
-  if(!coldigan.value || !name.value || !logo.files[0]){
-    alert('Lengkapi Coldigan, Nama, dan Logo');
-    return;
-  }
-  const file = logo.files[0];
-  const imgRef = sRef(storage,'logos/'+Date.now()+'_'+file.name);
-  await uploadBytes(imgRef,file);
-  const url = await getDownloadURL(imgRef);
-
-  push(gameRef,{
-    coldigan: coldigan.value,
-    name: name.value,
-    logo: url,
-    active: true,
-    order: Date.now()
-  });
-  coldigan.value=name.value=''; logo.value='';
-}
-
-onValue(gameRef,(snap)=>{
-  list.innerHTML='';
+// LOAD TICKET CS REALTIME
+const tickets=document.getElementById('tickets');
+onValue(ref(db,'support'), snap=>{
+  tickets.innerHTML='';
   snap.forEach(c=>{
-    const g=c.val();
-    list.innerHTML+=`
-      <div class="card">
-        <img src="${g.logo}">
-        <b>${g.name}</b><br>
-        <small>${g.coldigan}</small><br>
-        <button onclick="toggle('${c.key}',${g.active})">
-          ${g.active?'Matikan':'Hidupkan'}
-        </button>
-      </div>`;
-  });
-});
+    const t=c.val();
+    const d=document.createElement('div');
+    d.className='ticket';
+    d.innerHTML=`
+      <b>${t.judul}</b><br>
+      <small>User: ${t.user} | Status: ${t.status}</small>
+      <p>${t.pesan}</p>
+      <textarea id="r_${c.key}" placeholder="Balasan admin"></textarea><button onclick="reply('${c.key}')">Balas & Tandai Selesai</button>`;
+tickets.appendChild(d);
 
-window.toggle=(id,state)=>{
-  update(ref(db,'games/'+id),{active:!state});
-}
-</script>
+}); });
+
+window.reply = (id)=>{ const msg=document.getElementById('r_'+id).value; update(ref(db,'support/'+id),{ reply: msg, status: 'SELESAI' }); } </script>
+
 </body>
 </html>
