@@ -6,10 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RHF Admin Control</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"><script type="module">
+/* ================== FIREBASE IMPORT ================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, get, update, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-/* ===== FIREBASE ===== */
+/* ================== FIREBASE CONFIG ================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -21,113 +22,173 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
 
-/* ===== LOGIN ADMIN (PASSWORD ONLY) ===== */
-const ADMIN_PASS = "123456";
-window.adminLogin = ()=>{
-  if(adminPass.value!==ADMIN_PASS) return alert('Password salah');
-  localStorage.setItem('admin','ok');
+/* ================== ADMIN LOGIN ================== */
+const ADMIN_PASSWORD = "123456"; // ganti setelah upload
+
+window.loginAdmin = () => {
+  const pass = document.getElementById('adminPass').value;
+  if(pass !== ADMIN_PASSWORD){
+    alert('Password admin salah');
+    return;
+  }
+  localStorage.setItem('admin_login','ok');
   location.reload();
+};
+
+if(localStorage.getItem('admin_login') === 'ok'){
+  document.getElementById('loginBox').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
 }
 
-if(localStorage.getItem('admin')==='ok'){
-  loginBox.style.display='none';
-  panel.style.display='block';
-}
+/* ================== PRODUK ================== */
+window.addProduct = async () => {
+  const name  = pName.value.trim();
+  const price = Number(pPrice.value);
+  const game  = pGame.value.trim();
+  const cat   = pCat.value.trim();
+  const img   = pImg.value.trim();
 
-/* ===== PRODUK ===== */
-window.addProduct=()=>{
-  const data={
-    name:pName.value,
-    price:pPrice.value,
-    game:pGame.value,
-    category:pCat.value,
-    image:pImg.value,
-    active:true
-  };
-  push(ref(db,'products'),data);
-  alert('Produk ditambahkan');
-}
+  if(!name || !price || !img){
+    alert('Data produk belum lengkap');
+    return;
+  }
 
-onValue(ref(db,'products'),snap=>{
-  productList.innerHTML='';
-  snap.forEach(c=>{
-    const p=c.val();
-    productList.innerHTML+=`
-    <div class="item">
-      <b>${p.name}</b><br>
-      Rp ${p.price}<br>
-      <button onclick="toggle('${c.key}',${p.active})">${p.active?'NONAKTIF':'AKTIF'}</button>
-      <button onclick="remove(ref(db,'products/${c.key}'))">HAPUS</button>
-    </div>`;
+  await push(ref(db,'products'),{
+    name:name,
+    price:price,
+    game:game,
+    category:cat,
+    image:img,
+    active:true,
+    created:Date.now()
+  });
+
+  alert('Produk berhasil ditambahkan');
+};
+
+onValue(ref(db,'products'), snap => {
+  productList.innerHTML = '';
+  snap.forEach(child => {
+    const p = child.val();
+    const id = child.key;
+
+    productList.innerHTML += `
+      <div class="item">
+        <b>${p.name}</b><br>
+        Harga: Rp ${p.price}<br>
+        Status: ${p.active ? 'AKTIF' : 'NONAKTIF'}<br>
+        <button onclick="toggleProduct('${id}', ${p.active})">${p.active ? 'NONAKTIFKAN' : 'AKTIFKAN'}</button>
+      </div>
+    `;
   });
 });
 
-window.toggle=(id,s)=>update(ref(db,'products/'+id),{active:!s});
+window.toggleProduct = async (id, state) => {
+  await update(ref(db,'products/'+id),{ active: !state });
+};
 
-/* ===== TOP UP ===== */
-onValue(ref(db,'topup'),snap=>{
-  topupList.innerHTML='';
-  snap.forEach(c=>{
-    const t=c.val();
-    if(t.status!=='pending') return;
-    topupList.innerHTML+=`
-    <div class="item">
-      <b>${t.user}</b> - Rp ${t.jumlah}<br>
-      <a href="${t.bukti}" target="_blank">Bukti</a><br>
-      <button onclick="confirmTopup('${c.key}','${t.user}',${t.jumlah})">KONFIRM</button>
-      <button onclick="rejectTopup('${c.key}')">TOLAK</button>
-    </div>`;
+/* ================== TOP UP ================== */
+onValue(ref(db,'topup'), snap => {
+  topupList.innerHTML = '';
+  snap.forEach(child => {
+    const t = child.val();
+    const id = child.key;
+
+    if(t.status !== 'pending') return;
+
+    topupList.innerHTML += `
+      <div class="item">
+        <b>User:</b> ${t.user}<br>
+        <b>Jumlah:</b> Rp ${t.amount}<br>
+        <a href="${t.bukti}" target="_blank">Lihat Bukti</a><br>
+        <button onclick="confirmTopup('${id}','${t.user}',${t.amount})">KONFIRM</button>
+        <button onclick="rejectTopup('${id}')">TOLAK</button>
+      </div>
+    `;
   });
 });
 
-window.confirmTopup=(id,user,amt)=>{
-  update(ref(db,'users/'+user+'/saldo'),amt);
-  update(ref(db,'topup/'+id),{status:'ok'});
-}
+window.confirmTopup = async (id, user, amount) => {
+  const saldoRef = ref(db,'users/'+user+'/saldo');
+  const snap = await get(saldoRef);
+  const saldoNow = snap.exists() ? snap.val() : 0;
 
-window.rejectTopup=id=>update(ref(db,'topup/'+id),{status:'reject'});
+  await update(ref(db,'users/'+user),{
+    saldo: saldoNow + Number(amount)
+  });
 
-/* ===== CS ===== */
-onValue(ref(db,'cs'),snap=>{
-  csList.innerHTML='';
-  snap.forEach(c=>{
-    const m=c.val();
-    csList.innerHTML+=`<div class="item"><b>${m.user}</b><br>${m.msg}</div>`;
+  await update(ref(db,'topup/'+id),{ status:'confirmed' });
+};
+
+window.rejectTopup = async (id) => {
+  await update(ref(db,'topup/'+id),{ status:'rejected' });
+};
+
+/* ================== CUSTOMER SERVICE ================== */
+onValue(ref(db,'cs'), snap => {
+  csList.innerHTML = '';
+  snap.forEach(child => {
+    const m = child.val();
+    const id = child.key;
+
+    csList.innerHTML += `
+      <div class="item">
+        <b>${m.user}</b><br>
+        ${m.msg}<br><br>
+        <input id="reply_${id}" placeholder="Balasan admin">
+        <button onclick="replyCS('${id}')">Balas</button>
+      </div>
+    `;
   });
 });
+
+window.replyCS = async (id) => {
+  const text = document.getElementById('reply_'+id).value.trim();
+  if(!text) return;
+
+  await push(ref(db,'cs_reply/'+id),{
+    from:'admin',
+    msg:text,
+    time:Date.now()
+  });
+
+  alert('Balasan terkirim');
+};
 </script><style>
 *{box-sizing:border-box;font-family:Roboto}
 body{margin:0;background:#0f1115;color:#fff}
 header{padding:14px;background:#151821;font-weight:700}
 section{padding:14px}
 input,button{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px}
-button{background:#4cafef;color:#000;font-weight:700}
-.item{background:#1b1f2a;padding:10px;border-radius:10px;margin-bottom:8px}
+button{background:#4cafef;color:#000;font-weight:700;cursor:pointer}
+.item{background:#1b1f2a;padding:12px;border-radius:10px;margin-bottom:10px}
 </style></head>
-<body><div id="loginBox" class="section">
-  <h2>Admin Login</h2>
-  <input id="adminPass" type="password" placeholder="Password Admin">
-  <button onclick="adminLogin()">Masuk</button>
+<body><div id="loginBox">
+  <section>
+    <h2>Admin Login</h2>
+    <input id="adminPass" type="password" placeholder="Password Admin">
+    <button onclick="loginAdmin()">Masuk</button>
+  </section>
 </div><div id="panel" style="display:none">
 <header>RHF ADMIN PANEL</header><section>
-<h3>Tambah Produk</h3>
-<input id="pName" placeholder="Nama">
-<input id="pPrice" placeholder="Harga">
-<input id="pGame" placeholder="Game">
-<input id="pCat" placeholder="Kategori">
-<input id="pImg" placeholder="Link Gambar">
-<button onclick="addProduct()">Tambah</button>
+  <h3>Tambah Produk</h3>
+  <input id="pName" placeholder="Nama Produk">
+  <input id="pPrice" placeholder="Harga">
+  <input id="pGame" placeholder="Game">
+  <input id="pCat" placeholder="Kategori">
+  <input id="pImg" placeholder="Link Gambar">
+  <button onclick="addProduct()">Tambah Produk</button>
 </section><section>
-<h3>Produk</h3>
-<div id="productList"></div>
+  <h3>Daftar Produk</h3>
+  <div id="productList"></div>
 </section><section>
-<h3>Top Up Pending</h3>
-<div id="topupList"></div>
+  <h3>Top Up Pending</h3>
+  <div id="topupList"></div>
 </section><section>
-<h3>Customer Service</h3>
-<div id="csList"></div>
+  <h3>Customer Service</h3>
+  <div id="csList"></div>
 </section>
 </div></body>
 </html>
