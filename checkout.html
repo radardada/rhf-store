@@ -1,1 +1,73 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checkout | RHF GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body><header class="topbar">
+  <h1>Checkout</h1>
+</header><main class="container">  <!-- RINGKASAN PESANAN -->  <section class="card">
+    <h2>Ringkasan Pesanan</h2>
+    <div id="orderSummary">
+      <p><strong>Game:</strong> <span id="sumGame">-</span></p>
+      <p><strong>Produk:</strong> <span id="sumProduct">-</span></p>
+      <p><strong>Target:</strong> <span id="sumTarget">-</span></p>
+      <p class="price">Total: Rp <span id="sumPrice">0</span></p>
+    </div>
+  </section>  <!-- METODE PEMBAYARAN -->  <section class="card">
+    <h2>Metode Pembayaran</h2>
+    <select id="paymentMethod">
+      <option value="">Pilih metode</option>
+      <option value="DANA">DANA</option>
+      <option value="OVO">OVO</option>
+      <option value="GOPAY">GoPay</option>
+      <option value="SHOPEEPAY">ShopeePay</option>
+      <option value="QRIS">QRIS</option>
+      <option value="TRANSFER">Transfer Bank</option>
+    </select>
+  </section>  <!-- TOMBOL BAYAR --><button id="payBtn" class="btn-primary">Bayar Sekarang</button>
 
+</main><script type="module">
+  import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { app } from "./firebase.js";
+
+  const db = getDatabase(app);
+
+  // AMBIL DATA DARI LOCAL STORAGE
+  const order = JSON.parse(localStorage.getItem("RHF_ORDER"));
+
+  if (!order) {
+    alert("Data pesanan tidak ditemukan");
+    window.location.href = "index.html";
+  }
+
+  // TAMPILKAN RINGKASAN
+  document.getElementById("sumGame").innerText = order.game;
+  document.getElementById("sumProduct").innerText = order.product;
+  document.getElementById("sumTarget").innerText = order.target;
+  document.getElementById("sumPrice").innerText = order.price.toLocaleString();
+
+  // PROSES BAYAR
+  document.getElementById("payBtn").onclick = () => {
+    const payment = document.getElementById("paymentMethod").value;
+
+    if (!payment) {
+      alert("Pilih metode pembayaran");
+      return;
+    }
+
+    push(ref(db, "orders"), {
+      ...order,
+      paymentMethod: payment,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    localStorage.removeItem("RHF_ORDER");
+
+    alert("Pesanan berhasil dibuat!\nSilakan lakukan pembayaran.");
+    window.location.href = "index.html";
+  };
+</script></body>
+</html>
