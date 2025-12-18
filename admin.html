@@ -1,243 +1,105 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel - RHF GAMES</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="style.css">
-  <script src="utils.js"></script>
-
+  <meta charset="UTF-8" />
+  <title>RHF GAMES Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      background: #0e0e11;
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
-    .admin-container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
-    }
-    h1 {
-      color: #00ffd5;
-    }
-    .card {
-      background: #16161d;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    input, select, button {
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      margin: 5px 0;
-    }
-    button {
-      background: #00ffd5;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #333;
-    }
-    .danger {
-      background: #ff3b3b;
-      color: white;
-    }
+    body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
+    header{padding:16px;background:#020617;font-size:20px;font-weight:bold}
+    .wrap{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 56px)}
+    aside{border-right:1px solid #1e293b;padding:16px;overflow:auto}
+    main{padding:16px;overflow:auto}
+    input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #334155;background:#020617;color:#e5e7eb}
+    button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+    button.danger{background:#ef4444;color:#fff}
+    .card{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:12px;margin-bottom:12px}
+    .list-item{display:flex;gap:8px;align-items:center}
+    .list-item img{width:40px;height:40px;border-radius:8px}
+    .list-item b{flex:1}
   </style>
 </head>
-
-<body onload="initAdmin()">
-
-<div class="admin-container">
-
-  <h1>🎛️ ADMIN PANEL — RHF GAMES</h1>
-
-  <!-- ================= LOGIN ================= -->
-  <div class="card" id="loginBox">
-    <h3>🔐 Login Admin</h3>
-    <input type="password" id="adminPass" placeholder="Password admin">
-    <button onclick="loginAdmin()">Login</button>
-  </div>
-
-  <!-- ================= DASHBOARD ================= -->
-  <div id="adminPanel" style="display:none;">
-
-    <!-- MARKUP -->
-    <div class="card">
-      <h3>💰 Pengaturan Markup Harga</h3>
-      <p>Harga Asli + Markup = Harga Jual</p>
-      <input type="number" id="markupInput" placeholder="Contoh: 1000">
-      <button onclick="saveMarkup()">Simpan Markup</button>
-    </div>
-
-    <!-- PRODUK -->
-    <div class="card">
-      <h3>🎮 Manajemen Produk</h3>
-
-      <input type="text" id="productName" placeholder="Nama Produk">
-      <input type="number" id="basePrice" placeholder="Harga Asli">
-      <select id="productCategory">
-        <option value="GAME">Game</option>
-        <option value="E-WALLET">E-Wallet</option>
-        <option value="VOUCHER">Voucher</option>
-        <option value="PULSA">Pulsa & Data</option>
-      </select>
-
-      <button onclick="addProduct()">Tambah Produk</button>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Produk</th>
-            <th>Harga Asli</th>
-            <th>Harga Jual</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="productTable"></tbody>
-      </table>
-    </div>
-
-    <!-- ORDER -->
-    <div class="card">
-      <h3>📦 Pesanan Masuk</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Invoice</th>
-            <th>Produk</th>
-            <th>User Input</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody id="orderTable"></tbody>
-      </table>
-    </div>
-
-    <button class="danger" onclick="logoutAdmin()">Logout</button>
-
-  </div>
-
-</div>
-
-<script>
-/* ================= LOGIN ================= */
-function initAdmin() {
-  if (isAdmin()) {
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("adminPanel").style.display = "block";
-    loadMarkup();
-    loadProducts();
-    loadOrders();
-  }
+<body>
+<header>RHF GAMES – ADMIN PANEL</header>
+<div class="wrap">
+  <aside>
+    <h3>Tambah / Edit Game</h3>
+    <input id="gid" placeholder="ID game (mobile-legends)" />
+    <input id="gname" placeholder="Nama Game" />
+    <input id="glogo" placeholder="Logo URL (https://)" />
+    <select id="gcategory">
+      <option>MOBA</option><option>RPG</option><option>CASUAL</option><option>PC</option><option>APK</option><option>EWALLET</option><option>PULSA</option><option>LAINNYA</option>
+    </select>
+    <select id="ginput">
+      <option value="id_server">ID + Server</option>
+      <option value="id">ID Saja</option>
+      <option value="username">Username</option>
+      <option value="phone">Nomor HP</option>
+      <option value="email">Email</option>
+    </select>
+    <button onclick="saveGame()">Simpan Game</button>
+    <hr>
+    <h3>Tambah Produk</h3>
+    <input id="pname" placeholder="Nama Paket" />
+    <input id="pprice" type="number" placeholder="Harga Asli" />
+    <button onclick="addProduct()">Tambah Paket</button>
+    <hr>
+    <h3>Markup Harga</h3>
+    <input id="markup" type="number" placeholder="Markup (contoh 1000)" />
+    <button onclick="saveMarkup()">Simpan Markup</button>
+  </aside>
+  <main>
+    <h2>Daftar Game</h2>
+    <div id="gameList"></div>
+  </main>
+</div><script>
+const PASS = 'admin123';
+if(!localStorage.getItem('RHF_ADMIN')){
+  const p = prompt('Password Admin');
+  if(p!==PASS){alert('Akses ditolak');location.href='index.html'}
+  localStorage.setItem('RHF_ADMIN','1');
 }
 
-function loginAdmin() {
-  const pass = document.getElementById("adminPass").value;
-  if (pass === "admin123") {
-    localStorage.setItem("rhf_admin_login", "true");
-    location.reload();
-  } else {
-    alert("Password salah");
-  }
+let data = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
+let selected = null;
+
+function saveGame(){
+  const g = {
+    id:gid.value.trim(),
+    name:gname.value.trim(),
+    logo:glogo.value.trim(),
+    category:gcategory.value,
+    inputSchema:ginput.value,
+    products: []
+  };
+  const i = data.findIndex(x=>x.id===g.id);
+  if(i>-1){data[i]={...data[i],...g}}
+  else data.push(g);
+  persist();render();
 }
 
-function logoutAdmin() {
-  localStorage.removeItem("rhf_admin_login");
-  location.reload();
+function addProduct(){
+  if(!selected)return alert('Pilih game dulu');
+  selected.products.push({name:pname.value,basePrice:+pprice.value});
+  persist();render();
 }
 
-/* ================= MARKUP ================= */
-function loadMarkup() {
-  const cfg = getAdminConfig();
-  document.getElementById("markupInput").value = cfg.markup;
+function saveMarkup(){
+  localStorage.setItem('RHF_MARKUP',markup.value);
+  alert('Markup disimpan');
 }
 
-function saveMarkup() {
-  const value = document.getElementById("markupInput").value;
-  setAdminConfig({ markup: parseInt(value) });
-  alert("Markup berhasil disimpan");
-  loadProducts();
+function persist(){localStorage.setItem('RHF_GAMES',JSON.stringify(data))}
+
+function render(){
+  gameList.innerHTML='';
+  data.forEach(g=>{
+    const d=document.createElement('div');d.className='card list-item';
+    d.innerHTML=`<img src="${g.logo}"><b>${g.name}</b><button class='danger'>Hapus</button>`;
+    d.onclick=()=>{selected=g;gid.value=g.id;gname.value=g.name;glogo.value=g.logo};
+    d.querySelector('button').onclick=(e)=>{e.stopPropagation();data=data.filter(x=>x.id!==g.id);persist();render()};
+    gameList.appendChild(d);
+  })
 }
-
-/* ================= PRODUK ================= */
-function getProducts() {
-  return JSON.parse(localStorage.getItem("rhf_products")) || [];
-}
-
-function saveProducts(data) {
-  localStorage.setItem("rhf_products", JSON.stringify(data));
-}
-
-function addProduct() {
-  const name = productName.value;
-  const base = basePrice.value;
-  const cat = productCategory.value;
-
-  if (!name || !base) return alert("Lengkapi data");
-
-  const products = getProducts();
-  products.push({
-    id: Date.now(),
-    name,
-    basePrice: base,
-    category: cat,
-  });
-
-  saveProducts(products);
-  loadProducts();
-}
-
-function loadProducts() {
-  const tbody = document.getElementById("productTable");
-  tbody.innerHTML = "";
-
-  getProducts().forEach((p, i) => {
-    const sell = getSellPrice(p.basePrice);
-    tbody.innerHTML += `
-      <tr>
-        <td>${p.name}</td>
-        <td>${formatRupiah(p.basePrice)}</td>
-        <td>${formatRupiah(sell)}</td>
-        <td>
-          <button class="danger" onclick="deleteProduct(${i})">Hapus</button>
-        </td>
-      </tr>`;
-  });
-}
-
-function deleteProduct(index) {
-  const products = getProducts();
-  products.splice(index, 1);
-  saveProducts(products);
-  loadProducts();
-}
-
-/* ================= ORDER ================= */
-function loadOrders() {
-  const orders = JSON.parse(localStorage.getItem("rhf_orders")) || [];
-  const tbody = document.getElementById("orderTable");
-  tbody.innerHTML = "";
-
-  orders.forEach(o => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${o.invoice}</td>
-        <td>${o.product}</td>
-        <td>${o.userInput}</td>
-        <td>${formatRupiah(o.total)}</td>
-      </tr>`;
-  });
-}
-</script>
-
-</body>
+render();
+</script></body>
 </html>
