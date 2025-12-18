@@ -1,140 +1,44 @@
 <!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <title>RHF GAMES – Top Up Game & Digital</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RHF Game Store</title>  <!-- Font mirip Tokogame -->  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">  <style>
-    :root{
-      --primary:#00a2ff;
-      --dark:#0f172a;
-      --muted:#64748b;
-      --bg:#f8fafc;
-      --card:#ffffff;
-      --border:#e5e7eb;
-    }
-    *{box-sizing:border-box;font-family:'Inter',sans-serif}
-    body{margin:0;background:var(--bg);color:var(--dark)}
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body><header class="topbar">
+  <h1>RHF GAMES</h1>
+  <p>Top Up Game, E-Wallet & Produk Digital</p>
+</header><main class="container">  <!-- CATEGORY LIST -->  <section id="categoryList" class="grid"></section></main><script type="module">
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { app } from "./firebase.js";
 
-    /* HEADER */
-    header{
-      background:#fff;
-      border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:50
-    }
-    .nav{
-      max-width:1200px;margin:auto;
-      display:flex;align-items:center;gap:24px;
-      padding:14px 20px
-    }
-    .logo{
-      font-size:22px;font-weight:800;color:var(--primary)
-    }
-    .search{
-      flex:1
-    }
-    .search input{
-      width:100%;padding:12px 14px;
-      border-radius:8px;border:1px solid var(--border)
-    }
-    .nav-btn{
-      font-weight:600;color:#fff;
-      background:var(--primary);
-      padding:10px 16px;border-radius:8px
-    }
-
-    /* BANNER */
-    .banner{
-      max-width:1200px;margin:20px auto;padding:0 20px
-    }
-    .banner-box{
-      background:linear-gradient(135deg,#0ea5e9,#2563eb);
-      color:#fff;border-radius:16px;padding:30px
-    }
-    .banner-box h1{margin:0 0 10px;font-size:28px}
-
-    /* GRID */
-    .container{max-width:1200px;margin:auto;padding:20px}
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-      gap:18px
-    }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:16px;
-      transition:.2s
-    }
-    .card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,.06)}
-    .game-logo{
-      height:48px;width:48px;border-radius:10px;
-      background:#e2e8f0;margin-bottom:10px
-    }
-    .title{font-weight:700;margin-bottom:6px}
-    .desc{font-size:13px;color:var(--muted);margin-bottom:10px}
-    .price{font-size:18px;font-weight:800;color:var(--primary)}
-    .buy{
-      margin-top:12px;width:100%;
-      padding:10px;border-radius:10px;
-      background:var(--primary);color:#fff;
-      border:none;font-weight:700;cursor:pointer
-    }
-
-    footer{
-      border-top:1px solid var(--border);
-      background:#fff;margin-top:40px
-    }
-    footer div{max-width:1200px;margin:auto;padding:20px;color:var(--muted);font-size:13px}
-  </style></head>
-<body><header>
-  <div class="nav">
-    <div class="logo">RHF GAME</div>
-    <div class="search"><input placeholder="Cari game atau diamond..."></div>
-    <div class="nav-btn">Masuk</div>
-  </div>
-</header><section class="banner">
-  <div class="banner-box">
-    <h1>Top Up Game Cepat & Aman</h1>
-    <p>Harga transparan • Proses instan • Support 24 Jam</p>
-  </div>
-</section><main class="container">
-  <div class="grid" id="productGrid"></div>
-</main><footer>
-  <div>© 2025 RHF Game Store • UI bergaya marketplace top up</div>
-</footer><!-- Firebase --><script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-    authDomain: "rhf-gamestore.firebaseapp.com",
-    databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "rhf-gamestore",
-    storageBucket: "rhf-gamestore.firebasestorage.app",
-    messagingSenderId: "52065906934",
-    appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-  };
-
-  const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const categoryList = document.getElementById("categoryList");
 
-  const grid = document.getElementById('productGrid');
+  // =========================
+  // LOAD CATEGORY
+  // =========================
+  get(ref(db, "categories")).then(snapshot => {
+    if (!snapshot.exists()) return;
 
-  onValue(ref(db,'products'), snap => {
-    grid.innerHTML = '';
-    snap.forEach(child => {
-      const p = child.val();
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="game-logo"></div>
-        <div class="title">${p.name}</div>
-        <div class="desc">${p.desc || 'Top up resmi & cepat'}</div>
-        <div class="price">Rp ${Number(p.price).toLocaleString('id-ID')}</div>
-        <button class="buy">Beli Sekarang</button>
+    const categories = snapshot.val();
+
+    Object.keys(categories).forEach(key => {
+      const cat = categories[key];
+      if (!cat.active) return;
+
+      const div = document.createElement("div");
+      div.className = "category-card";
+      div.innerHTML = `
+        <h2>${cat.name}</h2>
       `;
-      grid.appendChild(card);
-    })
-  })
+
+      div.onclick = () => {
+        location.href = `game.html?category=${key}`;
+      };
+
+      categoryList.appendChild(div);
+    });
+  });
 </script></body>
 </html>
