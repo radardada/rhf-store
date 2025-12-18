@@ -1,1 +1,133 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Detail Produk | RHF GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body><header class="topbar">
+  <h1 id="gameTitle">Game</h1>
+</header><main class="container">  <!-- INPUT DINAMIS SESUAI GAME -->  <section class="card">
+    <h2>Masukkan Data Akun</h2>
+    <div id="dynamicInput"></div>
+  </section>  <!-- PILIH PRODUK -->  <section class="card">
+    <h2>Pilih Produk</h2>
+    <div id="productList" class="grid"></div>
+  </section><button id="checkoutBtn" class="btn-primary">Lanjut ke Checkout</button>
 
+</main><script type="module">
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { app } from "./firebase.js";
+
+  const db = getDatabase(app);
+
+  // =========================
+  // GET PARAM GAME
+  // =========================
+  const params = new URLSearchParams(window.location.search);
+  const gameKey = params.get("game");
+
+  if (!gameKey) {
+    alert("Game tidak ditemukan");
+    location.href = "index.html";
+  }
+
+  // =========================
+  // LOAD GAME DATA
+  // =========================
+  const gameRef = ref(db, `games/${gameKey}`);
+  const productRef = ref(db, `products/${gameKey}`);
+
+  let selectedProduct = null;
+  let inputValue = "";
+
+  get(gameRef).then(snapshot => {
+    if (!snapshot.exists()) return;
+
+    const game = snapshot.val();
+    document.getElementById("gameTitle").innerText = game.name;
+
+    renderInput(game.inputType);
+  });
+
+  get(productRef).then(snapshot => {
+    if (!snapshot.exists()) return;
+
+    const products = snapshot.val();
+    const list = document.getElementById("productList");
+
+    Object.keys(products).forEach(key => {
+      const p = products[key];
+      if (!p.active) return;
+
+      const div = document.createElement("div");
+      div.className = "product-card";
+      div.innerHTML = `
+        <h3>${p.name}</h3>
+        <p class="price">Rp ${p.sellPrice.toLocaleString()}</p>
+      `;
+
+      div.onclick = () => {
+        document.querySelectorAll('.product-card').forEach(el => el.classList.remove('active'));
+        div.classList.add('active');
+        selectedProduct = p;
+      };
+
+      list.appendChild(div);
+    });
+  });
+
+  // =========================
+  // RENDER INPUT SESUAI GAME
+  // =========================
+  function renderInput(type) {
+    const box = document.getElementById("dynamicInput");
+    box.innerHTML = "";
+
+    if (type === "uid_server") {
+      box.innerHTML = `
+        <input id="uid" placeholder="User ID" />
+        <input id="server" placeholder="Server" />
+      `;
+    } else if (type === "uid") {
+      box.innerHTML = `<input id="uid" placeholder="User ID" />`;
+    } else if (type === "email") {
+      box.innerHTML = `<input id="email" placeholder="Email Akun" />`;
+    } else if (type === "username") {
+      box.innerHTML = `<input id="username" placeholder="Username" />`;
+    } else if (type === "phone") {
+      box.innerHTML = `<input id="phone" placeholder="Nomor HP" />`;
+    } else {
+      box.innerHTML = `<input id="custom" placeholder="Masukkan data" />`;
+    }
+  }
+
+  // =========================
+  // CHECKOUT
+  // =========================
+  document.getElementById("checkoutBtn").onclick = () => {
+    if (!selectedProduct) {
+      alert("Pilih produk dahulu");
+      return;
+    }
+
+    const inputs = document.querySelectorAll('#dynamicInput input');
+    inputValue = Array.from(inputs).map(i => i.value).join(" ");
+
+    if (!inputValue.trim()) {
+      alert("Masukkan data akun");
+      return;
+    }
+
+    localStorage.setItem("RHF_ORDER", JSON.stringify({
+      game: document.getElementById("gameTitle").innerText,
+      product: selectedProduct.name,
+      target: inputValue,
+      price: selectedProduct.sellPrice
+    }));
+
+    location.href = "checkout.html";
+  };
+
+</script></body>
+</html>
