@@ -1,44 +1,125 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>RHF GAMES – Top Up Game & Digital</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>RHF GAMES - Top Up Game & Produk Digital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="utils.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b1220, #05080f);
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      padding: 20px;
+      background: linear-gradient(90deg, #0f172a, #020617);
+      border-bottom: 1px solid #1e293b;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 15px;
+    }
+
+    .product-card {
+      background: #0f172a;
+      border-radius: 14px;
+      padding: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid #1e293b;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: #38bdf8;
+    }
+
+    .product-card h4 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .product-card p {
+      margin: 0;
+      font-weight: bold;
+      color: #22d3ee;
+      font-size: 14px;
+    }
+
+    .empty {
+      color: #64748b;
+      text-align: center;
+      margin-top: 40px;
+    }
+  </style>
 </head>
-<body><header class="topbar">
+
+<body>
+
+<header>
   <h1>RHF GAMES</h1>
   <p>Top Up Game, E-Wallet & Produk Digital</p>
-</header><main class="container">  <!-- CATEGORY LIST -->  <section id="categoryList" class="grid"></section></main><script type="module">
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-  import { app } from "./firebase.js";
+</header>
 
-  const db = getDatabase(app);
-  const categoryList = document.getElementById("categoryList");
+<div class="container">
+  <div id="product-list" class="product-grid"></div>
+</div>
 
-  // =========================
-  // LOAD CATEGORY
-  // =========================
-  get(ref(db, "categories")).then(snapshot => {
-    if (!snapshot.exists()) return;
+<script>
+document.addEventListener("DOMContentLoaded", loadHomeProducts);
 
-    const categories = snapshot.val();
+function loadHomeProducts() {
+  const container = document.getElementById("product-list");
+  const products = JSON.parse(localStorage.getItem("rhf_products")) || [];
 
-    Object.keys(categories).forEach(key => {
-      const cat = categories[key];
-      if (!cat.active) return;
+  if (products.length === 0) {
+    container.innerHTML = "<div class='empty'>Belum ada produk tersedia</div>";
+    return;
+  }
 
-      const div = document.createElement("div");
-      div.className = "category-card";
-      div.innerHTML = `
-        <h2>${cat.name}</h2>
-      `;
+  container.innerHTML = "";
 
-      div.onclick = () => {
-        location.href = `game.html?category=${key}`;
-      };
+  products.forEach(p => {
+    const price = RHF_UTILS.getSellPrice(p.basePrice);
 
-      categoryList.appendChild(div);
-    });
+    container.innerHTML += `
+      <div class="product-card" onclick="openDetail(${p.id})">
+        <h4>${p.name}</h4>
+        <p>${RHF_UTILS.formatRupiah(price)}</p>
+      </div>
+    `;
   });
-</script></body>
+}
+
+function openDetail(id) {
+  window.location.href = "game-detail.html?id=" + id;
+}
+</script>
+
+</body>
 </html>
