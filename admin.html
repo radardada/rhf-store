@@ -1,49 +1,58 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Admin RHF Game Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      padding: 20px;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: none;
-    }
-    button {
-      background: #00ffcc;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .card {
-      background: #1e1e1e;
-      padding: 15px;
-      margin-top: 15px;
-      border-radius: 10px;
-    }
+    body { font-family: Arial; background:#0b0b0b; color:#fff; padding:20px }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:15px }
+    .card { background:#141414; border-radius:12px; padding:15px }
+    input, button { width:100%; padding:10px; margin-top:8px; border-radius:8px; border:none }
+    button { background:#00ffc8; font-weight:bold; cursor:pointer }
+    h3 { margin:0 0 10px 0 }
+    .small { color:#aaa; font-size:12px }
+    .list .item { border-bottom:1px solid #222; padding:8px 0 }
   </style>
 </head>
 <body>
 
-<h2>ADMIN PANEL</h2>
+<h2>ADMIN PANEL – RHF GAME STORE</h2>
 
-<input type="text" id="nama" placeholder="Nama Produk">
-<input type="number" id="harga" placeholder="Harga">
-<button onclick="tambahProduk()">Tambah Produk</button>
+<div class="grid">
+  <div class="card">
+    <h3>Dompet Tokogame (Simulasi)</h3>
+    <b id="walletTG">Rp 0</b>
+    <div class="small">Biaya pembelian via link/checkout resmi</div>
+  </div>
+  <div class="card">
+    <h3>Dompet Kamu (Profit)</h3>
+    <b id="walletMe">Rp 0</b>
+    <div class="small">Hasil markup +1.000</div>
+  </div>
+</div>
 
-<div id="list"></div>
+<div class="card" style="margin-top:15px">
+  <h3>Set Harga Produk</h3>
+  <input id="nama" placeholder="Nama Produk" />
+  <input id="hargaTG" type="number" placeholder="Harga Asli Tokogame (Rp)" />
+  <button onclick="buatProduk()">Simpan Produk</button>
+</div>
+
+<div class="card" style="margin-top:15px">
+  <h3>Simulasi Pembelian</h3>
+  <input id="bayar" type="number" placeholder="Pembeli Bayar (contoh: 3000)" />
+  <button onclick="prosesBeli()">Proses</button>
+</div>
+
+<div class="card" style="margin-top:15px">
+  <h3>Riwayat Transaksi</h3>
+  <div id="ledger" class="list"></div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
@@ -52,39 +61,65 @@
     projectId: "rhf-gamestore",
     storageBucket: "rhf-gamestore.firebasestorage.app",
     messagingSenderId: "52065906934",
-    appId: "1:52065906934:web:c15f0eff91cc937f787cd7",
-    measurementId: "G-RYFR9D5R5H"
+    appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  window.tambahProduk = function () {
-    const nama = document.getElementById('nama').value;
-    const harga = document.getElementById('harga').value;
+  // Init wallets
+  set(ref(db, 'wallets'), { tokogame: 0, me: 0 });
 
-    if (!nama || !harga) return alert('Lengkapi data');
+  window.buatProduk = () => {
+    const nama = namaEl.value;
+    const hargaTG = Number(hargaTGEl.value);
+    const hargaJual = hargaTG + 1000; // markup otomatis
 
-    push(ref(db, 'produk'), {
-      nama: nama,
-      harga: harga
-    });
-
-    document.getElementById('nama').value = '';
-    document.getElementById('harga').value = '';
+    push(ref(db, 'produk'), { nama, hargaTG, hargaJual });
+    namaEl.value=''; hargaTGEl.value='';
   }
 
-  const list = document.getElementById('list');
-  onValue(ref(db, 'produk'), snapshot => {
-    list.innerHTML = '';
-    snapshot.forEach(child => {
-      const data = child.val();
-      list.innerHTML += `
-        <div class="card">
-          <b>${data.nama}</b><br>
-          Rp ${data.harga}
-        </div>
-      `;
+  window.prosesBeli = () => {
+    const bayar = Number(bayarEl.value); // contoh 3000
+    if (bayar < 3000) return alert('Pembayaran kurang');
+
+    const keTG = 2000; // biaya resmi
+    const keMe = 1000; // profit
+
+    update(ref(db, 'wallets'), {
+      tokogame: (walletTGVal + keTG),
+      me: (walletMeVal + keMe)
+    });
+
+    push(ref(db, 'ledger'), {
+      bayar, keTG, keMe, waktu: Date.now()
+    });
+
+    bayarEl.value='';
+  }
+
+  // DOM refs
+  const walletTGEl = document.getElementById('walletTG');
+  const walletMeEl = document.getElementById('walletMe');
+  const ledgerEl = document.getElementById('ledger');
+  const namaEl = document.getElementById('nama');
+  const hargaTGEl = document.getElementById('hargaTG');
+  const bayarEl = document.getElementById('bayar');
+
+  let walletTGVal = 0, walletMeVal = 0;
+
+  onValue(ref(db, 'wallets'), s => {
+    const v = s.val() || { tokogame:0, me:0 };
+    walletTGVal = v.tokogame; walletMeVal = v.me;
+    walletTGEl.innerText = 'Rp ' + v.tokogame;
+    walletMeEl.innerText = 'Rp ' + v.me;
+  });
+
+  onValue(ref(db, 'ledger'), s => {
+    ledgerEl.innerHTML='';
+    s.forEach(c => {
+      const d = c.val();
+      ledgerEl.innerHTML += `<div class="item">Bayar Rp ${d.bayar} → TG Rp ${d.keTG}, Kamu Rp ${d.keMe}</div>`;
     });
   });
 </script>
