@@ -1,40 +1,42 @@
-// auth.js
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+/* =============================== RHF GAMES - AUTH.JS Auth sederhana tapi BENAR-BENAR BEKERJA
 
-import { app } from "./firebase.js";
+Admin login
 
-const auth = getAuth(app);
+Proteksi halaman admin
 
-// =========================
-// LOGIN ADMIN
-// =========================
-export function adminLogin(email, password) {
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      window.location.href = "admin.html";
-    })
-    .catch((error) => {
-      alert("Login gagal: " + error.message);
-    });
+Bisa dikembangkan ke Firebase ================================ */
+
+
+const RHF_AUTH = { adminKey: "RHF_ADMIN_LOGIN", adminPassword: "admin123", // GANTI NANTI
+
+// ===================== // LOGIN ADMIN // ===================== loginAdmin(password) { if (!password) return { ok: false, msg: "Password kosong" };
+
+if (password === this.adminPassword) {
+  const token = "admin_" + Date.now();
+  localStorage.setItem(this.adminKey, token);
+  return { ok: true, msg: "Login berhasil" };
 }
 
-// =========================
-// PROTECT ADMIN PAGE
-// =========================
-export function protectAdminPage() {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location.href = "index.html";
-    }
-  });
-}
+return { ok: false, msg: "Password salah" };
 
-// =========================
-// LOGOUT ADMIN
-// =========================
-export function adminLogout() {
-  auth.signOut().then(() => {
-    window.location.href = "index.html";
-  });
-}
+},
+
+// ===================== // CEK LOGIN ADMIN // ===================== isAdmin() { return !!localStorage.getItem(this.adminKey); },
+
+// ===================== // LOGOUT ADMIN // ===================== logoutAdmin() { localStorage.removeItem(this.adminKey); location.href = "index.html"; },
+
+// ===================== // PROTEKSI HALAMAN ADMIN // ===================== protectAdminPage() { if (!this.isAdmin()) { const pass = prompt("Masukkan password admin:"); const res = this.loginAdmin(pass); if (!res.ok) { alert(res.msg); location.href = "index.html"; } } } };
+
+/* =============================== CARA PAKAI
+
+1. Di admin.html
+
+
+
+   <script src="auth.js"></script>   <script>
+     RHF_AUTH.protectAdminPage();
+   </script>2. Tombol logout: onclick="RHF_AUTH.logoutAdmin()"
+
+
+
+================================ */
