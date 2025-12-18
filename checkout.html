@@ -1,73 +1,80 @@
 <!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Checkout | RHF GAMES</title>
+  <title>Checkout – RHF GAMES</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
+    .container{max-width:720px;margin:auto;padding:16px}
+    .card{background:#020617;border:1px solid #1e293b;border-radius:14px;padding:16px;margin-bottom:16px}
+    h1,h2{margin:0 0 12px}
+    .row{display:flex;justify-content:space-between;margin:6px 0}
+    .total{font-size:20px;font-weight:bold;color:#22c55e}
+    button{width:100%;padding:14px;border:none;border-radius:12px;background:#22c55e;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
+    input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#020617;color:#e5e7eb;margin-top:6px}
+    .muted{color:#94a3b8;font-size:13px}
+  </style>
 </head>
-<body><header class="topbar">
-  <h1>Checkout</h1>
-</header><main class="container">  <!-- RINGKASAN PESANAN -->  <section class="card">
-    <h2>Ringkasan Pesanan</h2>
-    <div id="orderSummary">
-      <p><strong>Game:</strong> <span id="sumGame">-</span></p>
-      <p><strong>Produk:</strong> <span id="sumProduct">-</span></p>
-      <p><strong>Target:</strong> <span id="sumTarget">-</span></p>
-      <p class="price">Total: Rp <span id="sumPrice">0</span></p>
-    </div>
-  </section>  <!-- METODE PEMBAYARAN -->  <section class="card">
+<body>
+<div class="container">
+  <h1>Checkout</h1>  <div class="card" id="gameInfo"></div>
+  <div class="card" id="accountInfo"></div>
+  <div class="card" id="priceInfo"></div>  <div class="card">
     <h2>Metode Pembayaran</h2>
-    <select id="paymentMethod">
-      <option value="">Pilih metode</option>
-      <option value="DANA">DANA</option>
-      <option value="OVO">OVO</option>
-      <option value="GOPAY">GoPay</option>
-      <option value="SHOPEEPAY">ShopeePay</option>
-      <option value="QRIS">QRIS</option>
-      <option value="TRANSFER">Transfer Bank</option>
+    <select id="payment">
+      <option>DANA</option>
+      <option>OVO</option>
+      <option>GoPay</option>
+      <option>ShopeePay</option>
+      <option>Transfer Bank</option>
     </select>
-  </section>  <!-- TOMBOL BAYAR --><button id="payBtn" class="btn-primary">Bayar Sekarang</button>
+  </div><button onclick="confirmOrder()">Bayar Sekarang</button>
 
-</main><script type="module">
-  import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-  import { app } from "./firebase.js";
+  <p class="muted">Dengan melanjutkan, Anda menyetujui syarat & ketentuan RHF GAMES</p>
+</div><script>
+const order = JSON.parse(localStorage.getItem('RHF_CHECKOUT'));
+if(!order){alert('Data checkout tidak ditemukan');location.href='index.html'}
 
-  const db = getDatabase(app);
+const markup = Number(localStorage.getItem('RHF_MARKUP')||0);
+const finalPrice = order.product.basePrice + markup;
 
-  // AMBIL DATA DARI LOCAL STORAGE
-  const order = JSON.parse(localStorage.getItem("RHF_ORDER"));
+// GAME INFO
+document.getElementById('gameInfo').innerHTML = `
+  <h2>${order.game.name}</h2>
+  <div class="row"><span>Paket</span><b>${order.product.name}</b></div>
+`;
 
-  if (!order) {
-    alert("Data pesanan tidak ditemukan");
-    window.location.href = "index.html";
-  }
+// ACCOUNT INFO
+let accountHTML = `<h2>Data Akun</h2>`;
+Object.entries(order.account).forEach(([k,v])=>{
+  accountHTML += `<div class="row"><span>${k}</span><b>${v}</b></div>`;
+});
+document.getElementById('accountInfo').innerHTML = accountHTML;
 
-  // TAMPILKAN RINGKASAN
-  document.getElementById("sumGame").innerText = order.game;
-  document.getElementById("sumProduct").innerText = order.product;
-  document.getElementById("sumTarget").innerText = order.target;
-  document.getElementById("sumPrice").innerText = order.price.toLocaleString();
+// PRICE INFO
+document.getElementById('priceInfo').innerHTML = `
+  <h2>Ringkasan Harga</h2>
+  <div class="row"><span>Harga Paket</span><span>Rp ${order.product.basePrice.toLocaleString()}</span></div>
+  <div class="row"><span>Biaya Admin</span><span>Rp ${markup.toLocaleString()}</span></div>
+  <hr style="border:1px solid #1e293b">
+  <div class="row total"><span>Total</span><span>Rp ${finalPrice.toLocaleString()}</span></div>
+`;
 
-  // PROSES BAYAR
-  document.getElementById("payBtn").onclick = () => {
-    const payment = document.getElementById("paymentMethod").value;
-
-    if (!payment) {
-      alert("Pilih metode pembayaran");
-      return;
-    }
-
-    push(ref(db, "orders"), {
-      ...order,
-      paymentMethod: payment,
-      status: "pending",
-      createdAt: serverTimestamp()
-    });
-
-    localStorage.removeItem("RHF_ORDER");
-
-    alert("Pesanan berhasil dibuat!\nSilakan lakukan pembayaran.");
-    window.location.href = "index.html";
-  };
+function confirmOrder(){
+  const orders = JSON.parse(localStorage.getItem('RHF_ORDERS')||'[]');
+  orders.push({
+    id: 'ORD'+Date.now(),
+    ...order,
+    payment: payment.value,
+    total: finalPrice,
+    status: 'MENUNGGU PEMBAYARAN',
+    time: new Date().toISOString()
+  });
+  localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
+  alert('Pesanan berhasil dibuat!');
+  localStorage.removeItem('RHF_CHECKOUT');
+  location.href='index.html';
+}
 </script></body>
 </html>
