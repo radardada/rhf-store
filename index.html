@@ -1,193 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RHF Game Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-<style>
-*{box-sizing:border-box;font-family:Roboto}
-body{margin:0;background:#0f1115;color:#fff;padding-bottom:70px}
-header{background:#151821;padding:14px;display:flex;justify-content:space-between;align-items:center}
-header b{font-size:18px}
-.search{background:#222;padding:8px 12px;border-radius:20px;color:#aaa}
-.category{display:flex;gap:8px;padding:10px}
-.category button{background:#222;color:#aaa;border:none;padding:8px 14px;border-radius:20px}
-.category button.active{background:#4cafef;color:#000}
-#grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:10px}
-.product{background:#1b1f2a;padding:10px;border-radius:14px}
-.product img{width:100%;height:110px;object-fit:cover;border-radius:10px}
-.product b{display:block;margin-top:6px}
-.product span{color:#4cafef;font-weight:700}
-.product button{margin-top:6px;width:100%;background:#4cafef;color:#000;border:none;padding:8px;border-radius:8px;font-weight:700}
-
-.page{display:none}
-.page.active{display:block}
-
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#151821;display:flex;justify-content:space-around;padding:10px 0}
-.bottom div{color:#aaa}
-.bottom div.active{color:#4cafef}
-
-.chat{background:#0b0d12;border-radius:12px;padding:10px;height:320px;overflow:auto}
-.msg-user{background:#333;padding:6px 10px;border-radius:10px;margin:6px 0;max-width:70%}
-.msg-admin{background:#4cafef;color:#000;padding:6px 10px;border-radius:10px;margin:6px 0 6px auto;max-width:70%}
-
-.card{background:#1b1f2a;padding:12px;border-radius:12px;margin:10px}
-input,textarea{width:100%;padding:8px;border-radius:8px;border:none;margin:6px 0}
-button.primary{background:#4cafef;color:#000;border:none;padding:10px;border-radius:8px;font-weight:700;width:100%}
-</style>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
- authDomain:"rhf-gamestore.firebaseapp.com",
- databaseURL:"https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"rhf-gamestore",
- storageBucket:"rhf-gamestore.firebasestorage.app",
- messagingSenderId:"52065906934",
- appId:"1:52065906934:web:c15f0eff91cc937f787cd7"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-
-/* ================= LOGIN SYSTEM (TAMBAHAN) ================= */
-let currentUser=localStorage.getItem('RHF_USER');
-if(!currentUser){
- const u=prompt('Buat Username');
- const p=prompt('Buat PIN');
- if(!u||!p){alert('Login dibatalkan');location.reload();}
- currentUser='user_'+Date.now();
- localStorage.setItem('RHF_USER',currentUser);
- localStorage.setItem('RHF_NAME',u);
- localStorage.setItem('RHF_PIN',p);
- set(ref(db,'users/'+currentUser),{name:u,saldo:0});
-}
-
-/* ================= SALDO SYSTEM (TAMBAHAN) ================= */
-const saldoBox=document.createElement('div');
-saldoBox.style.color='#4cafef';
-saldoBox.innerText='Saldo: Rp 0';
-document.querySelector('header').appendChild(saldoBox);
-
-onValue(ref(db,'users/'+currentUser+'/saldo'),s=>{
- saldoBox.innerText='Saldo: Rp '+(s.exists()?s.val():0);
-});
-
-/* ================= KODE ASLI KAMU ================= */
-window.showPage=id=>{
- document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
- document.getElementById(id).classList.add('active');
- document.querySelectorAll('.bottom div').forEach(b=>b.classList.remove('active'));
- document.getElementById('btn-'+id).classList.add('active');
-}
-
-window.filterCat=cat=>{
- document.querySelectorAll('.product').forEach(p=>{
-  p.style.display=(cat==='all'||p.dataset.cat===cat)?'block':'none';
- });
- document.querySelectorAll('.category button').forEach(b=>b.classList.remove('active'));
- document.getElementById('cat-'+cat).classList.add('active');
-}
-
-onValue(ref(db,'products'),snap=>{
- grid.innerHTML='';
- snap.forEach(c=>{
-  const p=c.val();
-  if(!p.active) return;
-  grid.innerHTML+=`
-   <div class="product" data-cat="${p.category}">
-    <img src="${p.image}" onerror="this.src='https://via.placeholder.com/300'">
-    <b>${p.name}</b>
-    <small>${p.game}</small>
-    <span>Rp ${p.price}</span>
-    <button onclick="order('${p.name}',${p.price})">Beli</button>
-   </div>`;
- });
-});
-
-window.order=(name,price)=>{
- showPage('akun');
- document.getElementById('orderInfo').innerText=`Pesanan: ${name} | Rp ${price}`;
-}
-
-window.sendCS=()=>{
- if(!csText.value) return;
- push(ref(db,'csChats/'+currentUser+'/messages'),{from:'user',text:csText.value,time:Date.now()});
- csText.value='';
-}
-
-onValue(ref(db,'csChats/'+currentUser+'/messages'),snap=>{
- csChat.innerHTML='';
- snap.forEach(c=>{
-  const m=c.val();
-  csChat.innerHTML+=`<div class="${m.from==='admin'?'msg-admin':'msg-user'}">${m.text||''}</div>`;
- });
-});
-
-window.sendTopup=()=>{
- if(!amount.value||!proof.files[0]) return alert('Lengkapi data');
- const r=new FileReader();
- r.onload=()=>{
-  push(ref(db,'topups'),{
-   userId:currentUser,
-   amount:Number(amount.value),
-   proofImage:r.result,
-   status:'pending',
-   time:Date.now()
-  });
-  alert('Top up dikirim, menunggu konfirmasi');
- }
- r.readAsDataURL(proof.files[0]);
-}
-</script>
+  <meta charset="UTF-8">
+  <title>RHF Game Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+    }
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+    }
+  </style>
 </head>
+<body>
 
-<body onload="showPage('home')">
-<header>
- <div><b>RHF Game Store</b><br><small>Game • Item • APK • Akun</small></div>
- <div class="search">Cari game atau item</div>
-</header>
+  <!-- Tampilan full Tokogame -->
+  <iframe src="https://www.tokogame.com/id-id"></iframe>
 
-<div id="home" class="page active">
- <div class="category">
-  <button id="cat-all" class="active" onclick="filterCat('all')">Semua</button>
-  <button id="cat-FIS IT" onclick="filterCat('FIS IT')">FIS IT</button>
- </div>
- <div id="grid"></div>
-</div>
-
-<div id="promo" class="page">
- <div class="card">Promo akan segera hadir</div>
-</div>
-
-<div id="cs" class="page">
- <div class="card">
-  <div id="csChat" class="chat"></div>
-  <input id="csText" placeholder="Tulis pesan">
-  <button class="primary" onclick="sendCS()">Kirim</button>
- </div>
-</div>
-
-<div id="akun" class="page">
- <div class="card">
-  <b id="orderInfo">Top Up Saldo</b>
-  <input id="amount" placeholder="Jumlah top up">
-  <input type="file" id="proof" accept="image/*">
-  <button class="primary" onclick="sendTopup()">Kirim Bukti</button>
-  <small>Pembayaran: DANA / OVO / GOPAY<br>85124869641</small>
- </div>
-</div>
-
-<div class="bottom">
- <div id="btn-home" class="active" onclick="showPage('home')">Home</div>
- <div id="btn-promo" onclick="showPage('promo')">Promo</div>
- <div id="btn-cs" onclick="showPage('cs')">CS</div>
- <div id="btn-akun" onclick="showPage('akun')">Akun</div>
-</div>
 </body>
 </html>
