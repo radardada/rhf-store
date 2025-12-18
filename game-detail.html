@@ -1,133 +1,152 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Detail Produk | RHF GAMES</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Detail Game - RHF GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="utils.js"></script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg,#0b1220,#020617);
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    header {
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .box {
+      background: #0f172a;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 16px;
+      border: 1px solid #1e293b;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .product-item {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .product-item.active {
+      border-color: #22d3ee;
+      background: #020617;
+    }
+    .btn {
+      margin: 16px;
+      padding: 14px;
+      background: #22c55e;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body><header class="topbar">
-  <h1 id="gameTitle">Game</h1>
-</header><main class="container">  <!-- INPUT DINAMIS SESUAI GAME -->  <section class="card">
-    <h2>Masukkan Data Akun</h2>
-    <div id="dynamicInput"></div>
-  </section>  <!-- PILIH PRODUK -->  <section class="card">
-    <h2>Pilih Produk</h2>
-    <div id="productList" class="grid"></div>
-  </section><button id="checkoutBtn" class="btn-primary">Lanjut ke Checkout</button>
 
-</main><script type="module">
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-  import { app } from "./firebase.js";
+<body>
 
-  const db = getDatabase(app);
+<header id="gameTitle">Game</header>
 
-  // =========================
-  // GET PARAM GAME
-  // =========================
-  const params = new URLSearchParams(window.location.search);
-  const gameKey = params.get("game");
+<div class="box">
+  <h3>Masukkan Data Akun</h3>
+  <input id="userInput" placeholder="Masukkan ID / Nomor" />
+</div>
 
-  if (!gameKey) {
-    alert("Game tidak ditemukan");
-    location.href = "index.html";
-  }
+<div class="box">
+  <h3>Pilih Produk</h3>
+  <div id="productOptions"></div>
+</div>
 
-  // =========================
-  // LOAD GAME DATA
-  // =========================
-  const gameRef = ref(db, `games/${gameKey}`);
-  const productRef = ref(db, `products/${gameKey}`);
+<div class="btn" onclick="goCheckout()">Lanjut ke Checkout</div>
 
-  let selectedProduct = null;
-  let inputValue = "";
+<script>
+let selectedProduct = null;
+let gameData = null;
 
-  get(gameRef).then(snapshot => {
-    if (!snapshot.exists()) return;
+const params = new URLSearchParams(window.location.search);
+const productId = params.get("id");
 
-    const game = snapshot.val();
-    document.getElementById("gameTitle").innerText = game.name;
+const products = JSON.parse(localStorage.getItem("rhf_products")) || [];
+gameData = products.find(p => p.id == productId);
 
-    renderInput(game.inputType);
-  });
+if (!gameData) {
+  alert("Produk tidak ditemukan");
+  location.href = "index.html";
+}
 
-  get(productRef).then(snapshot => {
-    if (!snapshot.exists()) return;
+document.getElementById("gameTitle").innerText = gameData.name;
 
-    const products = snapshot.val();
-    const list = document.getElementById("productList");
+/* ===== Tentukan Placeholder Input ===== */
+const inputField = document.getElementById("userInput");
+if (gameData.name.toLowerCase().includes("mobile legends")) {
+  inputField.placeholder = "Contoh: 12345678(1234)";
+} else if (gameData.name.toLowerCase().includes("free fire")) {
+  inputField.placeholder = "Contoh: 87654321";
+} else if (gameData.category === "E-WALLET") {
+  inputField.placeholder = "Contoh: 081234567890";
+} else {
+  inputField.placeholder = "Masukkan ID / Email / Nomor";
+}
 
-    Object.keys(products).forEach(key => {
-      const p = products[key];
-      if (!p.active) return;
+/* ===== Dummy Produk (bisa diganti admin nanti) ===== */
+const options = [
+  { name: "Paket A", base: 1000 },
+  { name: "Paket B", base: 2000 },
+  { name: "Paket C", base: 5000 }
+];
 
-      const div = document.createElement("div");
-      div.className = "product-card";
-      div.innerHTML = `
-        <h3>${p.name}</h3>
-        <p class="price">Rp ${p.sellPrice.toLocaleString()}</p>
-      `;
+const container = document.getElementById("productOptions");
 
-      div.onclick = () => {
-        document.querySelectorAll('.product-card').forEach(el => el.classList.remove('active'));
-        div.classList.add('active');
-        selectedProduct = p;
-      };
+options.forEach(opt => {
+  const sell = RHF_UTILS.getSellPrice(opt.base);
+  const div = document.createElement("div");
+  div.className = "product-item";
+  div.innerHTML = `<b>${opt.name}</b><br>${RHF_UTILS.formatRupiah(sell)}`;
 
-      list.appendChild(div);
-    });
-  });
-
-  // =========================
-  // RENDER INPUT SESUAI GAME
-  // =========================
-  function renderInput(type) {
-    const box = document.getElementById("dynamicInput");
-    box.innerHTML = "";
-
-    if (type === "uid_server") {
-      box.innerHTML = `
-        <input id="uid" placeholder="User ID" />
-        <input id="server" placeholder="Server" />
-      `;
-    } else if (type === "uid") {
-      box.innerHTML = `<input id="uid" placeholder="User ID" />`;
-    } else if (type === "email") {
-      box.innerHTML = `<input id="email" placeholder="Email Akun" />`;
-    } else if (type === "username") {
-      box.innerHTML = `<input id="username" placeholder="Username" />`;
-    } else if (type === "phone") {
-      box.innerHTML = `<input id="phone" placeholder="Nomor HP" />`;
-    } else {
-      box.innerHTML = `<input id="custom" placeholder="Masukkan data" />`;
-    }
-  }
-
-  // =========================
-  // CHECKOUT
-  // =========================
-  document.getElementById("checkoutBtn").onclick = () => {
-    if (!selectedProduct) {
-      alert("Pilih produk dahulu");
-      return;
-    }
-
-    const inputs = document.querySelectorAll('#dynamicInput input');
-    inputValue = Array.from(inputs).map(i => i.value).join(" ");
-
-    if (!inputValue.trim()) {
-      alert("Masukkan data akun");
-      return;
-    }
-
-    localStorage.setItem("RHF_ORDER", JSON.stringify({
-      game: document.getElementById("gameTitle").innerText,
-      product: selectedProduct.name,
-      target: inputValue,
-      price: selectedProduct.sellPrice
-    }));
-
-    location.href = "checkout.html";
+  div.onclick = () => {
+    document.querySelectorAll(".product-item").forEach(e => e.classList.remove("active"));
+    div.classList.add("active");
+    selectedProduct = { ...opt, price: sell };
   };
 
-</script></body>
+  container.appendChild(div);
+});
+
+/* ===== Checkout ===== */
+function goCheckout() {
+  const userVal = inputField.value.trim();
+  if (!userVal) return alert("Masukkan data akun");
+  if (!selectedProduct) return alert("Pilih produk");
+
+  const order = {
+    invoice: RHF_UTILS.generateInvoice(),
+    product: gameData.name + " - " + selectedProduct.name,
+    userInput: userVal,
+    total: selectedProduct.price
+  };
+
+  const orders = JSON.parse(localStorage.getItem("rhf_orders")) || [];
+  orders.push(order);
+  localStorage.setItem("rhf_orders", JSON.stringify(orders));
+
+  location.href = "checkout.html";
+}
+</script>
+
+</body>
 </html>
