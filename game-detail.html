@@ -1,179 +1,110 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Top Up Game - RHF GAMES</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="utils.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0b1220;
-  color:#fff;
-}
-.header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:16px;
-  background:#020617;
-}
-.header img{
-  width:48px;
-  height:48px;
-  border-radius:12px;
-}
-.section{
-  margin:16px;
-  padding:16px;
-  background:#0f172a;
-  border-radius:16px;
-  border:1px solid #1e293b;
-}
-.section h3{
-  margin:0 0 12px;
-  font-size:16px;
-}
-.input-group input{
-  width:100%;
-  padding:14px;
-  border-radius:10px;
-  border:none;
-  background:#020617;
-  color:#fff;
-  font-size:15px;
-}
-.hint{
-  margin-top:6px;
-  font-size:12px;
-  color:#94a3b8;
-}
-.products{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.product{
-  padding:14px;
-  border-radius:14px;
-  border:1px solid #1e293b;
-  background:#020617;
-  cursor:pointer;
-}
-.product.active{
-  border:2px solid #22d3ee;
-  background:#020617;
-}
-.product h4{
-  margin:0;
-  font-size:14px;
-}
-.product p{
-  margin:6px 0 0;
-  color:#22d3ee;
-  font-weight:bold;
-}
-.checkout{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:#020617;
-  padding:14px;
-}
-.checkout button{
-  width:100%;
-  padding:16px;
-  background:#22c55e;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:bold;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>Detail Game – RHF GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
+    .container{max-width:900px;margin:auto;padding:16px}
+    .header{display:flex;gap:16px;align-items:center}
+    .header img{width:80px;height:80px;border-radius:16px}
+    .card{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-top:16px}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .product{border:1px solid #334155;border-radius:14px;padding:12px;text-align:center;cursor:pointer}
+    .product.active{border-color:#22c55e;background:#022c22}
+    .inputs input{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#020617;color:#e5e7eb;margin-top:8px}
+    button{margin-top:16px;width:100%;padding:14px;border:none;border-radius:14px;background:#22c55e;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
+    .price{margin-top:6px;font-weight:bold;color:#22c55e}
+  </style>
 </head>
-
 <body>
+<div class="container">
+  <div class="header">
+    <img id="gameLogo" />
+    <div>
+      <h1 id="gameName"></h1>
+      <p id="gameCategory" style="color:#94a3b8"></p>
+    </div>
+  </div>  <div class="card">
+    <h2>Pilih Paket</h2>
+    <div class="products" id="productList"></div>
+  </div>  <div class="card">
+    <h2>Masukkan Data Akun</h2>
+    <div class="inputs" id="accountInputs"></div>
+  </div><button onclick="goCheckout()">Lanjut ke Checkout</button>
 
-<div class="header">
-  <img src="https://i.imgur.com/6XK4J7y.png">
-  <div>
-    <b id="gameName">Game</b><br>
-    <small>Top Up Resmi & Otomatis</small>
-  </div>
-</div>
+</div><script>
+const params = new URLSearchParams(location.search);
+const gameId = params.get('id');
+const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
+const game = games.find(g=>g.id===gameId);
+if(!game){alert('Game tidak ditemukan');location.href='index.html'}
 
-<div class="section">
-  <h3>Masukkan Data Akun</h3>
-  <div class="input-group">
-    <input id="userInput" placeholder="Masukkan ID">
-    <div class="hint" id="inputHint">Contoh: 12345678(1234)</div>
-  </div>
-</div>
+const markup = Number(localStorage.getItem('RHF_MARKUP')||0);
+let selectedProduct = null;
 
-<div class="section">
-  <h3>Pilih Nominal</h3>
-  <div class="products" id="productList"></div>
-</div>
+// SET HEADER
+gameLogo.src = game.logo;
+gameName.textContent = game.name;
+gameCategory.textContent = game.category;
 
-<div class="checkout">
-  <button onclick="checkout()">Lanjut ke Pembayaran</button>
-</div>
-
-<script>
-const params=new URLSearchParams(location.search);
-const id=params.get("id");
-
-const games=JSON.parse(localStorage.getItem("rhf_products"))||[];
-const game=games.find(g=>g.id==id);
-if(!game){location.href="index.html";}
-
-document.getElementById("gameName").innerText=game.name;
-
-if(game.name.toLowerCase().includes("mobile legends")){
-  userInput.placeholder="12345678(1234)";
-  inputHint.innerText="User ID (Server)";
-}
-
-let selected=null;
-const list=document.getElementById("productList");
-
-[
- {name:"86 Diamonds",base:1000},
- {name:"172 Diamonds",base:2000},
- {name:"257 Diamonds",base:3000},
- {name:"514 Diamonds",base:5000}
-].forEach(p=>{
-  const price=RHF_UTILS.getSellPrice(p.base);
-  const div=document.createElement("div");
-  div.className="product";
-  div.innerHTML=`<h4>${p.name}</h4><p>${RHF_UTILS.formatRupiah(price)}</p>`;
-  div.onclick=()=>{
-    document.querySelectorAll(".product").forEach(x=>x.classList.remove("active"));
-    div.classList.add("active");
-    selected={...p,price};
+// PRODUCTS
+game.products.forEach((p,i)=>{
+  const d=document.createElement('div');
+  d.className='product';
+  d.innerHTML=`<b>${p.name}</b><div class='price'>Rp ${(p.basePrice+markup).toLocaleString()}</div>`;
+  d.onclick=()=>{
+    document.querySelectorAll('.product').forEach(x=>x.classList.remove('active'));
+    d.classList.add('active');
+    selectedProduct=p;
   };
-  list.appendChild(div);
+  productList.appendChild(d);
 });
 
-function checkout(){
-  if(!userInput.value) return alert("Masukkan data akun");
-  if(!selected) return alert("Pilih nominal");
+// INPUT SCHEMA
+const inputs = document.getElementById('accountInputs');
+let schema = game.inputSchema;
 
-  const orders=JSON.parse(localStorage.getItem("rhf_orders"))||[];
-  orders.push({
-    invoice:RHF_UTILS.generateInvoice(),
-    product:game.name+" "+selected.name,
-    userInput:userInput.value,
-    total:selected.price
-  });
-  localStorage.setItem("rhf_orders",JSON.stringify(orders));
-  location.href="checkout.html";
+function addInput(label,key,placeholder){
+  const i=document.createElement('input');
+  i.placeholder=placeholder;
+  i.dataset.key=key;
+  inputs.appendChild(i);
 }
-</script>
 
-</body>
+switch(schema){
+  case 'id_server':
+    addInput('ID','id','Masukkan User ID');
+    addInput('Server','server','Masukkan Server');
+    break;
+  case 'id':
+    addInput('ID','id','Masukkan User ID');
+    break;
+  case 'username':
+    addInput('Username','username','Masukkan Username');
+    break;
+  case 'phone':
+    addInput('Nomor HP','phone','08xxxxxxxx');
+    break;
+  case 'email':
+    addInput('Email','email','email@example.com');
+    break;
+}
+
+function goCheckout(){
+  if(!selectedProduct)return alert('Pilih paket dulu');
+  const account={};
+  document.querySelectorAll('#accountInputs input').forEach(i=>{
+    if(!i.value)return alert('Lengkapi data akun');
+    account[i.dataset.key]=i.value;
+  });
+  localStorage.setItem('RHF_CHECKOUT',JSON.stringify({
+    game,
+    product:selectedProduct,
+    account
+  }));
+  location.href='checkout.html';
+}
+</script></body>
 </html>
