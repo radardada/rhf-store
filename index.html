@@ -1,95 +1,141 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>RHF GAMES – Top Up Game Termurah</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>RHF GAMES – Digital Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:#0f172a;
-  color:#e5e7eb;
-}
-header{
-  background:#020617;
-  padding:16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-header img{
-  height:40px;
-}
-header h1{
-  font-size:18px;
-  margin:0;
-}
-.container{
-  padding:16px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:14px;
-}
-.game-card{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:14px;
-  padding:12px;
-  text-align:center;
-  cursor:pointer;
-  transition:.2s;
-}
-.game-card:hover{
-  transform:translateY(-3px);
-  border-color:#22c55e;
-}
-.game-card img{
-  width:64px;
-  height:64px;
-  object-fit:contain;
-  margin-bottom:8px;
-}
-.game-card b{
-  font-size:14px;
-}
-</style>
+  <style>
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:#0f172a;
+      color:#e5e7eb;
+    }
+    header{
+      padding:18px;
+      background:#020617;
+      font-size:22px;
+      font-weight:bold;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    header img{
+      width:36px;
+      height:36px;
+      border-radius:8px;
+    }
+    .container{padding:16px}
+    h2{margin:20px 0 10px}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+      gap:14px;
+    }
+    .card{
+      background:#020617;
+      border:1px solid #1e293b;
+      border-radius:14px;
+      padding:12px;
+      text-align:center;
+      cursor:pointer;
+      transition:.2s;
+    }
+    .card:hover{
+      transform:translateY(-3px);
+      border-color:#22c55e;
+    }
+    .card img{
+      width:64px;
+      height:64px;
+      object-fit:contain;
+      margin-bottom:8px;
+    }
+    .card b{
+      font-size:14px;
+      display:block;
+    }
+    .footer{
+      text-align:center;
+      padding:20px;
+      color:#94a3b8;
+      font-size:13px;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="RHF GAMES">
-  <h1>RHF GAMES</h1>
+  <img src="logo.png" alt="RHF">
+  RHF GAMES
 </header>
 
 <div class="container">
-  <h2>Top Up Game</h2>
+
+  <h2>🎮 Game Online</h2>
   <div class="grid" id="gameList"></div>
+
+  <h2>💳 E-Wallet</h2>
+  <div class="grid" id="ewalletList"></div>
+
+  <h2>📞 Pulsa & Operator</h2>
+  <div class="grid" id="pulsaList"></div>
+
+  <h2>🎟️ Voucher Digital</h2>
+  <div class="grid" id="voucherList"></div>
+
 </div>
 
-<script>
-// AMAN: hanya baca data
-const games = JSON.parse(localStorage.getItem('RHF_GAMES') || '[]');
+<div class="footer">
+  © 2025 RHF GAMES • Aman • Cepat • Terpercaya
+</div>
 
-const gameList = document.getElementById('gameList');
+<!-- ================= FIREBASE ================= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-games.forEach(g=>{
-  const d = document.createElement('div');
-  d.className = 'game-card';
-  d.innerHTML = `
-    <img src="${g.logo}">
-    <b>${g.name}</b>
-  `;
-  d.onclick = ()=>{
-    localStorage.setItem('RHF_SELECTED_GAME', JSON.stringify(g));
-    location.href = 'game.html';
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+    authDomain: "rhf-gamestore.firebaseapp.com",
+    databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "rhf-gamestore",
+    storageBucket: "rhf-gamestore.firebasestorage.app",
+    messagingSenderId: "52065906934",
+    appId: "1:52065906934:web:c15f0eff91cc937f787cd7",
+    measurementId: "G-RYFR9D5R5H"
   };
-  gameList.appendChild(d);
-});
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const maps = {
+    game: gameList,
+    ewallet: ewalletList,
+    pulsa: pulsaList,
+    voucher: voucherList
+  };
+
+  get(ref(db, 'products')).then(snap=>{
+    if(!snap.exists()) return;
+    const data = snap.val();
+
+    Object.values(data).forEach(p=>{
+      if(!maps[p.category]) return;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${p.logo}">
+        <b>${p.name}</b>
+      `;
+      card.onclick = ()=>location.href = `game.html?id=${p.id}`;
+      maps[p.category].appendChild(card);
+    });
+  });
 </script>
 
 </body>
