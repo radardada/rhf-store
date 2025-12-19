@@ -2,29 +2,36 @@
 function confirmOrder(){
   const orders = JSON.parse(localStorage.getItem('RHF_ORDERS')||'[]');
 
-  // ambil nomor / id akun (apa pun inputnya)
-  let target = '';
-  Object.values(order.account).forEach(v=>{
-    if(!target) target = v;
-  });
-
   orders.push({
     id: 'ORD'+Date.now(),
-
-    // ===== DATA AMAN UNTUK ADMIN =====
-    gameId: order.game.id,
-    gameName: order.game.name,
-    product: order.product.name,
-    phone: target,
-
-    // ===== DATA TAMBAHAN =====
+    ...order,
     payment: payment.value,
     total: finalPrice,
-    status: 'pending',
-    time: Date.now()
+    status: 'MENUNGGU PEMBAYARAN',
+    time: new Date().toISOString()
   });
 
+  /* ===== TAMBAHAN TANPA MENGUBAH DATA ASLI ===== */
+  const last = orders[orders.length - 1];
+
+  // nama game aman
+  last.gameName = last.game?.name || '';
+
+  // nama paket aman
+  last.productName = last.product?.name || '';
+
+  // ambil nomor / id akun (apa pun inputnya)
+  let target = '';
+  if(last.account){
+    Object.values(last.account).forEach(v=>{
+      if(!target) target = v;
+    });
+  }
+  last.target = target;
+
+  /* ===== SIMPAN ULANG ===== */
   localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
+
   alert('Pesanan berhasil dibuat!');
   localStorage.removeItem('RHF_CHECKOUT');
   location.href='index.html';
