@@ -16,15 +16,18 @@
         .google-btn:hover { background: #3367d6; }
         .google-btn img { width: 20px; height: 20px; }
         .hidden { display: none; }
-        .admin-container { width: 90%; max-width: 1200px; margin: 20px auto; }
-        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .card h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        .admin-container { width: 90%; max-width: 1200px; margin: 20px auto; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); padding: 30px; }
+        .card { margin-bottom: 40px; }
+        .card h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
         input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px 25px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
         button:hover { background: #5a6fd8; }
         .btn-logout { background: #dc3545; float: right; }
         .product-item { border: 1px solid #eee; padding: 20px; margin: 15px 0; border-radius: 10px; background: #f9f9f9; }
-        .product-item img { max-width: 300px; border-radius: 10px; margin: 10px 0; }
+        .product-item img { max-width: 300px; border-radius: 10px; margin: 10px 0; display: block; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 50px; color: white; font-weight: bold; z-index: 9999; opacity: 0; transition: opacity 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
     </style>
 </head>
 <body>
@@ -33,37 +36,37 @@
 <div class="login-container" id="loginPage">
     <div class="login-header">
         <h1>RHF GAMES</h1>
-        <p>Admin Panel - Top Up All-in-One</p>
+        <p>Admin Panel - Top Up Game, E-Wallet & Pulsa</p>
     </div>
     <div class="login-body">
         <button class="google-btn" id="adminLoginBtn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
             Login dengan Google
         </button>
-        <p style="margin-top:20px; color:#666;">Hanya akun admin yang bisa masuk</p>
+        <p style="margin-top:20px; color:#666; font-size:14px;">Gunakan akun: radhitt925@gmail.com</p>
     </div>
 </div>
 
-<!-- Halaman Admin Panel -->
+<!-- Admin Panel Utama -->
 <div class="admin-container hidden" id="adminPanel">
-    <div class="card">
-        <h1>Admin Panel - RHF GAMES</h1>
-        <button class="btn-logout" id="logoutBtn">Logout</button>
+    <h1 style="text-align:center; color:#667eea;">Admin Panel - RHF GAMES</h1>
+    <button class="btn-logout" id="logoutBtn">Logout</button>
 
+    <div class="card">
         <h2>Tambah Produk Baru</h2>
         <form id="addProductForm">
-            <input type="text" id="title" placeholder="Judul Produk (ex: Mobile Legends Diamond)" required>
+            <input type="text" id="title" placeholder="Judul (ex: Mobile Legends Diamond)" required>
             <select id="category" required>
                 <option value="">Pilih Kategori</option>
-                <option value="game">Game (Diamond/UC/Crystal)</option>
-                <option value="ewallet">E-Wallet (DANA, OVO, GoPay)</option>
-                <option value="pulsa">Pulsa All Operator</option>
+                <option value="game">Game (Diamond/UC/Crystal/Robux)</option>
+                <option value="ewallet">E-Wallet (DANA, OVO, GoPay, ShopeePay)</option>
+                <option value="pulsa">Pulsa All Operator (Telkomsel, XL, Tri, dll)</option>
             </select>
-            <input type="text" id="image" placeholder="URL Banner Gambar" required>
-            <textarea id="helpText" placeholder="Help Text (cara cari ID atau nomor)"></textarea>
+            <input type="text" id="image" placeholder="URL Banner Gambar (https://...)" required>
+            <textarea id="helpText" placeholder="Help Text (cara cari ID/nomor)"></textarea>
 
             <label><strong>Input Fields (JSON array):</strong></label>
-            <textarea id="inputFields" rows="4" placeholder='[{"label": "User ID", "placeholder": "384480920"}, {"label": "Zone ID", "placeholder": "3797"}]'></textarea>
+            <textarea id="inputFields" rows="4" placeholder='[{"label": "User ID", "placeholder": "Contoh: 384480920"}, {"label": "Zone ID", "placeholder": "Contoh: 3797"}]'></textarea>
 
             <label><strong>Nominal Options (JSON array):</strong></label>
             <textarea id="rechargeOptions" rows="6" required placeholder='[{"amount": "86 Diamonds", "price": 20000, "bonus": true}, {"amount": "570 Diamonds", "price": 120000}]'></textarea>
@@ -73,8 +76,8 @@
     </div>
 
     <div class="card">
-        <h2>Daftar Produk</h2>
-        <div id="productsList">Loading...</div>
+        <h2>Daftar Produk Tersedia</h2>
+        <div id="productsList">Loading produk...</div>
     </div>
 </div>
 
@@ -86,8 +89,8 @@
 <script src="firebase.js"></script>
 
 <script>
-// UBAH INI JADI EMAIL GOOGLE KAMU YANG JADI ADMIN!
-const ADMIN_EMAIL = "radhitt925@gmail.com"; // <-- GANTI DENGAN EMAIL KAMU !!!
+// EMAIL ADMIN KAMU (sudah saya set otomatis)
+const ADMIN_EMAIL = "radhitt925@gmail.com";
 
 const loginPage = document.getElementById('loginPage');
 const adminPanel = document.getElementById('adminPanel');
@@ -107,9 +110,7 @@ auth.onAuthStateChanged(user => {
 // Tombol Login Google
 document.getElementById('adminLoginBtn').onclick = () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(err => {
-        alert("Gagal login: " + err.message);
-    });
+    auth.signInWithPopup(provider);
 };
 
 // Logout
@@ -117,13 +118,26 @@ document.getElementById('logoutBtn').onclick = () => {
     auth.signOut().then(() => location.reload());
 };
 
+// Toast notification
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.style.opacity = '1', 100);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
+}
+
 // Load produk real-time
 function loadProducts() {
     const list = document.getElementById('productsList');
     db.collection("games").orderBy("createdAt", "desc").onSnapshot(snapshot => {
         list.innerHTML = "";
         if (snapshot.empty) {
-            list.innerHTML = "<p>Belum ada produk.</p>";
+            list.innerHTML = "<p style='text-align:center; color:#999;'>Belum ada produk. Tambah yang pertama yuk!</p>";
             return;
         }
         snapshot.forEach(doc => {
@@ -133,10 +147,10 @@ function loadProducts() {
             div.innerHTML = `
                 <h3>\( {p.title} <small>( \){p.category || 'game'})</small></h3>
                 <img src="\( {p.image}" alt=" \){p.title}">
-                <p><strong>Help:</strong> ${p.helpText || '-'}</p>
-                <p><strong>Input:</strong> ${JSON.stringify(p.inputFields || [])}</p>
-                <p><strong>Options:</strong> ${p.rechargeOptions ? p.rechargeOptions.length + ' nominal' : '0'}</p>
-                <button style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:8px;" onclick="deleteProduct('${doc.id}')">Hapus</button>
+                <p><strong>Help Text:</strong> ${p.helpText || '-'}</p>
+                <p><strong>Input Fields:</strong> ${JSON.stringify(p.inputFields || [])}</p>
+                <p><strong>Nominal:</strong> ${p.rechargeOptions ? p.rechargeOptions.length + ' pilihan' : '0'}</p>
+                <button style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:8px;" onclick="deleteProduct('${doc.id}')">Hapus Produk</button>
             `;
             list.appendChild(div);
         });
@@ -144,12 +158,12 @@ function loadProducts() {
 }
 
 function deleteProduct(id) {
-    if (confirm("Yakin hapus produk ini?")) {
-        db.collection("games").doc(id).delete().then(() => alert("Produk dihapus!"));
+    if (confirm("Yakin hapus produk ini permanen?")) {
+        db.collection("games").doc(id).delete().then(() => showToast("Produk dihapus!", "success"));
     }
 }
 
-// Tambah produk
+// Tambah produk baru
 document.getElementById('addProductForm').onsubmit = (e) => {
     e.preventDefault();
 
@@ -160,7 +174,7 @@ document.getElementById('addProductForm').onsubmit = (e) => {
         inputFields = JSON.parse(document.getElementById('inputFields').value || '[]');
         rechargeOptions = JSON.parse(document.getElementById('rechargeOptions').value);
     } catch (err) {
-        alert("Format JSON salah! Periksa inputFields atau rechargeOptions.");
+        showToast("Format JSON salah! Periksa lagi.", "error");
         return;
     }
 
@@ -173,13 +187,13 @@ document.getElementById('addProductForm').onsubmit = (e) => {
         rechargeOptions: rechargeOptions,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        alert("Produk berhasil ditambahkan!");
+        showToast("Produk berhasil ditambahkan!", "success");
         e.target.reset();
     }).catch(err => {
-        alert("Gagal: " + err.message);
+        showToast("Gagal tambah produk: " + err.message, "error");
     });
 };
 </script>
 
 </body>
-          </html>
+</html>
