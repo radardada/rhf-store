@@ -1,142 +1,75 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>RHF GAMES – Digital Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    body{
-      margin:0;
-      font-family:Arial,Helvetica,sans-serif;
-      background:#0f172a;
-      color:#e5e7eb;
-    }
-    header{
-      padding:18px;
-      background:#020617;
-      font-size:22px;
-      font-weight:bold;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    header img{
-      width:36px;
-      height:36px;
-      border-radius:8px;
-    }
-    .container{padding:16px}
-    h2{margin:20px 0 10px}
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-      gap:14px;
-    }
-    .card{
-      background:#020617;
-      border:1px solid #1e293b;
-      border-radius:14px;
-      padding:12px;
-      text-align:center;
-      cursor:pointer;
-      transition:.2s;
-    }
-    .card:hover{
-      transform:translateY(-3px);
-      border-color:#22c55e;
-    }
-    .card img{
-      width:64px;
-      height:64px;
-      object-fit:contain;
-      margin-bottom:8px;
-    }
-    .card b{
-      font-size:14px;
-      display:block;
-    }
-    .footer{
-      text-align:center;
-      padding:20px;
-      color:#94a3b8;
-      font-size:13px;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RHF GAMES - Toko Game Online Terlengkap</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Poppins', sans-serif; }</style>
 </head>
-
 <body>
+  <header>
+    <div class="container">
+      <h1 class="logo">RHF GAMES</h1>
+      
+      <div class="search-bar">
+        <input type="text" placeholder="Cari game favoritmu...">
+      </div>
+      
+      <nav class="user-actions">
+        <a href="game.html">Game</a>
+        <a href="checkout.html">Keranjang</a>
+        <button id="loginBtn">Login</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+        <a href="admin.html" id="adminLink" style="display:none;">Admin</a>
+        <button class="toggle-theme" onclick="toggleTheme()">🌙</button>
+      </nav>
+    </div>
+  </header>
 
-<header>
-  <img src="logo.png" alt="RHF">
-  RHF GAMES
-</header>
+  <section class="hero">
+    <div class="container">
+      <h1>Temukan Game Impianmu di RHF GAMES</h1>
+      <p>Ratusan game premium & gratis dengan harga terbaik!</p>
+      <button class="btn-primary" onclick="location.href='game.html'">Jelajahi Sekarang</button>
+    </div>
+  </section>
 
-<div class="container">
+  <section class="games-section">
+    <div class="container">
+      <h2>Game Terpopuler</h2>
+      <div class="grid" id="gamesGrid">
+        <!-- Game akan di-load dari Firebase atau manual -->
+        <div class="game-card" onclick="location.href='game-detail.html?id=1'">
+          <div class="discount">-50%</div>
+          <img src="https://via.placeholder.com/300x180?text=Game+Epic" alt="Game">
+          <div class="game-info">
+            <h3>Adventure Quest</h3>
+            <div class="rating">★★★★☆ (4.8)</div>
+            <div class="price">Rp 75.000 <s>Rp 150.000</s></div>
+          </div>
+        </div>
+        <!-- Tambah lebih banyak card -->
+      </div>
+    </div>
+  </section>
 
-  <h2>🎮 Game Online</h2>
-  <div class="grid" id="gameList"></div>
+  <!-- Load Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
+  <script src="auth.js"></script>
+  <script src="utils.js"></script>
 
-  <h2>💳 E-Wallet</h2>
-  <div class="grid" id="ewalletList"></div>
-
-  <h2>📞 Pulsa & Operator</h2>
-  <div class="grid" id="pulsaList"></div>
-
-  <h2>🎟️ Voucher Digital</h2>
-  <div class="grid" id="voucherList"></div>
-
-</div>
-
-<div class="footer">
-  © 2025 RHF GAMES • Aman • Cepat • Terpercaya
-</div>
-
-<!-- ================= FIREBASE ================= -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-    authDomain: "rhf-gamestore.firebaseapp.com",
-    databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "rhf-gamestore",
-    storageBucket: "rhf-gamestore.firebasestorage.app",
-    messagingSenderId: "52065906934",
-    appId: "1:52065906934:web:c15f0eff91cc937f787cd7",
-    measurementId: "G-RYFR9D5R5H"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  const maps = {
-    game: gameList,
-    ewallet: ewalletList,
-    pulsa: pulsaList,
-    voucher: voucherList
-  };
-
-  get(ref(db, 'products')).then(snap=>{
-    if(!snap.exists()) return;
-    const data = snap.val();
-
-    Object.values(data).forEach(p=>{
-      if(!maps[p.category]) return;
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <img src="${p.logo}">
-        <b>${p.name}</b>
-      `;
-      card.onclick = ()=>location.href = `game.html?id=${p.id}`;
-      maps[p.category].appendChild(card);
-    });
-  });
-</script>
-
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+    // Load theme dari localStorage
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+  </script>
 </body>
 </html>
