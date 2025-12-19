@@ -6,149 +6,155 @@
     <title>Admin Panel - RHF GAMES</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Tambahan CSS khusus admin */
-        .admin-layout { display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background: #6c5ce7; color: white; padding: 20px; }
-        body.dark .sidebar { background: #4834d4; }
-        .sidebar h2 { margin-bottom: 40px; }
-        .sidebar a { display: block; color: white; padding: 15px; text-decoration: none; border-radius: 8px; margin-bottom: 10px; }
-        .sidebar a:hover { background: rgba(255,255,255,0.2); }
-        
-        .main-content { flex: 1; padding: 40px; }
-        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
         body.dark .card { background: #1e1e1e; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        table th, table td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        h1, h2 { color: #6c5ce7; }
+        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        body.dark input, body.dark textarea { background: #2d2d2d; border: none; color: white; }
+        button { background: #6c5ce7; color: white; border: none; font-size: 16px; cursor: pointer; }
+        button:hover { background: #4834d4; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table th, table td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         body.dark table { color: #ddd; }
         body.dark table th, body.dark table td { border-bottom: 1px solid #333; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px; }
-        .btn-primary { background: #6c5ce7; color: white; }
-        .btn-danger { background: #ff7675; color: white; }
-        .btn-edit { background: #fdcb6e; color: #333; }
-        
-        form input, form textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        body.dark form input, body.dark form textarea { background: #2d2d2d; border: none; color: white; }
+        .btn-danger { background: #ff7675; padding: 8px 15px; font-size: 14px; }
+        .btn-edit { background: #fdcb6e; color: #333; padding: 8px 15px; font-size: 14px; }
+        img.game-thumb { width: 80px; border-radius: 8px; }
+        .logout { background: #ff7675; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <div class="admin-layout">
-        <aside class="sidebar">
-            <h2>RHF GAMES<br>Admin</h2>
-            <a href="#dashboard">Dashboard</a>
-            <a href="#games">Manajemen Game</a>
-            <a href="#orders">Pesanan</a>
-            <a href="index.html">Kembali ke Site</a>
-            <button id="logoutBtn" style="width:100%; margin-top:50px; padding:15px; background:#ff7675; border:none; color:white; border-radius:8px;">Logout</button>
-        </aside>
 
-        <main class="main-content">
-            <h1>Admin Dashboard</h1>
-            
-            <div class="card">
-                <h2>Tambah Game Baru</h2>
-                <form id="addGameForm">
-                    <input type="text" id="gameTitle" placeholder="Judul Game" required>
-                    <textarea id="gameDesc" placeholder="Deskripsi" rows="4" required></textarea>
-                    <input type="text" id="gameImage" placeholder="URL Gambar (https://...)" required>
-                    <input type="number" id="gamePrice" placeholder="Harga (Rp)" required>
-                    <input type="text" id="gameCategory" placeholder="Kategori (ex: Action, Adventure)">
-                    <button type="submit" class="btn btn-primary">Tambah Game</button>
-                </form>
-            </div>
+<div class="container">
+    <h1>Admin Panel - RHF GAMES</h1>
+    <button class="logout" id="logoutBtn">Logout</button>
 
-            <div class="card">
-                <h2>Daftar Game</h2>
-                <table id="gamesTable">
-                    <thead>
-                        <tr>
-                            <th>Gambar</th>
-                            <th>Judul</th>
-                            <th>Harga</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Game akan di-load otomatis dari Firebase -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
+    <div class="card">
+        <h2>Tambah Game Baru</h2>
+        <form id="addGameForm">
+            <input type="text" id="title" placeholder="Judul Game" required>
+            <textarea id="desc" placeholder="Deskripsi singkat game" rows="4" required></textarea>
+            <input type="text" id="image" placeholder="URL Gambar (contoh: https://...jpg)" required>
+            <input type="number" id="price" placeholder="Harga dalam Rupiah (contoh: 75000)" required>
+            <input type="text" id="category" placeholder="Kategori (opsional, ex: Action)">
+            <button type="submit">Tambah Game</button>
+        </form>
     </div>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="firebase.js"></script>
-    <script src="auth.js"></script>
+    <div class="card">
+        <h2>Daftar Game di Toko</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Gambar</th>
+                    <th>Judul</th>
+                    <th>Harga</th>
+                    <th>Kategori</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="gamesList">
+                <!-- Game akan muncul otomatis dari Firebase -->
+                <tr>
+                    <td colspan="5" style="text-align:center; color:#999;">Loading data game...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-    <script>
-        // Cek jika bukan admin, redirect
-        firebase.auth().onAuthStateChanged(user => {
-            if (!user || user.email !== 'admin@rhfgames.com') { // Ganti dengan email admin kamu
-                location.href = 'index.html';
-            }
+<!-- Firebase SDK - WAJIB urutan ini -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<!-- File kita -->
+<script src="firebase.js"></script>
+
+<script>
+// Cek login admin
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        alert("Kamu harus login dulu!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // Ganti dengan email admin kamu yang sebenarnya
+    if (user.email !== "admin@rhfgames.com") {
+        alert("Akses ditolak. Hanya admin yang boleh masuk.");
+        window.location.href = "index.html";
+    }
+});
+
+// Load daftar game real-time
+const gamesRef = db.collection("games");
+const gamesList = document.getElementById("gamesList");
+
+gamesRef.orderBy("title").onSnapshot(snapshot => {
+    gamesList.innerHTML = "";
+    if (snapshot.empty) {
+        gamesList.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Belum ada game. Tambah yang pertama!</td></tr>";
+        return;
+    }
+
+    snapshot.forEach(doc => {
+        const game = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><img class="game-thumb" src="\( {game.image}" alt=" \){game.title}"></td>
+            <td><strong>\( {game.title}</strong><br><small> \){game.desc}</small></td>
+            <td>Rp ${Number(game.price).toLocaleString("id-ID")}</td>
+            <td>${game.category || "-"}</td>
+            <td>
+                <button class="btn-danger" onclick="deleteGame('${doc.id}')">Hapus</button>
+            </td>
+        `;
+        gamesList.appendChild(tr);
+    });
+});
+
+// Tambah game baru
+document.getElementById("addGameForm").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const newGame = {
+        title: document.getElementById("title").value,
+        desc: document.getElementById("desc").value,
+        image: document.getElementById("image").value,
+        price: Number(document.getElementById("price").value),
+        category: document.getElementById("category").value || "Umum",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    db.collection("games").add(newGame)
+        .then(() => {
+            alert("Game berhasil ditambahkan!");
+            e.target.reset();
+        })
+        .catch(error => {
+            alert("Gagal tambah game: " + error.message);
         });
+});
 
-        // Load games dari Firestore
-        const gamesRef = firebase.firestore().collection('games');
-        const tbody = document.querySelector('#gamesTable tbody');
+// Hapus game
+function deleteGame(id) {
+    if (confirm("Yakin ingin hapus game ini?")) {
+        db.collection("games").doc(id).delete()
+            .then(() => alert("Game dihapus!"))
+            .catch(error => alert("Error: " + error.message));
+    }
+}
 
-        gamesRef.onSnapshot(snapshot => {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const game = doc.data();
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><img src="${game.image}" width="80" style="border-radius:8px;"></td>
-                    <td>${game.title}</td>
-                    <td>Rp ${game.price.toLocaleString()}</td>
-                    <td>
-                        <button class="btn btn-edit" onclick="editGame('${doc.id}')">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteGame('${doc.id}')">Hapus</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        });
+// Logout
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    auth.signOut().then(() => {
+        window.location.href = "index.html";
+    });
+});
+</script>
 
-        // Tambah game
-        document.getElementById('addGameForm').addEventListener('submit', e => {
-            e.preventDefault();
-            gamesRef.add({
-                title: document.getElementById('gameTitle').value,
-                desc: document.getElementById('gameDesc').value,
-                image: document.getElementById('gameImage').value,
-                price: Number(document.getElementById('gamePrice').value),
-                category: document.getElementById('gameCategory').value || 'Umum',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                alert('Game berhasil ditambahkan!');
-                e.target.reset();
-            });
-        });
-
-        // Fungsi delete & edit (bisa dikembangkan lebih lanjut)
-        function deleteGame(id) {
-            if (confirm('Yakin hapus game ini?')) {
-                gamesRef.doc(id).delete();
-            }
-        }
-
-        function editGame(id) {
-            // Bisa buka modal edit, atau redirect ke form edit terpisah
-            alert('Fitur edit segera hadir! ID: ' + id);
-        }
-
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            firebase.auth().signOut().then(() => location.href = 'index.html');
-        });
-
-        // Dark mode sync
-        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-    </script>
 </body>
 </html>
