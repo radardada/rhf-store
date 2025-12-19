@@ -1,127 +1,128 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Checkout – RHF GAMES</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
-    .container{max-width:720px;margin:auto;padding:16px}
-    .card{background:#020617;border:1px solid #1e293b;border-radius:14px;padding:16px;margin-bottom:16px}
-    h1,h2{margin:0 0 12px}
-    .row{display:flex;justify-content:space-between;margin:6px 0}
-    .total{font-size:20px;font-weight:bold;color:#22c55e}
-    button{width:100%;padding:14px;border:none;border-radius:12px;background:#22c55e;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
-    input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#020617;color:#e5e7eb;margin-top:6px}
-    .muted{color:#94a3b8;font-size:13px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Belanja - RHF GAMES</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #f0f2f5; font-family: 'Poppins', sans-serif; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        
+        .cart-items { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .item { display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #eee; }
+        .item img { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; margin-right: 20px; }
+        .item-info { flex: 1; }
+        .item-info h3 { margin: 0; font-size: 18px; }
+        .item-price { font-size: 22px; font-weight: bold; color: #00aa5b; }
+        .remove-btn { background: #ff4d4f; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        
+        .summary { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); position: sticky; top: 100px; height: fit-content; }
+        .summary h2 { margin-top: 0; color: #333; }
+        .total-row { display: flex; justify-content: space-between; font-size: 20px; margin: 20px 0; }
+        .grand-total { font-size: 28px; font-weight: bold; color: #00aa5b; border-top: 2px solid #eee; padding-top: 20px; }
+        .checkout-btn { width: 100%; background: #00aa5b; color: white; padding: 18px; font-size: 20px; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px; }
+        .checkout-btn:hover { background: #008c47; }
+        
+        .empty-cart { text-align: center; padding: 80px 20px; }
+        .empty-cart img { max-width: 400px; width: 100%; margin-bottom: 30px; }
+        .empty-cart h2 { color: #999; }
+        .empty-cart a { color: #00aa5b; text-decoration: none; font-weight: bold; }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>Checkout</h1>  <div class="card" id="gameInfo"></div>
-  <div class="card" id="accountInfo"></div>
-  <div class="card" id="priceInfo"></div>  <div class="card">
-    <h2>Metode Pembayaran</h2>
-    <select id="payment">
-      <option>DANA</option>
-      <option>OVO</option>
-      <option>GoPay</option>
-      <option>ShopeePay</option>
-      <option>Transfer Bank</option>
-    </select>
-  </div><button onclick="confirmOrder()">Bayar Sekarang</button>
 
-  <p class="muted">Dengan melanjutkan, Anda menyetujui syarat & ketentuan RHF GAMES</p>
-</div><script>
-const order = JSON.parse(localStorage.getItem('RHF_CHECKOUT'));
-if(!order){alert('Data checkout tidak ditemukan');location.href='index.html'}
+<div class="container" id="mainContent" style="display:none;">
+    <div class="cart-items" id="cartItemsList">
+        <!-- Item keranjang akan muncul di sini -->
+    </div>
 
-const markup = Number(localStorage.getItem('RHF_MARKUP')||0);
-const finalPrice = order.product.basePrice + markup;
-
-// GAME INFO
-document.getElementById('gameInfo').innerHTML = `
-  <h2>${order.game.name}</h2>
-  <div class="row"><span>Paket</span><b>${order.product.name}</b></div>
-`;
-
-// ACCOUNT INFO
-let accountHTML = `<h2>Data Akun</h2>`;
-Object.entries(order.account).forEach(([k,v])=>{
-  accountHTML += `<div class="row"><span>${k}</span><b>${v}</b></div>`;
-});
-document.getElementById('accountInfo').innerHTML = accountHTML;
-
-// PRICE INFO
-document.getElementById('priceInfo').innerHTML = `
-  <h2>Ringkasan Harga</h2>
-  <div class="row"><span>Harga Paket</span><span>Rp ${order.product.basePrice.toLocaleString()}</span></div>
-  <div class="row"><span>Biaya Admin</span><span>Rp ${markup.toLocaleString()}</span></div>
-  <hr style="border:1px solid #1e293b">
-  <div class="row total"><span>Total</span><span>Rp ${finalPrice.toLocaleString()}</span></div>
-`;
-
-function confirmOrder(){
-  const orders = JSON.parse(localStorage.getItem('RHF_ORDERS')||'[]');
-  orders.push({
-  id: 'ORD'+Date.now(),
-  ...order,
-  payment: payment.value,
-  total: finalPrice,
-  status: 'MENUNGGU PEMBAYARAN',
-  time: new Date().toISOString()
-});
-
-// ===== TAMBAHAN AMAN (TIDAK MENGUBAH DATA ASLI) =====
-const last = orders[orders.length - 1];
-
-// Simpan nama game (string)
-last.gameName = last.game?.name || '';
-
-// Simpan nama paket (string)
-last.productName = last.product?.name || '';
-
-// Ambil nomor / id akun apa pun inputnya
-let target = '';
-if(last.account){
-  Object.values(last.account).forEach(v=>{
-    if(!target) target = v;
-  });
-}
-last.target = target;
-
-// ===== JANGAN TARUH DI BAWAH INI =====
-localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
-  localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
-  alert('Pesanan berhasil dibuat!');
-  localStorage.removeItem('RHF_CHECKOUT');
-  location.href='index.html';
-}
-  <div class="container">
-  <h1>Keranjang Belanja</h1>
-  <div id="cartItems"></div>
-  <h2>Total: <span id="totalPrice">Rp 0</span></h2>
+    <div class="summary">
+        <h2>Ringkasan Belanja</h2>
+        <div class="total-row"><span>Subtotal</span><span id="subtotal">Rp 0</span></div>
+        <div class="total-row grand-total"><span>Total</span><span id="grandTotal">Rp 0</span></div>
+        <button class="checkout-btn" onclick="alert('Fitur pembayaran segera hadir! (Integrasi Midtrans nanti)')">
+            Lanjutkan Pembayaran
+        </button>
+    </div>
 </div>
 
+<div class="empty-cart" id="emptyCart">
+    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-cart-illustration-svg-download-png-2902552.png" alt="Keranjang Kosong">
+    <h2>Keranjang belanja kamu masih kosong nih!</h2>
+    <p>Yuk cari game favoritmu dulu <a href="game.html">di sini →</a></p>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+<script src="auth.js"></script>
+
 <script>
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      db.collection('carts').doc(user.uid).onSnapshot(doc => {
-        const cartItems = document.getElementById('cartItems');
-        cartItems.innerHTML = '';
-        let total = 0;
-        if (doc.exists) {
-          const data = doc.data();
-          Object.keys(data).forEach(key => {
-            const item = data[key];
-            total += item.price * item.quantity;
-            cartItems.innerHTML += `<p>${item.title} - ${formatRupiah(item.price)}</p>`;
-          });
-        }
-        document.getElementById('totalPrice').textContent = formatRupiah(total);
-      });
+// Cek login dulu
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        alert("Login dulu ya untuk lihat keranjang!");
+        window.location.href = "index.html";
+        return;
     }
-  });
+
+    // Load keranjang real-time
+    const cartRef = db.collection("carts").doc(user.uid);
+    const cartList = document.getElementById("cartItemsList");
+    let total = 0;
+
+    cartRef.onSnapshot(doc => {
+        cartList.innerHTML = "";
+        total = 0;
+
+        if (!doc.exists || Object.keys(doc.data()).length === 0) {
+            document.getElementById("mainContent").style.display = "none";
+            document.getElementById("emptyCart").style.display = "block";
+            return;
+        }
+
+        document.getElementById("mainContent").style.display = "grid";
+        document.getElementById("emptyCart").style.display = "none";
+
+        const data = doc.data();
+        Object.keys(data).forEach(gameId => {
+            const item = data[gameId];
+            total += item.price;
+
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+                <img src="\( {item.image}" alt=" \){item.title}">
+                <div class="item-info">
+                    <h3>${item.title}</h3>
+                    <p>Kategori: ${item.category || "Game"}</p>
+                </div>
+                <div class="item-price">Rp ${item.price.toLocaleString("id-ID")}</div>
+                <button class="remove-btn" onclick="removeFromCart('${gameId}')">Hapus</button>
+            `;
+            cartList.appendChild(div);
+        });
+
+        document.getElementById("subtotal").textContent = "Rp " + total.toLocaleString("id-ID");
+        document.getElementById("grandTotal").textContent = "Rp " + total.toLocaleString("id-ID");
+    });
+});
+
+// Hapus dari keranjang
+function removeFromCart(gameId) {
+    const user = auth.currentUser;
+    if (user && confirm("Hapus game ini dari keranjang?")) {
+        db.collection("carts").doc(user.uid).update({
+            [gameId]: firebase.firestore.FieldValue.delete()
+        });
+    }
+}
 </script>
-</script></body>
+
+</body>
 </html>
