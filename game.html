@@ -1,64 +1,81 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Daftar Game – RHF GAMES</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
-    header{padding:16px;font-size:20px;font-weight:bold;background:#020617}
-    .container{padding:16px;max-width:1200px;margin:auto}
-    .search{margin-bottom:16px}
-    .search input{width:100%;padding:12px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e5e7eb}
-    .category{margin:24px 0 12px;font-size:18px;font-weight:bold}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
-    .card{background:#020617;border:1px solid #1e293b;border-radius:18px;padding:14px;text-align:center;cursor:pointer;transition:.2s}
-    .card:hover{transform:translateY(-4px);border-color:#22c55e}
-    .card img{width:72px;height:72px;border-radius:16px;margin-bottom:8px}
-    .card b{display:block}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Game - RHF GAMES</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #f8f8f8; font-family: Arial, sans-serif; margin: 0; padding-top: 80px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .search-bar { text-align: center; margin-bottom: 40px; }
+        .search-bar input { width: 80%; max-width: 600px; padding: 20px; font-size: 20px; border: 1px solid #ddd; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px; }
+        .game-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; text-align: center; padding: 20px; }
+        .game-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(255,87,34,0.2); border: 2px solid #ff5722; }
+        .game-card img { width: 100%; height: 150px; object-fit: contain; margin-bottom: 15px; }
+        .game-card h3 { font-size: 18px; color: #333; margin: 0; }
+        
+        .loading { text-align: center; padding: 100px; font-size: 24px; color: #ff5722; }
+    </style>
 </head>
 <body>
-<header>🎮 Daftar Produk – RHF GAMES</header>
+
 <div class="container">
-  <div class="search">
-    <input id="search" placeholder="Cari game atau produk..." oninput="render()" />
-  </div>
-  <div id="gameContainer"></div>
-</div><script>
-const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
+    <h1 style="text-align:center; color:#ff5722; font-size:36px; margin-bottom:20px;">Pilih Game Favoritmu</h1>
+    
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Cari game... (ex: Mobile Legends, Free Fire)">
+    </div>
 
-function render(){
-  const q = search.value.toLowerCase();
-  const wrap = document.getElementById('gameContainer');
-  wrap.innerHTML='';
+    <div class="games-grid" id="gamesGrid">
+        <div class="loading">Loading game populer...</div>
+    </div>
+</div>
 
-  const categories = {};
-  games.forEach(g=>{
-    if(q && !g.name.toLowerCase().includes(q)) return;
-    if(!categories[g.category]) categories[g.category]=[];
-    categories[g.category].push(g);
-  });
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  Object.keys(categories).forEach(cat=>{
-    const h=document.createElement('div');
-    h.className='category';
-    h.textContent=cat;
-    wrap.appendChild(h);
+<script src="firebase.js"></script>
+<script src="auth.js"></script>
 
-    const grid=document.createElement('div');
-    grid.className='grid';
+<script>
+// Load semua game real-time
+const gamesRef = db.collection("games").orderBy("title");
+const grid = document.getElementById("gamesGrid");
 
-    categories[cat].forEach(g=>{
-      const c=document.createElement('div');
-      c.className='card';
-      c.innerHTML=`<img src="${g.logo}"><b>${g.name}</b>`;
-      c.onclick=()=>location.href=`game-detail.html?id=${g.id}`;
-      grid.appendChild(c);
+gamesRef.onSnapshot(snapshot => {
+    grid.innerHTML = "";
+    if (snapshot.empty) {
+        grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:100px; color:#999;'>Belum ada game. Tambah dari Admin Panel!</div>";
+        return;
+    }
+
+    snapshot.forEach(doc => {
+        const game = doc.data();
+        const div = document.createElement("div");
+        div.className = "game-card";
+        div.innerHTML = `
+            <img src="\( {game.image || 'https://via.placeholder.com/200?text=' + game.title}" alt=" \){game.title}">
+            <h3>${game.title}</h3>
+        `;
+        div.onclick = () => location.href = `game-detail.html?id=${doc.id}`;
+        grid.appendChild(div);
     });
-    wrap.appendChild(grid);
-  });
-}
-render();
-</script></body>
+});
+
+// Search real-time
+document.getElementById("searchInput").addEventListener("input", e => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll(".game-card").forEach(card => {
+        const title = card.querySelector("h3").textContent.toLowerCase();
+        card.style.display = title.includes(query) ? "block" : "none";
+    });
+});
+</script>
+
+</body>
 </html>
