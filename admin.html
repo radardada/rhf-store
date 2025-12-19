@@ -16,6 +16,12 @@
     .list-item{display:flex;gap:8px;align-items:center}
     .list-item img{width:40px;height:40px;border-radius:8px}
     .list-item b{flex:1}
+
+    /* ===== TAMBAHAN ===== */
+    .status-pending{color:#facc15;font-weight:bold}
+    .status-sukses{color:#22c55e;font-weight:bold}
+    .status-gagal{color:#ef4444;font-weight:bold}
+    .order-actions button{width:auto;margin-right:6px}
   </style>
 </head>
 <body>
@@ -47,11 +53,20 @@
     <input id="markup" type="number" placeholder="Markup (contoh 1000)" />
     <button onclick="saveMarkup()">Simpan Markup</button>
   </aside>
+
   <main>
     <h2>Daftar Game</h2>
     <div id="gameList"></div>
+
+    <!-- ===== TAMBAHAN ===== -->
+    <hr>
+    <h2>Order Masuk</h2>
+    <div id="orderList"></div>
   </main>
-</div><script>
+</div>
+
+<script>
+/* ===================== KODE ASLI KAMU (TIDAK DIUBAH) ===================== */
 const PASS = 'admin123';
 if(!localStorage.getItem('RHF_ADMIN')){
   const p = prompt('Password Admin');
@@ -101,5 +116,46 @@ function render(){
   })
 }
 render();
-</script></body>
+
+/* ===================== TAMBAHAN: SISTEM ORDER ===================== */
+let orders = JSON.parse(localStorage.getItem('RHF_ORDERS') || '[]');
+
+function renderOrders(){
+  orderList.innerHTML = '';
+  if(orders.length===0){
+    orderList.innerHTML = '<p>Belum ada order masuk.</p>';
+    return;
+  }
+  orders.sort((a,b)=>b.time-a.time).forEach(o=>{
+    const d = document.createElement('div');
+    d.className = 'card';
+    d.innerHTML = `
+      <b>ID Order:</b> ${o.id}<br>
+      <b>Game:</b> ${o.gameId}<br>
+      <b>Paket:</b> ${o.product}<br>
+      <b>Nomor:</b> ${o.phone}<br>
+      <b>Total:</b> Rp ${o.total.toLocaleString()}<br>
+      <b>Status:</b>
+      <span class="status-${o.status}">${o.status}</span>
+      <div class="order-actions">
+        <button onclick="setStatus('${o.id}','sukses')">✔ Sukses</button>
+        <button class="danger" onclick="setStatus('${o.id}','gagal')">✖ Gagal</button>
+      </div>
+    `;
+    orderList.appendChild(d);
+  });
+}
+
+function setStatus(id,status){
+  const i = orders.findIndex(o=>o.id===id);
+  if(i>-1){
+    orders[i].status = status;
+    localStorage.setItem('RHF_ORDERS', JSON.stringify(orders));
+    renderOrders();
+  }
+}
+
+renderOrders();
+</script>
+</body>
 </html>
