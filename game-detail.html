@@ -1,133 +1,163 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Detail Game – RHF GAMES</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
-    .container{max-width:900px;margin:auto;padding:16px}
-    .header{display:flex;gap:16px;align-items:center}
-    .header img{width:80px;height:80px;border-radius:16px}
-    .card{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-top:16px}
-    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-    .product{border:1px solid #334155;border-radius:14px;padding:12px;text-align:center;cursor:pointer}
-    .product.active{border-color:#22c55e;background:#022c22}
-    .inputs input{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#020617;color:#e5e7eb;margin-top:8px}
-    button{margin-top:16px;width:100%;padding:14px;border:none;border-radius:14px;background:#22c55e;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
-    .price{margin-top:6px;font-weight:bold;color:#22c55e}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Up - RHF GAMES</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f8f8f8; }
+        .container { max-width: 960px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .banner { background: #ff5722; padding: 40px 20px; text-align: center; color: white; }
+        .banner img { max-width: 100%; border-radius: 12px; }
+        .banner h1 { font-size: 32px; margin: 20px 0 0; }
+        
+        .content { padding: 40px 30px; }
+        .step { margin-bottom: 60px; }
+        .step-number { background: #ff5722; color: white; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin-right: 15px; }
+        .step-title { font-size: 28px; display: inline-block; vertical-align: middle; }
+        
+        .input-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+        .input-group { }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 8px; }
+        .help-text { font-size: 14px; color: #666; margin-top: 10px; }
+        
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-top: 30px; }
+        .option { border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; position: relative; }
+        .option:hover { border-color: #ff5722; }
+        .option.selected { border-color: #ff5722; background: #fff3e0; box-shadow: 0 0 20px rgba(255,87,34,0.3); }
+        .option.bonus::after { content: "BONUS"; background: #4caf50; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; position: absolute; top: -10px; right: 10px; }
+        .amount { font-size: 24px; font-weight: bold; }
+        .price { font-size: 28px; color: #ff5722; font-weight: bold; margin-top: 10px; }
+        
+        .proceed-btn { background: #ff5722; color: white; border: none; padding: 20px; font-size: 24px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 40px; }
+        .proceed-btn:hover { background: #e64a19; }
+        .proceed-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
 </head>
 <body>
+
 <div class="container">
-  <div class="header">
-    <img id="gameLogo" />
-    <div>
-      <h1 id="gameName"></h1>
-      <p id="gameCategory" style="color:#94a3b8"></p>
+    <div class="banner">
+        <img id="bannerImg" src="" alt="Banner">
+        <h1 id="pageTitle">Top Up Game</h1>
     </div>
-  </div>  <div class="card">
-    <h2>Pilih Paket</h2>
-    <div class="products" id="productList"></div>
-  </div>  <div class="card">
-    <h2>Masukkan Data Akun</h2>
-    <div class="inputs" id="accountInputs"></div>
-  </div><button onclick="goCheckout()">Lanjut ke Checkout</button>
 
-</div><script>
-const params = new URLSearchParams(location.search);
-const gameId = params.get('id');
-const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
-const game = games.find(g=>g.id===gameId);
-if(!game){alert('Game tidak ditemukan');location.href='index.html'}
+    <div class="content">
+        <div class="step">
+            <span class="step-number">1</span>
+            <span class="step-title">Masukkan Data Akun</span>
+            <div id="inputFields"></div>
+            <p class="help-text" id="helpText">Cara menemukan ID: Buka game → klik avatar → lihat di profil.</p>
+        </div>
 
-const markup = Number(localStorage.getItem('RHF_MARKUP')||0);
-let selectedProduct = null;
+        <div class="step">
+            <span class="step-number">2</span>
+            <span class="step-title">Pilih Nominal</span>
+            <div class="options-grid" id="optionsGrid"></div>
+        </div>
 
-// SET HEADER
-gameLogo.src = game.logo;
-gameName.textContent = game.name;
-gameCategory.textContent = game.category;
+        <button class="proceed-btn" id="proceedBtn" disabled>Lanjut ke Pembayaran</button>
+    </div>
+</div>
 
-// PRODUCTS
-game.products.forEach((p,i)=>{
-  const d=document.createElement('div');
-  d.className='product';
-  d.innerHTML=`<b>${p.name}</b><div class='price'>Rp ${(p.basePrice+markup).toLocaleString()}</div>`;
-  d.onclick=()=>{
-    document.querySelectorAll('.product').forEach(x=>x.classList.remove('active'));
-    d.classList.add('active');
-    selectedProduct=p;
-  };
-  productList.appendChild(d);
-});
-
-// INPUT SCHEMA
-const inputs = document.getElementById('accountInputs');
-let schema = game.inputSchema;
-
-function addInput(label,key,placeholder){
-  const i=document.createElement('input');
-  i.placeholder=placeholder;
-  i.dataset.key=key;
-  inputs.appendChild(i);
-}
-
-switch(schema){
-  case 'id_server':
-    addInput('ID','id','Masukkan User ID');
-    addInput('Server','server','Masukkan Server');
-    break;
-  case 'id':
-    addInput('ID','id','Masukkan User ID');
-    break;
-  case 'username':
-    addInput('Username','username','Masukkan Username');
-    break;
-  case 'phone':
-    addInput('Nomor HP','phone','08xxxxxxxx');
-    break;
-  case 'email':
-    addInput('Email','email','email@example.com');
-    break;
-}
-
-function goCheckout(){
-  if(!selectedProduct)return alert('Pilih paket dulu');
-  const account={};
-  document.querySelectorAll('#accountInputs input').forEach(i=>{
-    if(!i.value)return alert('Lengkapi data akun');
-    account[i.dataset.key]=i.value;
-  });
-  localStorage.setItem('RHF_CHECKOUT',JSON.stringify({
-    game,
-    product:selectedProduct,
-    account
-  }));
-  location.href='checkout.html';
-}
-  <!-- Copy struktur dari index, tapi tambah -->
-<section class="detail">
-  <div class="container" id="gameDetail">
-    <!-- Akan diisi JS -->
-  </div>
-</section>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="firebase.js"></script>
+<script src="auth.js"></script>
 
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const gameId = urlParams.get('id');
-  db.collection('games').doc(gameId).get().then(doc => {
-    if (doc.exists) {
-      const game = doc.data();
-      document.getElementById('gameDetail').innerHTML = `
-        <img src="${game.image}" style="width:100%; max-height:400px; object-fit:cover;">
-        <h1>${game.title}</h1>
-        <p>${game.desc}</p>
-        <h2>${formatRupiah(game.price)}</h2>
-        <button class="btn-primary" onclick="addToCart('${gameId}', ${JSON.stringify(game)})">Tambah ke Keranjang</button>
-      `;
-    }
-  });
+const urlParams = new URLSearchParams(window.location.search);
+const gameId = urlParams.get('id');
+
+let selectedOption = null;
+let inputValues = {};
+
+if (!gameId) {
+    document.body.innerHTML = "<h1 style='text-align:center;padding:100px;'>Game tidak ditemukan!</h1>";
+} else {
+    db.collection("games").doc(gameId).get().then(doc => {
+        if (!doc.exists) {
+            alert("Game tidak ditemukan!");
+            return;
+        }
+        const game = doc.data();
+        
+        document.getElementById('bannerImg').src = game.image || "https://via.placeholder.com/900x300?text=Banner+Game";
+        document.getElementById('pageTitle').textContent = "Top Up " + game.title;
+        document.getElementById('helpText').textContent = game.helpText || "Cara menemukan ID: Buka game → klik avatar → lihat di profil.";
+
+        // Render input fields (fleksibel dari admin)
+        const inputContainer = document.getElementById('inputFields');
+        (game.inputFields || [{label: "User ID", placeholder: "Masukkan ID"}]).forEach(field => {
+            const div = document.createElement('div');
+            div.className = 'input-group';
+            div.innerHTML = `
+                <label>${field.label}</label>
+                <input type="text" placeholder="\( {field.placeholder}" data-key=" \){field.label}">
+            `;
+            inputContainer.appendChild(div);
+        });
+
+        // Event listener untuk simpan nilai input
+        inputContainer.addEventListener('input', e => {
+            if (e.target.tagName === 'INPUT') {
+                inputValues[e.target.dataset.key] = e.target.value;
+            }
+            checkProceedButton();
+        });
+
+        // Render recharge options
+        const grid = document.getElementById('optionsGrid');
+        (game.rechargeOptions || []).forEach(opt => {
+            const div = document.createElement('div');
+            div.className = `option ${opt.bonus ? 'bonus' : ''}`;
+            div.innerHTML = `
+                <div class="amount">${opt.amount}</div>
+                <div class="price">Rp ${opt.price.toLocaleString("id-ID")}</div>
+            `;
+            div.onclick = () => {
+                document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedOption = opt;
+                checkProceedButton();
+            };
+            grid.appendChild(div);
+        });
+    });
+}
+
+function checkProceedButton() {
+    const inputsFilled = Object.values(inputValues).every(v => v.trim() !== '');
+    document.getElementById('proceedBtn').disabled = !(inputsFilled && selectedOption);
+}
+
+document.getElementById('proceedBtn').onclick = () => {
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            alert("Login dulu untuk top up!");
+            return;
+        }
+
+        // Simpan order (bisa ke collection orders)
+        db.collection("orders").add({
+            userUid: user.uid,
+            gameId: gameId,
+            inputs: inputValues,
+            option: selectedOption,
+            totalPrice: selectedOption.price,
+            status: "pending",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("Order berhasil! Silakan lanjut pembayaran.");
+            window.location.href = "checkout.html";
+        });
+    });
+};
 </script>
-</script></body>
+
+</body>
 </html>
