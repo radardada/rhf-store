@@ -1,21 +1,105 @@
-const gamesRef = db.collection('games');
-const grid = document.getElementById('gamesGrid');
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHF GAMES - Top Up Game Termurah & Terpercaya</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: #f4f6f9; color: #333; }
+        header { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 28px; font-weight: bold; color: #007bff; }
+        .user-actions { display: flex; align-items: center; gap: 15px; }
+        .user-actions button { background: none; border: 1px solid #007bff; color: #007bff; padding: 8px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; }
+        .user-actions button:hover { background: #007bff; color: white; }
+        
+        .hero { background: linear-gradient(135deg, #007bff, #0056b3); color: white; text-align: center; padding: 80px 20px; }
+        .hero h1 { font-size: 48px; margin-bottom: 20px; }
+        .hero p { font-size: 24px; margin-bottom: 40px; opacity: 0.9; }
+        .search-bar { max-width: 700px; margin: 0 auto; position: relative; }
+        .search-bar input { width: 100%; padding: 20px 60px 20px 20px; font-size: 20px; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .search-bar button { position: absolute; right: 10px; top: 10px; background: #007bff; color: white; border: none; padding: 15px; border-radius: 50%; cursor: pointer; }
+        
+        .container { max-width: 1200px; margin: 60px auto; padding: 20px; }
+        .section-title { text-align: center; font-size: 36px; color: #007bff; margin-bottom: 50px; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
+        .game-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); text-align: center; padding: 30px 20px; transition: 0.3s; cursor: pointer; }
+        .game-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,123,255,0.2); }
+        .game-card img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 20px; }
+        .game-card h3 { font-size: 20px; margin: 0; color: #333; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">RHF GAMES</div>
+    <div class="user-actions">
+        <div id="userDisplay" style="display:none; color:#007bff; font-weight:bold;"></div>
+        <button id="loginBtn">Login Google</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+        <a href="admin.html" id="adminLink" style="display:none; color:#007bff; text-decoration:none; font-weight:bold;">Admin</a>
+    </div>
+</header>
+
+<div class="hero">
+    <h1>Top Up Game Favoritmu</h1>
+    <p>Termurah, Cepat, dan Aman 100%</p>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Cari game... (Mobile Legends, Free Fire, Genshin Impact)">
+        <button>🔍</button>
+    </div>
+</div>
+
+<div class="container">
+    <h2 class="section-title">Game Populer</h2>
+    <div class="games-grid" id="gamesGrid">
+        <div style="grid-column:1/-1; text-align:center; padding:80px; color:#999; font-size:24px;">Loading game populer...</div>
+    </div>
+</div>
+
+<!-- Firebase API (sudah full terintegrasi) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+<script src="auth.js"></script>
+
+<script>
+// Load game real-time dari Firestore
+const gamesRef = db.collection("games").orderBy("title");
+const grid = document.getElementById("gamesGrid");
 
 gamesRef.onSnapshot(snapshot => {
-  grid.innerHTML = '';
-  snapshot.forEach(doc => {
-    const game = doc.data();
-    const card = document.createElement('div');
-    card.className = 'game-card';
-    card.innerHTML = `
-      <img src="\( {game.image}" alt=" \){game.title}">
-      <div class="game-info">
-        <h3>${game.title}</h3>
-        <div class="rating">★★★★☆</div>
-        <div class="price">${formatRupiah(game.price)}</div>
-      </div>
-    `;
-    card.onclick = () => location.href = `game-detail.html?id=${doc.id}`;
-    grid.appendChild(card);
-  });
+    grid.innerHTML = "";
+    if (snapshot.empty) {
+        grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:100px; color:#999;'>Belum ada game tersedia. Tambah dari panel admin!</div>";
+        return;
+    }
+
+    snapshot.forEach(doc => {
+        const game = doc.data();
+        const div = document.createElement("div");
+        div.className = "game-card";
+        div.innerHTML = `
+            <img src="\( {game.image || 'https://via.placeholder.com/150?text=' + game.title}" alt=" \){game.title}">
+            <h3>${game.title}</h3>
+        `;
+        div.onclick = () => location.href = `game-detail.html?id=${doc.id}`;
+        grid.appendChild(div);
+    });
 });
+
+// Search filter client-side
+document.getElementById("searchInput").addEventListener("input", e => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll(".game-card").forEach(card => {
+        const title = card.querySelector("h3").textContent.toLowerCase();
+        card.style.display = title.includes(query) ? "block" : "none";
+    });
+});
+</script>
+
+</body>
+</html>
