@@ -1,125 +1,67 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>RHF GAMES - Top Up Game & Produk Digital</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="style.css">
-  <script src="utils.js"></script>
-
+  <meta charset="UTF-8" />
+  <title>RHF GAMES – Top Up Game & Produk Digital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
   <style>
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #0b1220, #05080f);
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
-
-    header {
-      padding: 20px;
-      background: linear-gradient(90deg, #0f172a, #020617);
-      border-bottom: 1px solid #1e293b;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    header p {
-      margin: 5px 0 0;
-      color: #94a3b8;
-      font-size: 14px;
-    }
-
-    .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 15px;
-    }
-
-    .product-card {
-      background: #0f172a;
-      border-radius: 14px;
-      padding: 15px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 1px solid #1e293b;
-    }
-
-    .product-card:hover {
-      transform: translateY(-4px);
-      border-color: #38bdf8;
-    }
-
-    .product-card h4 {
-      margin: 0 0 10px;
-      font-size: 15px;
-    }
-
-    .product-card p {
-      margin: 0;
-      font-weight: bold;
-      color: #22d3ee;
-      font-size: 14px;
-    }
-
-    .empty {
-      color: #64748b;
-      text-align: center;
-      margin-top: 40px;
-    }
+    body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
+    header{background:#020617;padding:16px;display:flex;align-items:center;gap:12px}
+    header img{height:36px}
+    header b{font-size:20px}
+    .search{padding:16px;background:#020617}
+    .search input{width:100%;padding:14px;border-radius:14px;border:1px solid #334155;background:#020617;color:#e5e7eb}
+    .container{max-width:1200px;margin:auto;padding:16px}
+    .section{margin-bottom:32px}
+    .section h2{margin:0 0 12px;font-size:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px}
+    .card{background:#020617;border:1px solid #1e293b;border-radius:20px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
+    .card:hover{transform:translateY(-4px);border-color:#22c55e}
+    .card img{width:72px;height:72px;border-radius:16px;margin-bottom:8px}
+    .card b{display:block;font-size:14px}
   </style>
 </head>
-
 <body>
-
 <header>
-  <h1>RHF GAMES</h1>
-  <p>Top Up Game, E-Wallet & Produk Digital</p>
-</header>
+  <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" />
+  <b>RHF GAMES</b>
+</header><div class="search">
+  <input id="search" placeholder="Cari game, voucher, e-wallet..." oninput="render()" />
+</div><div class="container" id="content"></div><script>
+const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
 
-<div class="container">
-  <div id="product-list" class="product-grid"></div>
-</div>
+function render(){
+  const q = search.value.toLowerCase();
+  const wrap = document.getElementById('content');
+  wrap.innerHTML='';
 
-<script>
-document.addEventListener("DOMContentLoaded", loadHomeProducts);
+  const categories = {};
+  games.forEach(g=>{
+    if(q && !g.name.toLowerCase().includes(q)) return;
+    if(!categories[g.category]) categories[g.category]=[];
+    categories[g.category].push(g);
+  });
 
-function loadHomeProducts() {
-  const container = document.getElementById("product-list");
-  const products = JSON.parse(localStorage.getItem("rhf_products")) || [];
+  Object.keys(categories).forEach(cat=>{
+    const sec=document.createElement('div');
+    sec.className='section';
+    sec.innerHTML=`<h2>${cat}</h2>`;
 
-  if (products.length === 0) {
-    container.innerHTML = "<div class='empty'>Belum ada produk tersedia</div>";
-    return;
-  }
+    const grid=document.createElement('div');
+    grid.className='grid';
 
-  container.innerHTML = "";
+    categories[cat].forEach(g=>{
+      const c=document.createElement('div');
+      c.className='card';
+      c.innerHTML=`<img src="${g.logo}"><b>${g.name}</b>`;
+      c.onclick=()=>location.href=`game-detail.html?id=${g.id}`;
+      grid.appendChild(c);
+    });
 
-  products.forEach(p => {
-    const price = RHF_UTILS.getSellPrice(p.basePrice);
-
-    container.innerHTML += `
-      <div class="product-card" onclick="openDetail(${p.id})">
-        <h4>${p.name}</h4>
-        <p>${RHF_UTILS.formatRupiah(price)}</p>
-      </div>
-    `;
+    sec.appendChild(grid);
+    wrap.appendChild(sec);
   });
 }
-
-function openDetail(id) {
-  window.location.href = "game-detail.html?id=" + id;
-}
-</script>
-
-</body>
+render();
+</script></body>
 </html>
