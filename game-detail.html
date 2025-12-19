@@ -106,5 +106,28 @@ function goCheckout(){
   }));
   location.href='checkout.html';
 }
+  <!-- Copy struktur dari index, tapi tambah -->
+<section class="detail">
+  <div class="container" id="gameDetail">
+    <!-- Akan diisi JS -->
+  </div>
+</section>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameId = urlParams.get('id');
+  db.collection('games').doc(gameId).get().then(doc => {
+    if (doc.exists) {
+      const game = doc.data();
+      document.getElementById('gameDetail').innerHTML = `
+        <img src="${game.image}" style="width:100%; max-height:400px; object-fit:cover;">
+        <h1>${game.title}</h1>
+        <p>${game.desc}</p>
+        <h2>${formatRupiah(game.price)}</h2>
+        <button class="btn-primary" onclick="addToCart('${gameId}', ${JSON.stringify(game)})">Tambah ke Keranjang</button>
+      `;
+    }
+  });
+</script>
 </script></body>
 </html>
