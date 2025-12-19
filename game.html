@@ -1,1 +1,64 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daftar Game – RHF GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body{background:#0f172a;color:#e5e7eb;font-family:Arial;margin:0}
+    header{padding:16px;font-size:20px;font-weight:bold;background:#020617}
+    .container{padding:16px;max-width:1200px;margin:auto}
+    .search{margin-bottom:16px}
+    .search input{width:100%;padding:12px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e5e7eb}
+    .category{margin:24px 0 12px;font-size:18px;font-weight:bold}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+    .card{background:#020617;border:1px solid #1e293b;border-radius:18px;padding:14px;text-align:center;cursor:pointer;transition:.2s}
+    .card:hover{transform:translateY(-4px);border-color:#22c55e}
+    .card img{width:72px;height:72px;border-radius:16px;margin-bottom:8px}
+    .card b{display:block}
+  </style>
+</head>
+<body>
+<header>🎮 Daftar Produk – RHF GAMES</header>
+<div class="container">
+  <div class="search">
+    <input id="search" placeholder="Cari game atau produk..." oninput="render()" />
+  </div>
+  <div id="gameContainer"></div>
+</div><script>
+const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
 
+function render(){
+  const q = search.value.toLowerCase();
+  const wrap = document.getElementById('gameContainer');
+  wrap.innerHTML='';
+
+  const categories = {};
+  games.forEach(g=>{
+    if(q && !g.name.toLowerCase().includes(q)) return;
+    if(!categories[g.category]) categories[g.category]=[];
+    categories[g.category].push(g);
+  });
+
+  Object.keys(categories).forEach(cat=>{
+    const h=document.createElement('div');
+    h.className='category';
+    h.textContent=cat;
+    wrap.appendChild(h);
+
+    const grid=document.createElement('div');
+    grid.className='grid';
+
+    categories[cat].forEach(g=>{
+      const c=document.createElement('div');
+      c.className='card';
+      c.innerHTML=`<img src="${g.logo}"><b>${g.name}</b>`;
+      c.onclick=()=>location.href=`game-detail.html?id=${g.id}`;
+      grid.appendChild(c);
+    });
+    wrap.appendChild(grid);
+  });
+}
+render();
+</script></body>
+</html>
