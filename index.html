@@ -1,67 +1,73 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>RHF GAMES – Top Up Game & Produk Digital</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
-    header{background:#020617;padding:16px;display:flex;align-items:center;gap:12px}
-    header img{height:36px}
-    header b{font-size:20px}
-    .search{padding:16px;background:#020617}
-    .search input{width:100%;padding:14px;border-radius:14px;border:1px solid #334155;background:#020617;color:#e5e7eb}
-    .container{max-width:1200px;margin:auto;padding:16px}
-    .section{margin-bottom:32px}
-    .section h2{margin:0 0 12px;font-size:20px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px}
-    .card{background:#020617;border:1px solid #1e293b;border-radius:20px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
-    .card:hover{transform:translateY(-4px);border-color:#22c55e}
-    .card img{width:72px;height:72px;border-radius:16px;margin-bottom:8px}
-    .card b{display:block;font-size:14px}
-  </style>
+<meta charset="UTF-8">
+<title>RHF GAMES</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
+header{padding:16px;background:#020617;font-size:20px;font-weight:bold;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:16px}
+.card{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:12px;text-align:center;cursor:pointer}
+.card img{width:64px;height:64px;border-radius:12px;margin-bottom:8px}
+.card b{display:block}
+.empty{text-align:center;padding:40px;color:#94a3b8}
+</style>
 </head>
+
 <body>
-<header>
-  <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" />
-  <b>RHF GAMES</b>
-</header><div class="search">
-  <input id="search" placeholder="Cari game, voucher, e-wallet..." oninput="render()" />
-</div><div class="container" id="content"></div><script>
-const games = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
+<header>🎮 RHF GAMES STORE</header>
 
-function render(){
-  const q = search.value.toLowerCase();
-  const wrap = document.getElementById('content');
-  wrap.innerHTML='';
+<div id="gameGrid" class="grid"></div>
+<div id="empty" class="empty" style="display:none">
+Belum ada game tersedia
+</div>
 
-  const categories = {};
-  games.forEach(g=>{
-    if(q && !g.name.toLowerCase().includes(q)) return;
-    if(!categories[g.category]) categories[g.category]=[];
-    categories[g.category].push(g);
+<!-- ============ FIREBASE ============ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const grid = document.getElementById('gameGrid');
+const empty = document.getElementById('empty');
+
+/* ===== LOAD GAME REALTIME ===== */
+onValue(ref(db,'games'), snap=>{
+  grid.innerHTML='';
+  if(!snap.exists()){
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  snap.forEach(s=>{
+    const g = s.val();
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <img src="${g.logo}">
+      <b>${g.name}</b>
+      <small>${g.category}</small>
+    `;
+    card.onclick=()=>{
+      location.href = `game.html?id=${g.id}`;
+    };
+    grid.appendChild(card);
   });
-
-  Object.keys(categories).forEach(cat=>{
-    const sec=document.createElement('div');
-    sec.className='section';
-    sec.innerHTML=`<h2>${cat}</h2>`;
-
-    const grid=document.createElement('div');
-    grid.className='grid';
-
-    categories[cat].forEach(g=>{
-      const c=document.createElement('div');
-      c.className='card';
-      c.innerHTML=`<img src="${g.logo}"><b>${g.name}</b>`;
-      c.onclick=()=>location.href=`game-detail.html?id=${g.id}`;
-      grid.appendChild(c);
-    });
-
-    sec.appendChild(grid);
-    wrap.appendChild(sec);
-  });
-}
-render();
-</script></body>
+});
+</script>
+</body>
 </html>
