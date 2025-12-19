@@ -64,13 +64,34 @@ document.getElementById('priceInfo').innerHTML = `
 function confirmOrder(){
   const orders = JSON.parse(localStorage.getItem('RHF_ORDERS')||'[]');
   orders.push({
-    id: 'ORD'+Date.now(),
-    ...order,
-    payment: payment.value,
-    total: finalPrice,
-    status: 'MENUNGGU PEMBAYARAN',
-    time: new Date().toISOString()
+  id: 'ORD'+Date.now(),
+  ...order,
+  payment: payment.value,
+  total: finalPrice,
+  status: 'MENUNGGU PEMBAYARAN',
+  time: new Date().toISOString()
+});
+
+// ===== TAMBAHAN AMAN (TIDAK MENGUBAH DATA ASLI) =====
+const last = orders[orders.length - 1];
+
+// Simpan nama game (string)
+last.gameName = last.game?.name || '';
+
+// Simpan nama paket (string)
+last.productName = last.product?.name || '';
+
+// Ambil nomor / id akun apa pun inputnya
+let target = '';
+if(last.account){
+  Object.values(last.account).forEach(v=>{
+    if(!target) target = v;
   });
+}
+last.target = target;
+
+// ===== JANGAN TARUH DI BAWAH INI =====
+localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
   localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
   alert('Pesanan berhasil dibuat!');
   localStorage.removeItem('RHF_CHECKOUT');
