@@ -1,72 +1,88 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>RHF GAMES Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
-    header{padding:16px;background:#020617;font-size:20px;font-weight:bold}
-    .wrap{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 56px)}
-    aside{border-right:1px solid #1e293b;padding:16px;overflow:auto}
-    main{padding:16px;overflow:auto}
-    input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #334155;background:#020617;color:#e5e7eb}
-    button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
-    button.danger{background:#ef4444;color:#fff}
-    .card{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:12px;margin-bottom:12px}
-    .list-item{display:flex;gap:8px;align-items:center}
-    .list-item img{width:40px;height:40px;border-radius:8px}
-    .list-item b{flex:1}
-
-    /* ===== TAMBAHAN ===== */
-    .status-pending{color:#facc15;font-weight:bold}
-    .status-sukses{color:#22c55e;font-weight:bold}
-    .status-gagal{color:#ef4444;font-weight:bold}
-    .order-actions button{width:auto;margin-right:6px}
-  </style>
+<meta charset="UTF-8" />
+<title>RHF GAMES Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:#e5e7eb}
+header{padding:16px;background:#020617;font-size:20px;font-weight:bold}
+.wrap{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 56px)}
+aside{border-right:1px solid #1e293b;padding:16px;overflow:auto}
+main{padding:16px;overflow:auto}
+input,select,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #334155;background:#020617;color:#e5e7eb}
+button{background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+button.danger{background:#ef4444;color:#fff}
+.card{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:12px;margin-bottom:12px}
+.list-item{display:flex;gap:8px;align-items:center}
+.list-item img{width:40px;height:40px;border-radius:8px}
+.list-item b{flex:1}
+.status-pending{color:#facc15;font-weight:bold}
+.status-sukses{color:#22c55e;font-weight:bold}
+.status-gagal{color:#ef4444;font-weight:bold}
+.order-actions button{width:auto;margin-right:6px}
+</style>
 </head>
+
 <body>
 <header>RHF GAMES – ADMIN PANEL</header>
+
 <div class="wrap">
-  <aside>
-    <h3>Tambah / Edit Game</h3>
-    <input id="gid" placeholder="ID game (mobile-legends)" />
-    <input id="gname" placeholder="Nama Game" />
-    <input id="glogo" placeholder="Logo URL (https://)" />
-    <select id="gcategory">
-      <option>MOBA</option><option>RPG</option><option>CASUAL</option><option>PC</option><option>APK</option><option>EWALLET</option><option>PULSA</option><option>LAINNYA</option>
-    </select>
-    <select id="ginput">
-      <option value="id_server">ID + Server</option>
-      <option value="id">ID Saja</option>
-      <option value="username">Username</option>
-      <option value="phone">Nomor HP</option>
-      <option value="email">Email</option>
-    </select>
-    <button onclick="saveGame()">Simpan Game</button>
-    <hr>
-    <h3>Tambah Produk</h3>
-    <input id="pname" placeholder="Nama Paket" />
-    <input id="pprice" type="number" placeholder="Harga Asli" />
-    <button onclick="addProduct()">Tambah Paket</button>
-    <hr>
-    <h3>Markup Harga</h3>
-    <input id="markup" type="number" placeholder="Markup (contoh 1000)" />
-    <button onclick="saveMarkup()">Simpan Markup</button>
-  </aside>
+<aside>
+<h3>Tambah / Edit Game</h3>
+<input id="gid" placeholder="ID game" />
+<input id="gname" placeholder="Nama Game" />
+<input id="glogo" placeholder="Logo URL" />
+<select id="gcategory">
+<option>MOBA</option><option>RPG</option><option>CASUAL</option>
+<option>PC</option><option>APK</option><option>EWALLET</option>
+<option>PULSA</option><option>LAINNYA</option>
+</select>
+<select id="ginput">
+<option value="id_server">ID + Server</option>
+<option value="id">ID</option>
+<option value="username">Username</option>
+<option value="phone">Nomor HP</option>
+<option value="email">Email</option>
+</select>
+<button onclick="saveGame()">Simpan Game</button>
 
-  <main>
-    <h2>Daftar Game</h2>
-    <div id="gameList"></div>
+<hr>
+<h3>Tambah Produk</h3>
+<input id="pname" placeholder="Nama Paket" />
+<input id="pprice" type="number" placeholder="Harga" />
+<button onclick="addProduct()">Tambah Paket</button>
+</aside>
 
-    <!-- ===== TAMBAHAN ===== -->
-    <hr>
-    <h2>Order Masuk</h2>
-    <div id="orderList"></div>
-  </main>
+<main>
+<h2>Daftar Game</h2>
+<div id="gameList"></div>
+
+<hr>
+<h2>Order Masuk</h2>
+<div id="orderList"></div>
+</main>
 </div>
 
-<script>
-/* ===================== KODE ASLI KAMU (TIDAK DIUBAH) ===================== */
+<!-- ================= FIREBASE ================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+  authDomain: "rhf-gamestore.firebaseapp.com",
+  databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rhf-gamestore",
+  storageBucket: "rhf-gamestore.firebasestorage.app",
+  messagingSenderId: "52065906934",
+  appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ====== AUTH ====== */
 const PASS = 'admin123';
 if(!localStorage.getItem('RHF_ADMIN')){
   const p = prompt('Password Admin');
@@ -74,88 +90,62 @@ if(!localStorage.getItem('RHF_ADMIN')){
   localStorage.setItem('RHF_ADMIN','1');
 }
 
-let data = JSON.parse(localStorage.getItem('RHF_GAMES')||'[]');
+/* ====== GAME SYSTEM ====== */
 let selected = null;
 
 function saveGame(){
-  const g = {
-    id:gid.value.trim(),
-    name:gname.value.trim(),
-    logo:glogo.value.trim(),
+  const id = gid.value.trim();
+  if(!id) return alert('ID kosong');
+
+  set(ref(db,'games/'+id),{
+    id,
+    name:gname.value,
+    logo:glogo.value,
     category:gcategory.value,
-    inputSchema:ginput.value,
-    products: []
-  };
-  const i = data.findIndex(x=>x.id===g.id);
-  if(i>-1){data[i]={...data[i],...g}}
-  else data.push(g);
-  persist();render();
-}
-
-function addProduct(){
-  if(!selected)return alert('Pilih game dulu');
-  selected.products.push({name:pname.value,basePrice:+pprice.value});
-  persist();render();
-}
-
-function saveMarkup(){
-  localStorage.setItem('RHF_MARKUP',markup.value);
-  alert('Markup disimpan');
-}
-
-function persist(){localStorage.setItem('RHF_GAMES',JSON.stringify(data))}
-
-function render(){
-  gameList.innerHTML='';
-  data.forEach(g=>{
-    const d=document.createElement('div');d.className='card list-item';
-    d.innerHTML=`<img src="${g.logo}"><b>${g.name}</b><button class='danger'>Hapus</button>`;
-    d.onclick=()=>{selected=g;gid.value=g.id;gname.value=g.name;glogo.value=g.logo};
-    d.querySelector('button').onclick=(e)=>{e.stopPropagation();data=data.filter(x=>x.id!==g.id);persist();render()};
-    gameList.appendChild(d);
-  })
-}
-render();
-
-/* ===================== TAMBAHAN: SISTEM ORDER ===================== */
-let orders = JSON.parse(localStorage.getItem('RHF_ORDERS') || '[]');
-
-function renderOrders(){
-  orderList.innerHTML = '';
-  if(orders.length===0){
-    orderList.innerHTML = '<p>Belum ada order masuk.</p>';
-    return;
-  }
-  orders.sort((a,b)=>b.time-a.time).forEach(o=>{
-    const d = document.createElement('div');
-    d.className = 'card';
-    d.innerHTML = `
-      <b>ID Order:</b> ${o.id}<br>
-      <b>Game:</b> ${o.gameName || '-'}<br>
-      <b>Paket:</b> ${o.productName || '-'}<br>
-      <b>Nomor:</b> ${o.target || '-'}<br>
-      <b>Total:</b> Rp ${o.total.toLocaleString()}<br>
-      <b>Status:</b>
-      <span class="status-${o.status}">${o.status}</span>
-      <div class="order-actions">
-        <button onclick="setStatus('${o.id}','sukses')">✔ Sukses</button>
-        <button class="danger" onclick="setStatus('${o.id}','gagal')">✖ Gagal</button>
-      </div>
-    `;
-    orderList.appendChild(d);
+    inputSchema:ginput.value
   });
 }
 
-function setStatus(id,status){
-  const i = orders.findIndex(o=>o.id===id);
-  if(i>-1){
-    orders[i].status = status;
-    localStorage.setItem('RHF_ORDERS', JSON.stringify(orders));
-    renderOrders();
-  }
+function addProduct(){
+  if(!selected) return alert('Pilih game dulu');
+  push(ref(db,'games/'+selected.id+'/products'),{
+    name:pname.value,
+    basePrice:+pprice.value
+  });
 }
 
-renderOrders();
+/* ====== REALTIME RENDER ====== */
+onValue(ref(db,'games'),snap=>{
+  gameList.innerHTML='';
+  snap.forEach(s=>{
+    const g=s.val();
+    const d=document.createElement('div');
+    d.className='card list-item';
+    d.innerHTML=`<img src="${g.logo}"><b>${g.name}</b>`;
+    d.onclick=()=>selected=g;
+    gameList.appendChild(d);
+  });
+});
+
+/* ====== ORDER SYSTEM ====== */
+onValue(ref(db,'orders'),snap=>{
+  orderList.innerHTML='';
+  snap.forEach(s=>{
+    const o=s.val();
+    const d=document.createElement('div');
+    d.className='card';
+    d.innerHTML=`
+    <b>ID:</b> ${o.id}<br>
+    <b>Game:</b> ${o.gameName}<br>
+    <b>Paket:</b> ${o.productName}<br>
+    <b>Total:</b> Rp ${o.total}<br>
+    <span class="status-${o.status}">${o.status}</span><br>
+    <button onclick="update(ref(db,'orders/${s.key}'),{status:'sukses'})">✔</button>
+    <button class="danger" onclick="update(ref(db,'orders/${s.key}'),{status:'gagal'})">✖</button>
+    `;
+    orderList.appendChild(d);
+  });
+});
 </script>
 </body>
 </html>
