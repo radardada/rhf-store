@@ -1,159 +1,96 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>RHF GAMES – Top Up Game Resmi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>RHF GAMES – Top Up Game Termurah</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      background:#0f172a;
-      color:#e5e7eb;
-    }
-
-    /* HEADER */
-    header{
-      background:#020617;
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      border-bottom:1px solid #1e293b;
-    }
-    header img{
-      height:36px;
-    }
-    header b{
-      font-size:18px;
-    }
-
-    /* HERO */
-    .hero{
-      padding:24px 16px;
-      text-align:center;
-    }
-    .hero h1{
-      font-size:22px;
-      margin-bottom:8px;
-    }
-    .hero p{
-      color:#94a3b8;
-      font-size:14px;
-    }
-
-    /* SEARCH */
-    .search{
-      padding:0 16px 16px;
-    }
-    .search input{
-      width:100%;
-      padding:14px;
-      border-radius:12px;
-      border:1px solid #334155;
-      background:#020617;
-      color:#fff;
-      font-size:15px;
-    }
-
-    /* GRID */
-    .games{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-      gap:14px;
-      padding:16px;
-    }
-
-    .game-card{
-      background:#020617;
-      border:1px solid #1e293b;
-      border-radius:14px;
-      padding:12px;
-      text-align:center;
-      cursor:pointer;
-      transition:0.2s;
-    }
-    .game-card:hover{
-      transform:translateY(-3px);
-      border-color:#22c55e;
-    }
-    .game-card img{
-      width:64px;
-      height:64px;
-      border-radius:12px;
-      margin-bottom:10px;
-    }
-    .game-card b{
-      font-size:14px;
-      display:block;
-    }
-
-    /* TRUST */
-    .trust{
-      padding:24px 16px;
-      background:#020617;
-      border-top:1px solid #1e293b;
-      text-align:center;
-    }
-    .trust span{
-      display:inline-block;
-      margin:6px 10px;
-      color:#22c55e;
-      font-size:14px;
-    }
-
-    footer{
-      text-align:center;
-      padding:16px;
-      font-size:13px;
-      color:#64748b;
-    }
-  </style>
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+}
+header{
+  background:#020617;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+header img{
+  height:40px;
+}
+header h1{
+  font-size:18px;
+  margin:0;
+}
+.container{
+  padding:16px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:14px;
+}
+.game-card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  transition:.2s;
+}
+.game-card:hover{
+  transform:translateY(-3px);
+  border-color:#22c55e;
+}
+.game-card img{
+  width:64px;
+  height:64px;
+  object-fit:contain;
+  margin-bottom:8px;
+}
+.game-card b{
+  font-size:14px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
-  <b>RHF GAMES</b>
-  <span style="color:#22c55e;font-size:13px">Resmi & Aman</span>
+  <img src="logo.png" alt="RHF GAMES">
+  <h1>RHF GAMES</h1>
 </header>
 
-<div class="hero">
-  <h1>Top Up Game Favoritmu</h1>
-  <p>Cepat • Aman • Terpercaya</p>
+<div class="container">
+  <h2>Top Up Game</h2>
+  <div class="grid" id="gameList"></div>
 </div>
 
-<div class="search">
-  <input type="text" placeholder="Cari game favorit kamu…">
-</div>
+<script>
+// AMAN: hanya baca data
+const games = JSON.parse(localStorage.getItem('RHF_GAMES') || '[]');
 
-<div class="games">
-  <!-- CONTOH GAME -->
-  <div class="game-card" onclick="location.href='game.html?id=ml'">
-    <img src="https://i.imgur.com/1X5K5kC.png">
-    <b>Mobile Legends</b>
-  </div>
+const gameList = document.getElementById('gameList');
 
-  <div class="game-card">
-    <img src="https://i.imgur.com/7Y7Jw2F.png">
-    <b>Free Fire</b>
-  </div>
-
-  <div class="game-card">
-    <img src="https://i.imgur.com/JfPpwOA.png">
-    <b>PUBG Mobile</b>
-  </div>
-</div>
-
-<div class="trust">
-  <span>✔ Aman & Terpercaya</span>
-  <span>✔ Proses Cepat</span>
-  <span>✔ Support 24 Jam</span>
-</div>
-
-<footer>
-  © 2025 RHF GAMES • All Rights Reserved
-</footer>
+games.forEach(g=>{
+  const d = document.createElement('div');
+  d.className = 'game-card';
+  d.innerHTML = `
+    <img src="${g.logo}">
+    <b>${g.name}</b>
+  `;
+  d.onclick = ()=>{
+    localStorage.setItem('RHF_SELECTED_GAME', JSON.stringify(g));
+    location.href = 'game.html';
+  };
+  gameList.appendChild(d);
+});
+</script>
 
 </body>
 </html>
