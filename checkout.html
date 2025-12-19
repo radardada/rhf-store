@@ -97,5 +97,31 @@ localStorage.setItem('RHF_ORDERS',JSON.stringify(orders));
   localStorage.removeItem('RHF_CHECKOUT');
   location.href='index.html';
 }
+  <div class="container">
+  <h1>Keranjang Belanja</h1>
+  <div id="cartItems"></div>
+  <h2>Total: <span id="totalPrice">Rp 0</span></h2>
+</div>
+
+<script>
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      db.collection('carts').doc(user.uid).onSnapshot(doc => {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+        let total = 0;
+        if (doc.exists) {
+          const data = doc.data();
+          Object.keys(data).forEach(key => {
+            const item = data[key];
+            total += item.price * item.quantity;
+            cartItems.innerHTML += `<p>${item.title} - ${formatRupiah(item.price)}</p>`;
+          });
+        }
+        document.getElementById('totalPrice').textContent = formatRupiah(total);
+      });
+    }
+  });
+</script>
 </script></body>
 </html>
