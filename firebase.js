@@ -1,4 +1,5 @@
-// firebase.js - Compat version untuk HTML biasa
+// firebase.js - Compat Version (Cocok untuk HTML + GitHub Pages)
+
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
   authDomain: "rhf-gamestore.firebaseapp.com",
@@ -10,6 +11,13 @@ const firebaseConfig = {
   measurementId: "G-RYFR9D5R5H"
 };
 
+// Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+// Variabel global penting
+const auth = firebase.auth();          // Untuk login/logout
+const db = firebase.firestore();       // Untuk simpan & load game/cart real-time
+
+// Test sukses (buka console F12 untuk lihat)
+console.log("RHF GAMES Firebase berhasil connect! 🔥");
+console.log("Database URL:", firebaseConfig.databaseURL);
