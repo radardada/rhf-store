@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - RHF GAMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden; width: 400px; max-width: 95%; }
+        .login-header { background: #667eea; color: white; padding: 40px 30px; text-align: center; }
+        .login-header h1 { margin: 0; font-size: 28px; }
+        .login-header p { margin: 10px 0 0; opacity: 0.9; }
+        .login-body { padding: 40px 30px; text-align: center; }
+        .google-btn { background: #4285f4; color: white; border: none; padding: 15px 30px; border-radius: 30px; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(66,133,244,0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .google-btn:hover { background: #3367d6; }
+        .google-btn img { width: 20px; height: 20px; }
+        .hidden { display: none; }
+        .admin-container { width: 90%; max-width: 1200px; margin: 20px auto; }
+        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .card h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px 25px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #5a6fd8; }
+        .btn-logout { background: #dc3545; float: right; }
+        .product-item { border: 1px solid #eee; padding: 20px; margin: 15px 0; border-radius: 10px; background: #f9f9f9; }
+        .product-item img { max-width: 300px; border-radius: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
 
+<!-- Halaman Login -->
+<div class="login-container" id="loginPage">
+    <div class="login-header">
+        <h1>RHF GAMES</h1>
+        <p>Admin Panel - Top Up All-in-One</p>
+    </div>
+    <div class="login-body">
+        <button class="google-btn" id="adminLoginBtn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
+            Login dengan Google
+        </button>
+        <p style="margin-top:20px; color:#666;">Hanya akun admin yang bisa masuk</p>
+    </div>
+</div>
+
+<!-- Halaman Admin Panel -->
+<div class="admin-container hidden" id="adminPanel">
+    <div class="card">
+        <h1>Admin Panel - RHF GAMES</h1>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+
+        <h2>Tambah Produk Baru</h2>
+        <form id="addProductForm">
+            <input type="text" id="title" placeholder="Judul Produk (ex: Mobile Legends Diamond)" required>
+            <select id="category" required>
+                <option value="">Pilih Kategori</option>
+                <option value="game">Game (Diamond/UC/Crystal)</option>
+                <option value="ewallet">E-Wallet (DANA, OVO, GoPay)</option>
+                <option value="pulsa">Pulsa All Operator</option>
+            </select>
+            <input type="text" id="image" placeholder="URL Banner Gambar" required>
+            <textarea id="helpText" placeholder="Help Text (cara cari ID atau nomor)"></textarea>
+
+            <label><strong>Input Fields (JSON array):</strong></label>
+            <textarea id="inputFields" rows="4" placeholder='[{"label": "User ID", "placeholder": "384480920"}, {"label": "Zone ID", "placeholder": "3797"}]'></textarea>
+
+            <label><strong>Nominal Options (JSON array):</strong></label>
+            <textarea id="rechargeOptions" rows="6" required placeholder='[{"amount": "86 Diamonds", "price": 20000, "bonus": true}, {"amount": "570 Diamonds", "price": 120000}]'></textarea>
+
+            <button type="submit">Tambah Produk</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Daftar Produk</h2>
+        <div id="productsList">Loading...</div>
+    </div>
+</div>
+
+<!-- Firebase API -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+
+<script>
+// UBAH INI JADI EMAIL GOOGLE KAMU YANG JADI ADMIN!
+const ADMIN_EMAIL = "radhitt925@gmail.com"; // <-- GANTI DENGAN EMAIL KAMU !!!
+
+const loginPage = document.getElementById('loginPage');
+const adminPanel = document.getElementById('adminPanel');
+
+// Cek status login
+auth.onAuthStateChanged(user => {
+    if (user && user.email === ADMIN_EMAIL) {
+        loginPage.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadProducts();
+    } else {
+        loginPage.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+    }
+});
+
+// Tombol Login Google
+document.getElementById('adminLoginBtn').onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => {
+        alert("Gagal login: " + err.message);
+    });
+};
+
+// Logout
+document.getElementById('logoutBtn').onclick = () => {
+    auth.signOut().then(() => location.reload());
+};
+
+// Load produk real-time
+function loadProducts() {
+    const list = document.getElementById('productsList');
+    db.collection("games").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+        list.innerHTML = "";
+        if (snapshot.empty) {
+            list.innerHTML = "<p>Belum ada produk.</p>";
+            return;
+        }
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+                <h3>\( {p.title} <small>( \){p.category || 'game'})</small></h3>
+                <img src="\( {p.image}" alt=" \){p.title}">
+                <p><strong>Help:</strong> ${p.helpText || '-'}</p>
+                <p><strong>Input:</strong> ${JSON.stringify(p.inputFields || [])}</p>
+                <p><strong>Options:</strong> ${p.rechargeOptions ? p.rechargeOptions.length + ' nominal' : '0'}</p>
+                <button style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:8px;" onclick="deleteProduct('${doc.id}')">Hapus</button>
+            `;
+            list.appendChild(div);
+        });
+    });
+}
+
+function deleteProduct(id) {
+    if (confirm("Yakin hapus produk ini?")) {
+        db.collection("games").doc(id).delete().then(() => alert("Produk dihapus!"));
+    }
+}
+
+// Tambah produk
+document.getElementById('addProductForm').onsubmit = (e) => {
+    e.preventDefault();
+
+    let inputFields = [];
+    let rechargeOptions = [];
+
+    try {
+        inputFields = JSON.parse(document.getElementById('inputFields').value || '[]');
+        rechargeOptions = JSON.parse(document.getElementById('rechargeOptions').value);
+    } catch (err) {
+        alert("Format JSON salah! Periksa inputFields atau rechargeOptions.");
+        return;
+    }
+
+    db.collection("games").add({
+        title: document.getElementById('title').value,
+        category: document.getElementById('category').value,
+        image: document.getElementById('image').value,
+        helpText: document.getElementById('helpText').value,
+        inputFields: inputFields,
+        rechargeOptions: rechargeOptions,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert("Produk berhasil ditambahkan!");
+        e.target.reset();
+    }).catch(err => {
+        alert("Gagal: " + err.message);
+    });
+};
+</script>
+
+</body>
+          </html>
