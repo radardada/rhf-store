@@ -268,3 +268,20 @@ function renderOrders() {
     table.appendChild(row);
   });
 }
+// utils.js
+function formatRupiah(angka) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+}
+
+async function addToCart(gameId, gameData) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert('Login dulu ya!');
+    return;
+  }
+  const cartRef = db.collection('carts').doc(user.uid);
+  await cartRef.set({
+    [gameId]: { ...gameData, quantity: 1 }
+  }, { merge: true });
+  alert('Ditambahkan ke keranjang!');
+}
