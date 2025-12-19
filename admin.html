@@ -131,9 +131,9 @@ function renderOrders(){
     d.className = 'card';
     d.innerHTML = `
       <b>ID Order:</b> ${o.id}<br>
-      <b>Game:</b> ${o.gameId}<br>
-      <b>Paket:</b> ${o.product}<br>
-      <b>Nomor:</b> ${o.phone}<br>
+      <b>Game:</b> ${o.gameName || '-'}<br>
+      <b>Paket:</b> ${o.productName || '-'}<br>
+      <b>Nomor:</b> ${o.target || '-'}<br>
       <b>Total:</b> Rp ${o.total.toLocaleString()}<br>
       <b>Status:</b>
       <span class="status-${o.status}">${o.status}</span>
