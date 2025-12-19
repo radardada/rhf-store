@@ -11,13 +11,12 @@
         .login-header { background: #667eea; color: white; padding: 40px 30px; text-align: center; }
         .login-header h1 { margin: 0; font-size: 28px; }
         .login-header p { margin: 10px 0 0; opacity: 0.9; }
-        .login-body { padding: 40px 30px; text-align: center; }
-        .google-btn { background: #4285f4; color: white; border: none; padding: 15px 30px; border-radius: 30px; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(66,133,244,0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .google-btn:hover { background: #3367d6; }
-        .google-btn img { width: 20px; height: 20px; }
+        .login-body { padding: 40px 30px; }
+        input { width: 100%; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; }
+        .login-btn { width: 100%; background: #667eea; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; }
+        .login-btn:hover { background: #5a6fd8; }
         .hidden { display: none; }
         .admin-container { width: 90%; max-width: 1200px; margin: 20px auto; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); padding: 30px; }
-        .card { margin-bottom: 40px; }
         .card h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
         input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px 25px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
@@ -25,29 +24,28 @@
         .btn-logout { background: #dc3545; float: right; }
         .product-item { border: 1px solid #eee; padding: 20px; margin: 15px 0; border-radius: 10px; background: #f9f9f9; }
         .product-item img { max-width: 300px; border-radius: 10px; margin: 10px 0; display: block; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 50px; color: white; font-weight: bold; z-index: 9999; opacity: 0; transition: opacity 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
+        .error-msg { color: #dc3545; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<!-- Halaman Login -->
+<!-- Halaman Login Email + Password -->
 <div class="login-container" id="loginPage">
     <div class="login-header">
         <h1>RHF GAMES</h1>
-        <p>Admin Panel - Top Up Game, E-Wallet & Pulsa</p>
+        <p>Admin Panel</p>
     </div>
     <div class="login-body">
-        <button class="google-btn" id="adminLoginBtn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
-            Login dengan Google
-        </button>
-        <p style="margin-top:20px; color:#666; font-size:14px;">Gunakan akun: radhitt925@gmail.com</p>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" required value="radhitt925@gmail.com">
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <div class="error-msg" id="loginError"></div>
+            <button type="submit" class="login-btn">Login</button>
+        </form>
     </div>
 </div>
 
-<!-- Admin Panel Utama -->
+<!-- Admin Panel -->
 <div class="admin-container hidden" id="adminPanel">
     <h1 style="text-align:center; color:#667eea;">Admin Panel - RHF GAMES</h1>
     <button class="btn-logout" id="logoutBtn">Logout</button>
@@ -55,29 +53,26 @@
     <div class="card">
         <h2>Tambah Produk Baru</h2>
         <form id="addProductForm">
-            <input type="text" id="title" placeholder="Judul (ex: Mobile Legends Diamond)" required>
+            <input type="text" id="title" placeholder="Judul Produk" required>
             <select id="category" required>
                 <option value="">Pilih Kategori</option>
-                <option value="game">Game (Diamond/UC/Crystal/Robux)</option>
-                <option value="ewallet">E-Wallet (DANA, OVO, GoPay, ShopeePay)</option>
-                <option value="pulsa">Pulsa All Operator (Telkomsel, XL, Tri, dll)</option>
+                <option value="game">Game</option>
+                <option value="ewallet">E-Wallet</option>
+                <option value="pulsa">Pulsa</option>
             </select>
-            <input type="text" id="image" placeholder="URL Banner Gambar (https://...)" required>
-            <textarea id="helpText" placeholder="Help Text (cara cari ID/nomor)"></textarea>
-
-            <label><strong>Input Fields (JSON array):</strong></label>
-            <textarea id="inputFields" rows="4" placeholder='[{"label": "User ID", "placeholder": "Contoh: 384480920"}, {"label": "Zone ID", "placeholder": "Contoh: 3797"}]'></textarea>
-
-            <label><strong>Nominal Options (JSON array):</strong></label>
-            <textarea id="rechargeOptions" rows="6" required placeholder='[{"amount": "86 Diamonds", "price": 20000, "bonus": true}, {"amount": "570 Diamonds", "price": 120000}]'></textarea>
-
+            <input type="text" id="image" placeholder="URL Gambar Banner" required>
+            <textarea id="helpText" placeholder="Help Text"></textarea>
+            <label><strong>Input Fields (JSON):</strong></label>
+            <textarea id="inputFields" rows="4" placeholder='[{"label": "User ID", "placeholder": "Contoh: 12345"}]'></textarea>
+            <label><strong>Nominal Options (JSON):</strong></label>
+            <textarea id="rechargeOptions" rows="6" required placeholder='[{"amount": "100 Diamonds", "price": 15000}]'></textarea>
             <button type="submit">Tambah Produk</button>
         </form>
     </div>
 
     <div class="card">
-        <h2>Daftar Produk Tersedia</h2>
-        <div id="productsList">Loading produk...</div>
+        <h2>Daftar Produk</h2>
+        <div id="productsList">Loading...</div>
     </div>
 </div>
 
@@ -89,15 +84,13 @@
 <script src="firebase.js"></script>
 
 <script>
-// EMAIL ADMIN KAMU (sudah saya set otomatis)
-const ADMIN_EMAIL = "radhitt925@gmail.com";
-
 const loginPage = document.getElementById('loginPage');
 const adminPanel = document.getElementById('adminPanel');
+const loginError = document.getElementById('loginError');
 
-// Cek status login
+// Cek jika sudah login
 auth.onAuthStateChanged(user => {
-    if (user && user.email === ADMIN_EMAIL) {
+    if (user) {
         loginPage.classList.add('hidden');
         adminPanel.classList.remove('hidden');
         loadProducts();
@@ -107,10 +100,19 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// Tombol Login Google
-document.getElementById('adminLoginBtn').onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider);
+// Login dengan Email + Password
+document.getElementById('loginForm').onsubmit = (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            // Sukses, onAuthStateChanged akan handle tampilan panel
+        })
+        .catch(err => {
+            loginError.textContent = "Login gagal: " + err.message;
+        });
 };
 
 // Logout
@@ -118,26 +120,13 @@ document.getElementById('logoutBtn').onclick = () => {
     auth.signOut().then(() => location.reload());
 };
 
-// Toast notification
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.style.opacity = '1', 100);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    }, 3000);
-}
-
-// Load produk real-time
+// Load & Tambah Produk (sama seperti sebelumnya)
 function loadProducts() {
     const list = document.getElementById('productsList');
     db.collection("games").orderBy("createdAt", "desc").onSnapshot(snapshot => {
         list.innerHTML = "";
         if (snapshot.empty) {
-            list.innerHTML = "<p style='text-align:center; color:#999;'>Belum ada produk. Tambah yang pertama yuk!</p>";
+            list.innerHTML = "<p>Belum ada produk.</p>";
             return;
         }
         snapshot.forEach(doc => {
@@ -145,12 +134,9 @@ function loadProducts() {
             const div = document.createElement('div');
             div.className = 'product-item';
             div.innerHTML = `
-                <h3>\( {p.title} <small>( \){p.category || 'game'})</small></h3>
+                <h3>\( {p.title} ( \){p.category || 'game'})</h3>
                 <img src="\( {p.image}" alt=" \){p.title}">
-                <p><strong>Help Text:</strong> ${p.helpText || '-'}</p>
-                <p><strong>Input Fields:</strong> ${JSON.stringify(p.inputFields || [])}</p>
-                <p><strong>Nominal:</strong> ${p.rechargeOptions ? p.rechargeOptions.length + ' pilihan' : '0'}</p>
-                <button style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:8px;" onclick="deleteProduct('${doc.id}')">Hapus Produk</button>
+                <button style="background:#dc3545; color:white; padding:10px; border:none; border-radius:8px;" onclick="deleteProduct('${doc.id}')">Hapus</button>
             `;
             list.appendChild(div);
         });
@@ -158,12 +144,11 @@ function loadProducts() {
 }
 
 function deleteProduct(id) {
-    if (confirm("Yakin hapus produk ini permanen?")) {
-        db.collection("games").doc(id).delete().then(() => showToast("Produk dihapus!", "success"));
+    if (confirm("Yakin hapus?")) {
+        db.collection("games").doc(id).delete();
     }
 }
 
-// Tambah produk baru
 document.getElementById('addProductForm').onsubmit = (e) => {
     e.preventDefault();
 
@@ -174,7 +159,7 @@ document.getElementById('addProductForm').onsubmit = (e) => {
         inputFields = JSON.parse(document.getElementById('inputFields').value || '[]');
         rechargeOptions = JSON.parse(document.getElementById('rechargeOptions').value);
     } catch (err) {
-        showToast("Format JSON salah! Periksa lagi.", "error");
+        alert("JSON salah!");
         return;
     }
 
@@ -187,13 +172,11 @@ document.getElementById('addProductForm').onsubmit = (e) => {
         rechargeOptions: rechargeOptions,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        showToast("Produk berhasil ditambahkan!", "success");
+        alert("Produk ditambahkan!");
         e.target.reset();
-    }).catch(err => {
-        showToast("Gagal tambah produk: " + err.message, "error");
     });
 };
 </script>
 
 </body>
-</html>
+    </html>
