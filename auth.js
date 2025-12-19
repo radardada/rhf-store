@@ -1,42 +1,29 @@
-/* =============================== RHF GAMES - AUTH.JS Auth sederhana tapi BENAR-BENAR BEKERJA
+// auth.js
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const adminLink = document.getElementById('adminLink');
 
-Admin login
+if (loginBtn) {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'block';
+      if (user.email === 'admin@rhfgames.com') { // Ganti dengan email admin kamu
+        if (adminLink) adminLink.style.display = 'block';
+      }
+    } else {
+      loginBtn.style.display = 'block';
+      logoutBtn.style.display = 'none';
+      if (adminLink) adminLink.style.display = 'none';
+    }
+  });
 
-Proteksi halaman admin
+  loginBtn.addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  });
 
-Bisa dikembangkan ke Firebase ================================ */
-
-
-const RHF_AUTH = { adminKey: "RHF_ADMIN_LOGIN", adminPassword: "admin123", // GANTI NANTI
-
-// ===================== // LOGIN ADMIN // ===================== loginAdmin(password) { if (!password) return { ok: false, msg: "Password kosong" };
-
-if (password === this.adminPassword) {
-  const token = "admin_" + Date.now();
-  localStorage.setItem(this.adminKey, token);
-  return { ok: true, msg: "Login berhasil" };
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+  });
 }
-
-return { ok: false, msg: "Password salah" };
-
-},
-
-// ===================== // CEK LOGIN ADMIN // ===================== isAdmin() { return !!localStorage.getItem(this.adminKey); },
-
-// ===================== // LOGOUT ADMIN // ===================== logoutAdmin() { localStorage.removeItem(this.adminKey); location.href = "index.html"; },
-
-// ===================== // PROTEKSI HALAMAN ADMIN // ===================== protectAdminPage() { if (!this.isAdmin()) { const pass = prompt("Masukkan password admin:"); const res = this.loginAdmin(pass); if (!res.ok) { alert(res.msg); location.href = "index.html"; } } } };
-
-/* =============================== CARA PAKAI
-
-1. Di admin.html
-
-
-
-   <script src="auth.js"></script>   <script>
-     RHF_AUTH.protectAdminPage();
-   </script>2. Tombol logout: onclick="RHF_AUTH.logoutAdmin()"
-
-
-
-================================ */
