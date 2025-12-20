@@ -3,191 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - RHF GAMES</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Admin Dashboard - RHF GAMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
-        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        h1, h2 { color: #007bff; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { padding: 12px 25px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .btn-danger { background: #dc3545; width: auto; }
-        .btn-danger:hover { background: #c82333; }
-        
-        /* Box Login Baru */
-        .login-box { text-align: center; max-width: 400px; margin: 100px auto; }
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --dark-bg: #1a1d21;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background: var(--dark-bg);
+            height: 100vh;
+            color: white;
+            position: fixed;
+            padding: 20px;
+        }
+
+        .sidebar h2 { font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .sidebar nav ul { list-style: none; padding: 0; }
+        .sidebar nav ul li { padding: 12px 0; cursor: pointer; transition: 0.3s; }
+        .sidebar nav ul li:hover { color: var(--primary-color); }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 270px;
+            padding: 30px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        h1, h2 { color: #333; margin-top: 0; }
+
+        /* Form Styling */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        textarea { height: 100px; font-family: monospace; }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: #0056b3; }
+
+        /* Product List Styling */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .product-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .product-info { flex: 1; margin-left: 15px; }
+        .product-info h4 { margin: 0; font-size: 16px; }
+        .product-info span { font-size: 12px; color: #888; }
+
+        .btn-delete { color: var(--danger-color); cursor: pointer; font-size: 18px; }
+
         .hidden { display: none; }
-        
-        .product-item { border: 1px solid #eee; padding: 20px; margin: 15px 0; border-radius: 10px; background: #f9f9f9; }
-        .product-item img { max-width: 200px; border-radius: 10px; margin: 10px 0; display: block; }
-        
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 50px; color: white; font-weight: bold; z-index: 9999; opacity: 0; transition: opacity 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.3); pointer-events: none; }
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
+
+        /* Login Overlay */
+        #loginOverlay {
+            position: fixed; top:0; left:0; width: 100%; height:100%;
+            background: #fff; z-index: 9999; display: flex;
+            justify-content: center; align-items: center;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-
-    <div id="loginPage">
-        <div class="card login-box">
-            <h1>RHF GAMES</h1>
-            <p>Masukkan Password Admin</p>
-            <input type="password" id="adminPassInput" placeholder="Password...">
-            <button id="loginBtn">Masuk ke Panel</button>
+    <div id="loginOverlay">
+        <div class="card" style="width: 350px; text-align: center;">
+            <img src="https://img.icons8.com/clouds/100/000000/lock-landscape.png"/>
+            <h3>Admin Login</h3>
+            <input type="password" id="adminPass" placeholder="Password Admin">
+            <button class="btn-primary" onclick="checkAuth()" style="width: 100%; margin-top: 10px;">Login</button>
         </div>
     </div>
 
-    <div id="adminPanel" class="hidden">
+    <div class="sidebar">
+        <h2><i class="fas fa-gamepad"></i> RHF ADMIN</h2>
+        <nav>
+            <ul>
+                <li onclick="window.location.reload()"><i class="fas fa-plus-circle"></i> Tambah Produk</li>
+                <li><i class="fas fa-shopping-cart"></i> Daftar Pesanan</li>
+                <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
         <div class="card">
-            <button id="logoutBtn" style="float:right;" class="btn-danger">Logout</button>
-            <h1>Admin Panel - RHF GAMES</h1>
+            <h1>Tambah Produk Baru</h1>
+            <form id="productForm">
+                <div class="form-group">
+                    <label>Judul Game / Produk</label>
+                    <input type="text" id="title" placeholder="Contoh: Mobile Legends" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="category">
+                        <option value="game">Game Top Up</option>
+                        <option value="ewallet">E-Wallet</option>
+                        <option value="pulsa">Pulsa / Data</option>
+                    </select>
+                </div>
 
-            <h2>Tambah Produk Baru</h2>
-            <form id="addProductForm">
-                <input type="text" id="title" placeholder="Judul (ex: Mobile Legends)" required>
-                <select id="category" required>
-                    <option value="">Pilih Kategori</option>
-                    <option value="game">Game</option>
-                    <option value="ewallet">E-Wallet</option>
-                    <option value="pulsa">Pulsa</option>
-                </select>
-                <input type="text" id="image" placeholder="URL Banner Gambar" required>
-                <textarea id="helpText" placeholder="Help Text (cara cari ID)"></textarea>
+                <div class="form-group">
+                    <label>URL Gambar Banner</label>
+                    <input type="text" id="image" placeholder="https://link-gambar.com/banner.jpg" required>
+                </div>
 
-                <label><strong>Input Fields (JSON):</strong></label>
-                <textarea id="inputFields" rows="2">[{"label": "User ID", "placeholder": "12345"}]</textarea>
+                <div class="form-group">
+                    <label>Input Fields (JSON - Data yang harus diisi pembeli)</label>
+                    <textarea id="inputFields">[{"label": "User ID", "placeholder": "Ketik ID"}, {"label": "Zone ID", "placeholder": "Ketik Zone"}]</textarea>
+                </div>
 
-                <label><strong>Nominal Options (JSON):</strong></label>
-                <textarea id="rechargeOptions" rows="4" required placeholder='[{"amount": "86 Diamonds", "price": 20000}]'></textarea>
+                <div class="form-group">
+                    <label>Nominal & Harga (JSON)</label>
+                    <textarea id="rechargeOptions">[{"amount": "86 Diamonds", "price": 20000}, {"amount": "172 Diamonds", "price": 40000}]</textarea>
+                </div>
 
-                <button type="submit" style="width: auto;">Simpan Produk</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Simpan Produk</button>
             </form>
         </div>
 
-        <div class="card">
-            <h2>Daftar Semua Produk</h2>
-            <div id="productsList">Loading produk...</div>
+        <h2>Produk Terdaftar</h2>
+        <div class="product-grid" id="productGrid">
+            <p>Memuat data...</p>
         </div>
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-<script src="firebase.js"></script>
+        // Konfigurasi API Kamu
+        const firebaseConfig = {
+            apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
+            authDomain: "rhf-gamestore.firebaseapp.com",
+            databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rhf-gamestore",
+            storageBucket: "rhf-gamestore.firebasestorage.app",
+            messagingSenderId: "52065906934",
+            appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
+        };
 
-<script>
-// --- KONFIGURASI PASSWORD ---
-const PASSWORD_ADMIN = "rhfgames123"; // Ganti password sesukamu di sini
-// ----------------------------
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-const loginPage = document.getElementById('loginPage');
-const adminPanel = document.getElementById('adminPanel');
-
-// Fungsi Cek Status (Menggunakan Session Storage agar refresh tidak logout)
-function checkAuth() {
-    if (sessionStorage.getItem("adminAuth") === "true") {
-        loginPage.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
-        loadProducts();
-    } else {
-        loginPage.classList.remove('hidden');
-        adminPanel.classList.add('hidden');
-    }
-}
-
-// Logika Login Password
-document.getElementById('loginBtn').onclick = () => {
-    const input = document.getElementById('adminPassInput').value;
-    if (input === PASSWORD_ADMIN) {
-        sessionStorage.setItem("adminAuth", "true");
-        showToast("Login Berhasil!");
-        checkAuth();
-    } else {
-        showToast("Password Salah!", "error");
-    }
-};
-
-// Logout
-document.getElementById('logoutBtn').onclick = () => {
-    sessionStorage.removeItem("adminAuth");
-    location.reload();
-};
-
-// Jalankan cek auth saat page diload
-checkAuth();
-
-// --- FUNGSI TOAST ---
-function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.style.opacity = '1', 100);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    }, 3000);
-}
-
-// --- FUNGSI LOAD PRODUK (Firestore) ---
-function loadProducts() {
-    const list = document.getElementById('productsList');
-    // Pastikan variabel 'db' sudah didefinisikan di firebase.js
-    db.collection("games").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-        list.innerHTML = "";
-        if (snapshot.empty) {
-            list.innerHTML = "<p>Belum ada produk.</p>";
-            return;
+        // --- SISTEM AUTH SEDERHANA ---
+        window.checkAuth = function() {
+            const pass = document.getElementById('adminPass').value;
+            if(pass === "admin123") { // Ganti password di sini
+                document.getElementById('loginOverlay').style.display = 'none';
+                sessionStorage.setItem('isAdmin', 'true');
+                loadData();
+            } else {
+                alert("Password Salah!");
+            }
         }
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            const div = document.createElement('div');
-            div.className = 'product-item';
-            div.innerHTML = `
-                <h3>\( {p.title} </h3>
-                <img src=" \){p.image}">
-                <button class="btn-danger" onclick="deleteProduct('${doc.id}')">Hapus</button>
-            `;
-            list.appendChild(div);
-        });
-    });
-}
 
-function deleteProduct(id) {
-    if (confirm("Hapus produk ini?")) {
-        db.collection("games").doc(id).delete().then(() => showToast("Terhapus!"));
-    }
-}
+        window.logout = function() {
+            sessionStorage.removeItem('isAdmin');
+            location.reload();
+        }
 
-// Tambah produk
-document.getElementById('addProductForm').onsubmit = (e) => {
-    e.preventDefault();
-    try {
-        const inputFields = JSON.parse(document.getElementById('inputFields').value || '[]');
-        const rechargeOptions = JSON.parse(document.getElementById('rechargeOptions').value);
+        if(sessionStorage.getItem('isAdmin') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadData();
+        }
 
-        db.collection("games").add({
-            title: document.getElementById('title').value,
-            category: document.getElementById('category').value,
-            image: document.getElementById('image').value,
-            helpText: document.getElementById('helpText').value,
-            inputFields: inputFields,
-            rechargeOptions: rechargeOptions,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            showToast("Produk ditambahkan!");
-            e.target.reset();
-        });
-    } catch (err) {
-        showToast("Format JSON salah!", "error");
-    }
-};
-</script>
+        // --- SIMPAN DATA KE DATABASE ---
+        document.getElementById('productForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            try {
+                const newProduct = {
+                    title: document.getElementById('title').value,
+                    category: document.getElementById('category').value,
+                    image: document.getElementById('image').value,
+                    inputFields: JSON.parse(document.getElementById('inputFields').value),
+                    rechargeOptions: JSON.parse(document.getElementById('rechargeOptions').value),
+                    createdAt: Date.now()
+                };
 
+                const dbRef = ref(db, 'products');
+                await push(dbRef, newProduct);
+                
+                alert("Produk Berhasil Ditambahkan!");
+                e.target.reset();
+            } catch (error) {
+                alert("Gagal: Format JSON Salah! Periksa tanda kutip dan koma.");
+                console.error(error);
+            }
+        };
+
+        // --- LOAD DATA REAL-TIME ---
+        function loadData() {
+            const productGrid = document.getElementById('productGrid');
+            const dbRef = ref(db, 'products');
+
+            onValue(dbRef, (snapshot) => {
+                productGrid.innerHTML = "";
+                const data = snapshot.val();
+                
+                if (!data) {
+                    productGrid.innerHTML = "<p>Belum ada produk.</p>";
+                    return;
+                }
+
+                for (let id in data) {
+                    const p = data[id];
+                    const card = `
+                        <div class="product-card">
+                            <img src="${p.image}" alt="game">
+                            <div class="product-info">
+                                <h4>${p.title}</h4>
+                                <span>${p.category} - ${p.rechargeOptions.length} Pilihan</span>
+                            </div>
+                            <i class="fas fa-trash-alt btn-delete" onclick="deleteProduct('${id}')"></i>
+                        </div>
+                    `;
+                    productGrid.innerHTML += card;
+                }
+            });
+        }
+
+        // --- HAPUS DATA ---
+        window.deleteProduct = function(id) {
+            if(confirm("Hapus produk ini?")) {
+                const itemRef = ref(db, 'products/' + id);
+                remove(itemRef);
+            }
+        }
+    </script>
 </body>
 </html>
