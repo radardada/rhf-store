@@ -1,4 +1,4 @@
-// firebase.js - Compat Version (Cocok untuk HTML + GitHub Pages)
+// firebase.js - API pusat untuk semua file, mirip Tokogame
 
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
@@ -11,13 +11,9 @@ const firebaseConfig = {
   measurementId: "G-RYFR9D5R5H"
 };
 
-// Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Variabel global penting
-const auth = firebase.auth();          // Untuk login/logout
-const db = firebase.firestore();       // Untuk simpan & load game/cart real-time
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-// Test sukses (buka console F12 untuk lihat)
-console.log("RHF GAMES Firebase berhasil connect! 🔥");
-console.log("Database URL:", firebaseConfig.databaseURL);
+console.log("API Firebase terhubung ke semua file RHF GAMES seperti Tokogame! 🔥");
