@@ -1,294 +1,103 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - RHF GAMES</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --dark-bg: #1a1d21;
-            --card-bg: #ffffff;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            display: flex;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: 250px;
-            background: var(--dark-bg);
-            height: 100vh;
-            color: white;
-            position: fixed;
-            padding: 20px;
-        }
-
-        .sidebar h2 { font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .sidebar nav ul { list-style: none; padding: 0; }
-        .sidebar nav ul li { padding: 12px 0; cursor: pointer; transition: 0.3s; }
-        .sidebar nav ul li:hover { color: var(--primary-color); }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 270px;
-            padding: 30px;
-            width: 100%;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-        }
-
-        h1, h2 { color: #333; margin-top: 0; }
-
-        /* Form Styling */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        textarea { height: 100px; font-family: monospace; }
-
-        button {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .btn-primary { background: var(--primary-color); color: white; }
-        .btn-primary:hover { background: #0056b3; }
-
-        /* Product List Styling */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .product-card {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .product-card img {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-
-        .product-info { flex: 1; margin-left: 15px; }
-        .product-info h4 { margin: 0; font-size: 16px; }
-        .product-info span { font-size: 12px; color: #888; }
-
-        .btn-delete { color: var(--danger-color); cursor: pointer; font-size: 18px; }
-
-        .hidden { display: none; }
-
-        /* Login Overlay */
-        #loginOverlay {
-            position: fixed; top:0; left:0; width: 100%; height:100%;
-            background: #fff; z-index: 9999; display: flex;
-            justify-content: center; align-items: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Admin Panel | RHF Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header>
+    <h1>Admin Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+  </header>
 
-    <div id="loginOverlay">
-        <div class="card" style="width: 350px; text-align: center;">
-            <img src="https://img.icons8.com/clouds/100/000000/lock-landscape.png"/>
-            <h3>Admin Login</h3>
-            <input type="password" id="adminPass" placeholder="Password Admin">
-            <button class="btn-primary" onclick="checkAuth()" style="width: 100%; margin-top: 10px;">Login</button>
-        </div>
-    </div>
+  <section>
+    <h2>Tambah/Edit Produk</h2>
+    <form id="product-form">
+      <input id="prod-name" placeholder="Nama Produk (misal Server VPS 1GB)">
+      <input id="prod-price" type="number" placeholder="Harga (Rp)">
+      <textarea id="prod-desc" placeholder="Deskripsi (misal Akses SSH, 1 bulan)"></textarea>
+      <input id="prod-image" placeholder="URL Gambar">
+      <button type="submit">Tambah Produk</button>
+    </form>
 
-    <div class="sidebar">
-        <h2><i class="fas fa-gamepad"></i> RHF ADMIN</h2>
-        <nav>
-            <ul>
-                <li onclick="window.location.reload()"><i class="fas fa-plus-circle"></i> Tambah Produk</li>
-                <li><i class="fas fa-shopping-cart"></i> Daftar Pesanan</li>
-                <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
-            </ul>
-        </nav>
-    </div>
+    <h2>Daftar Produk</h2>
+    <table class="admin-table" id="products-table">
+      <tr><th>ID</th><th>Nama</th><th>Harga</th><th>Aksi</th></tr>
+    </table>
+  </section>
 
-    <div class="main-content">
-        <div class="card">
-            <h1>Tambah Produk Baru</h1>
-            <form id="productForm">
-                <div class="form-group">
-                    <label>Judul Game / Produk</label>
-                    <input type="text" id="title" placeholder="Contoh: Mobile Legends" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Kategori</label>
-                    <select id="category">
-                        <option value="game">Game Top Up</option>
-                        <option value="ewallet">E-Wallet</option>
-                        <option value="pulsa">Pulsa / Data</option>
-                    </select>
-                </div>
+  <section>
+    <h2>Daftar Pembeli/Orders</h2>
+    <table class="admin-table" id="orders-table">
+      <tr><th>ID Order</th><th>User ID</th><th>Produk</th><th>Waktu</th></tr>
+    </table>
+  </section>
 
-                <div class="form-group">
-                    <label>URL Gambar Banner</label>
-                    <input type="text" id="image" placeholder="https://link-gambar.com/banner.jpg" required>
-                </div>
+  <section>
+    <h2>Daftar User yang Login</h2>
+    <table class="admin-table" id="users-table">
+      <tr><th>User ID</th><th>Email</th><th>Last Login</th></tr>
+    </table>
+  </section>
 
-                <div class="form-group">
-                    <label>Input Fields (JSON - Data yang harus diisi pembeli)</label>
-                    <textarea id="inputFields">[{"label": "User ID", "placeholder": "Ketik ID"}, {"label": "Zone ID", "placeholder": "Ketik Zone"}]</textarea>
-                </div>
+  <script type="module">
+    import { logout, checkAuth } from './auth.js';
+    import { fetchProducts, addProduct, deleteProduct, fetchOrders, fetchUsers } from './utils.js';
 
-                <div class="form-group">
-                    <label>Nominal & Harga (JSON)</label>
-                    <textarea id="rechargeOptions">[{"amount": "86 Diamonds", "price": 20000}, {"amount": "172 Diamonds", "price": 40000}]</textarea>
-                </div>
+    checkAuth((user) => {
+      if (!user || user.email !== 'admin@rhfgamestore.com') {
+        alert('Akses ditolak!');
+        window.location.href = 'index.html';
+      }
+    });
 
-                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Simpan Produk</button>
-            </form>
-        </div>
+    async function loadAdminData() {
+      // Load Produk
+      const products = await fetchProducts();
+      const prodTable = document.getElementById('products-table');
+      for (let id in products) {
+        const row = `<tr><td>\( {id}</td><td> \){products[id].name}</td><td>\( {formatRupiah(products[id].price)}</td><td><button onclick="deleteProd(' \){id}')">Hapus</button></td></tr>`;
+        prodTable.innerHTML += row;
+      }
 
-        <h2>Produk Terdaftar</h2>
-        <div class="product-grid" id="productGrid">
-            <p>Memuat data...</p>
-        </div>
-    </div>
+      // Load Orders
+      const orders = await fetchOrders();
+      const orderTable = document.getElementById('orders-table');
+      for (let id in orders) {
+        const ord = orders[id];
+        const row = `<tr><td>\( {id}</td><td> \){ord.userId}</td><td>\( {ord.productId}</td><td> \){ord.timestamp}</td></tr>`;
+        orderTable.innerHTML += row;
+      }
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+      // Load Users
+      const users = await fetchUsers();
+      const userTable = document.getElementById('users-table');
+      for (let id in users) {
+        const usr = users[id];
+        const row = `<tr><td>\( {id}</td><td> \){usr.email}</td><td>${usr.lastLogin}</td></tr>`;
+        userTable.innerHTML += row;
+      }
+    }
+    loadAdminData();
 
-        // Konfigurasi API Kamu
-        const firebaseConfig = {
-            apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
-            authDomain: "rhf-gamestore.firebaseapp.com",
-            databaseURL: "https://rhf-gamestore-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "rhf-gamestore",
-            storageBucket: "rhf-gamestore.firebasestorage.app",
-            messagingSenderId: "52065906934",
-            appId: "1:52065906934:web:c15f0eff91cc937f787cd7"
-        };
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const product = {
+        name: document.getElementById('prod-name').value,
+        price: parseInt(document.getElementById('prod-price').value),
+        description: document.getElementById('prod-desc').value,
+        image: document.getElementById('prod-image').value
+      };
+      await addProduct(product);
+      location.reload();
+    });
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // --- SISTEM AUTH SEDERHANA ---
-        window.checkAuth = function() {
-            const pass = document.getElementById('adminPass').value;
-            if(pass === "admin123") { // Ganti password di sini
-                document.getElementById('loginOverlay').style.display = 'none';
-                sessionStorage.setItem('isAdmin', 'true');
-                loadData();
-            } else {
-                alert("Password Salah!");
-            }
-        }
-
-        window.logout = function() {
-            sessionStorage.removeItem('isAdmin');
-            location.reload();
-        }
-
-        if(sessionStorage.getItem('isAdmin') === 'true') {
-            document.getElementById('loginOverlay').style.display = 'none';
-            loadData();
-        }
-
-        // --- SIMPAN DATA KE DATABASE ---
-        document.getElementById('productForm').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            try {
-                const newProduct = {
-                    title: document.getElementById('title').value,
-                    category: document.getElementById('category').value,
-                    image: document.getElementById('image').value,
-                    inputFields: JSON.parse(document.getElementById('inputFields').value),
-                    rechargeOptions: JSON.parse(document.getElementById('rechargeOptions').value),
-                    createdAt: Date.now()
-                };
-
-                const dbRef = ref(db, 'products');
-                await push(dbRef, newProduct);
-                
-                alert("Produk Berhasil Ditambahkan!");
-                e.target.reset();
-            } catch (error) {
-                alert("Gagal: Format JSON Salah! Periksa tanda kutip dan koma.");
-                console.error(error);
-            }
-        };
-
-        // --- LOAD DATA REAL-TIME ---
-        function loadData() {
-            const productGrid = document.getElementById('productGrid');
-            const dbRef = ref(db, 'products');
-
-            onValue(dbRef, (snapshot) => {
-                productGrid.innerHTML = "";
-                const data = snapshot.val();
-                
-                if (!data) {
-                    productGrid.innerHTML = "<p>Belum ada produk.</p>";
-                    return;
-                }
-
-                for (let id in data) {
-                    const p = data[id];
-                    const card = `
-                        <div class="product-card">
-                            <img src="${p.image}" alt="game">
-                            <div class="product-info">
-                                <h4>${p.title}</h4>
-                                <span>${p.category} - ${p.rechargeOptions.length} Pilihan</span>
-                            </div>
-                            <i class="fas fa-trash-alt btn-delete" onclick="deleteProduct('${id}')"></i>
-                        </div>
-                    `;
-                    productGrid.innerHTML += card;
-                }
-            });
-        }
-
-        // --- HAPUS DATA ---
-        window.deleteProduct = function(id) {
-            if(confirm("Hapus produk ini?")) {
-                const itemRef = ref(db, 'products/' + id);
-                remove(itemRef);
-            }
-        }
-    </script>
+    window.deleteProd = async (id) => {
+      await deleteProduct(id);
+      location.reload();
+    };
+  </script>
 </body>
 </html>
