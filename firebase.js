@@ -1,4 +1,8 @@
-// firebase.js - API pusat untuk semua file, mirip Tokogame
+// firebase.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAyHSaALeuwibcF22VNL_6WDlcZepcDB3A",
@@ -11,9 +15,9 @@ const firebaseConfig = {
   measurementId: "G-RYFR9D5R5H"
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const analytics = getAnalytics(app);
 
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-console.log("API Firebase terhubung ke semua file RHF GAMES seperti Tokogame! 🔥");
+export { auth, db, analytics };
