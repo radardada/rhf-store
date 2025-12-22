@@ -1,12 +1,61 @@
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
+/* style.css - Modern & Rapi */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
 }
-.admin-table th, .admin-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
+
+.navbar {
+  background: #007bff !important;
 }
-.admin-table th {
+
+.card {
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card img {
+  height: 200px;
+  object-fit: cover;
+}
+
+.btn-primary {
   background: #007bff;
+  border: none;
+}
+
+.btn-success {
+  background: #28a745;
+}
+
+.table {
+  background: white;
+}
+
+.modal-content {
+  border-radius: 10px;
+}
+
+.sidebar {
+  background: #343a40;
   color: white;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sidebar a {
+  color: white;
+  display: block;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+
+.sidebar a:hover {
+  background: #007bff;
 }
