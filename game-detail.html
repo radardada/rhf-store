@@ -1,67 +1,19 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Detail Produk | RHF Store</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <!-- Header & Nav -->
-
-  <section class="container">
-    <h2 id="product-name"></h2>
-    <p id="product-desc"></p>
-    <p>Harga: <span id="product-price"></span></p>
-
-    <form id="buy-form">
-      <label>Field Custom (misal User ID / Nomor E-Wallet / Username Server)</label>
-      <input type="text" id="custom-field" placeholder="Masukkan detail" required>
-
-      <label>Metode Pembayaran</label>
-      <select required>
-        <option>DANA</option>
-        <option>GoPay</option>
-        <!-- Lainnya -->
-      </select>
-
-      <label>Kontak (Email/No. HP)</label>
-      <input type="text" placeholder="Email atau No. HP" required>
-
-      <button type="submit" class="buy-btn">Beli Sekarang</button>
-    </form>
-  </section>
-
-  <script type="module">
-    import { getQueryParam, addOrder } from './utils.js';
-    import { checkAuth } from './auth.js';
-
-    const id = getQueryParam('id');
-    checkAuth(async (user) => {
-      if (!user) {
-        alert('Login dulu untuk beli!');
-        window.location.href = 'index.html';
-        return;
-      }
-      // Fetch detail dari DB
-      const products = await fetchProducts();
-      const prod = products[id];
-      document.getElementById('product-name').textContent = prod.name;
-      document.getElementById('product-desc').textContent = prod.description;
-      document.getElementById('product-price').textContent = formatRupiah(prod.price);
-
-      document.getElementById('buy-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const order = {
-          userId: user.uid,
-          productId: id,
-          customField: document.getElementById('custom-field').value,
-          timestamp: new Date().toISOString()
-        };
-        await addOrder(order);
-        window.location.href = 'checkout.html?order=' + new Date().getTime(); // Simulasi
-      });
-    });
-  </script>
-</body>
-</html>
+<!-- Gunakan container, card untuk form -->
+<div class="container my-5">
+  <div class="row">
+    <div class="col-md-6">
+      <img id="product-img" class="img-fluid rounded" src="">
+    </div>
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h2 id="product-name"></h2>
+        <p id="product-desc"></p>
+        <h3>Harga: <span id="product-price" class="text-success"></span></h3>
+        <form id="buy-form" class="mt-4">
+          <!-- Input form-control -->
+          <button type="submit" class="btn btn-success btn-lg w-100">Beli Sekarang</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
