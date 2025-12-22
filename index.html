@@ -1,37 +1,84 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF GAMES - Top Up Termurah</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RHF Store | Jual Beli Barang Digital Murah</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>RHF GAMES</h1>
-        <div class="games-grid" id="productsGrid"></div>
+  <header>
+    <h1>RHF Store | Jual Server, E-Wallet, APK Game, Voucher, dll</h1>
+    <p>Jual Beli Online Non-Fisik, Aman, Cepat</p>
+    <button onclick="showLoginModal()">Login/Register</button>
+  </header>
+
+  <nav>
+    <a href="#">Region: Indonesia (Rp)</a>
+    <a href="#">Site Map</a>
+    <a href="#">News & Promos</a>
+    <a href="products.html">Daftar Produk</a>
+    <a href="#">Terms</a>
+    <a href="#">Kontak Kami</a>
+  </nav>
+
+  <section>
+    <h2>Produk Terlaris <a href="products.html">Lihat Semua</a></h2>
+    <div class="game-list" id="product-list">
+      <!-- Dinamis dari JS -->
     </div>
+  </section>
 
-    <script src="firebase.js"></script>
-    <script src="auth.js"></script>
-    <script src="utils.js"></script>
+  <!-- Modal Login -->
+  <div id="loginModal" style="display:none; position:fixed; top:20%; left:30%; background:white; padding:20px; border:1px solid #ddd;">
+    <h3>Login/Register</h3>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="handleLogin()">Login</button>
+    <button onclick="handleRegister()">Register</button>
+    <button onclick="closeModal()">Tutup</button>
+  </div>
 
-    <script>
-        db.collection("products").orderBy("title").onSnapshot(snapshot => {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = "";
-            snapshot.forEach(doc => {
-                const p = doc.data();
-                const div = document.createElement("div");
-                div.className = "game-card";
-                div.innerHTML = `
-                    <img src="\( {p.image}" alt=" \){p.title}">
-                    <h3>${p.title}</h3>
-                `;
-                div.onclick = () => location.href = `game-detail.html?id=${doc.id}`;
-                grid.appendChild(div);
-            });
-        });
-    </script>
+  <footer>
+    <p>Kontak: cs@rhfstore.com | Partnerships: partners@rhfstore.com</p>
+  </footer>
+
+  <script type="module">
+    import { login, register, checkAuth, trackUser } from './auth.js';
+    import { fetchProducts } from './utils.js';
+
+    function showLoginModal() { document.getElementById('loginModal').style.display = 'block'; }
+    function closeModal() { document.getElementById('loginModal').style.display = 'none'; }
+
+    function handleLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      login(email, password);
+    }
+
+    function handleRegister() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      register(email, password);
+    }
+
+    checkAuth((user) => {
+      if (user) trackUser(user);
+    });
+
+    async function loadProducts() {
+      const products = await fetchProducts();
+      const list = document.getElementById('product-list');
+      for (let id in products) {
+        const prod = products[id];
+        list.innerHTML += `<div class="game-item">
+          <a href="product-detail.html?id=\( {id}"><img src=" \){prod.image}" alt="${prod.name}"></a>
+          <p>${prod.name} - ${formatRupiah(prod.price)}</p>
+        </div>`;
+      }
+    }
+    loadProducts();
+  </script>
 </body>
 </html>
