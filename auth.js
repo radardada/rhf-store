@@ -1,35 +1,43 @@
-// auth.js - Login user biasa (untuk cart & order, mirip Tokogame)
+// auth.js
+import { auth } from './firebase.js';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const userDisplay = document.getElementById('userDisplay');
-const adminLink = document.getElementById('adminLink');
+function register(email, password) {
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log('Registered:', userCredential.user);
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
 
-// Cek login user biasa
-auth.onAuthStateChanged(user => {
-    if (user) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'block';
-        if (userDisplay) {
-            userDisplay.innerHTML = user.displayName || user.email;
-            userDisplay.style.display = 'block';
-        }
-        if (adminLink && user.email === 'radhitt925@gmail.com') adminLink.style.display = 'block';
-    } else {
-        if (loginBtn) loginBtn.style.display = 'block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-        if (userDisplay) userDisplay.style.display = 'none';
-        if (adminLink) adminLink.style.display = 'none';
-    }
-});
+function login(email, password) {
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log('Logged in:', userCredential.user);
+      if (userCredential.user.email === 'admin@rhfgamestore.com') { // Ganti dengan email admin mu
+        window.location.href = 'admin.html';
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
 
-// Login Google untuk user biasa
-if (loginBtn) loginBtn.addEventListener('click', () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider);
-});
+function logout() {
+  signOut(auth).then(() => {
+    console.log('Logged out');
+    window.location.href = 'index.html';
+  }).catch((error) => {
+    console.error('Error:', error);
+  });
+}
 
-// Logout user
-if (logoutBtn) logoutBtn.addEventListener('click', () => {
-    auth.signOut();
-});
+function checkAuth(callback) {
+  onAuthStateChanged(auth, (user) => {
+    callback(user);
+  });
+}
+
+export { register, login, logout, checkAuth };
