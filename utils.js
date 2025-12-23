@@ -3,8 +3,7 @@ import { db } from './firebase.js';
 import { ref, get, push, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 async function fetchProducts() {
-  const productsRef = ref(db, 'products');
-  const snapshot = await get(productsRef);
+  const snapshot = await get(ref(db, 'products'));
   return snapshot.val() || {};
 }
 
@@ -18,26 +17,17 @@ async function deleteProduct(id) {
 }
 
 async function fetchOrders() {
-  const ordersRef = ref(db, 'orders');
-  const snapshot = await get(ordersRef);
+  const snapshot = await get(ref(db, 'orders'));
   return snapshot.val() || {};
 }
 
 async function fetchUsers() {
-  const usersRef = ref(db, 'users');
-  const snapshot = await get(usersRef);
+  const snapshot = await get(ref(db, 'users'));
   return snapshot.val() || {};
-}
-
-async function trackUser(user) {
-  await set(ref(db, `users/${user.uid}`), {
-    email: user.email,
-    lastLogin: new Date().toISOString()
-  });
 }
 
 function formatRupiah(angka) {
   return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-export { fetchProducts, addProduct, deleteProduct, fetchOrders, fetchUsers, trackUser, formatRupiah };
+export { fetchProducts, addProduct, deleteProduct, fetchOrders, fetchUsers, formatRupiah };
