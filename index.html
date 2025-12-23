@@ -3,34 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RHF Store | Top Up Game, Server VPS, Voucher Digital & APK Murah</title>
-  <!-- Bootstrap 5 CDN -->
+  <title>RHF Store | Top Up Game, VPS, Voucher & Produk Digital Murah</title>
+  <!-- Bootstrap 5 & Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome untuk icon -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Navbar Fixed dengan Logo -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm fixed-top">
+  <!-- Navbar dengan Logo Modern Blue Theme -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow fixed-top">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center fw-bold" href="index.html">
-        <img src="https://img.freepik.com/free-vector/gradient-digital-shop-logo-template_23-2149219139.jpg" alt="RHF Store Logo" width="50" height="50" class="rounded me-3">
+      <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="index.html">
+        <img src="https://templatesjungle.com/wp-content/uploads/edd/2024/04/bookly-bookstore-ecommerce-bootstrap-5-html-css-website-template-cover-1024x768.jpg" alt="RHF Store Logo" width="60" height="60" class="rounded-circle me-3 border border-light">
         RHF Store
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-center">
           <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="products.html">Semua Produk</a></li>
+          <li class="nav-item"><a class="nav-link" href="products.html">Produk</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Promo</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Kontak</a></li>
           <li class="nav-item">
             <button class="btn btn-outline-light ms-3" data-bs-toggle="modal" data-bs-target="#loginModal">
-              <i class="fas fa-sign-in-alt"></i> Login / Register
+              <i class="fas fa-user"></i> Login / Register
             </button>
           </li>
         </ul>
@@ -38,87 +37,71 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <section class="bg-gradient text-white py-5 mt-5" style="background: linear-gradient(135deg, #007bff, #6610f2);">
-    <div class="container text-center py-5">
-      <h1 class="display-4 fw-bold">RHF Store - Jual Beli Produk Digital Terpercaya</h1>
-      <p class="lead">Top Up Diamond Game, Server VPS, Voucher Google Play/Steam, APK Premium, E-Wallet & Lainnya. Murah, Aman, Cepat!</p>
-      <a href="products.html" class="btn btn-light btn-lg mt-3"><i class="fas fa-shopping-cart"></i> Belanja Sekarang</a>
+  <!-- Hero Section Gradient -->
+  <section class="bg-gradient py-5 text-white text-center" style="background: linear-gradient(135deg, #007bff, #4e73df); margin-top: 76px;">
+    <div class="container py-5">
+      <h1 class="display-3 fw-bold">RHF Store - Produk Digital Terlengkap</h1>
+      <p class="lead fs-3">Top Up Diamond Game, Server VPS, Voucher Steam/Google Play, APK Premium, E-Wallet & Lainnya. Aman, Cepat, Murah!</p>
+      <a href="products.html" class="btn btn-light btn-lg mt-4"><i class="fas fa-shopping-bag"></i> Lihat Produk</a>
     </div>
   </section>
 
-  <!-- Produk Terbaru Grid -->
+  <!-- Grid Produk Terbaru (Melekat Full dengan Admin) -->
   <section class="container my-5">
-    <h2 class="text-center mb-5 fw-bold">Produk Terbaru & Terlaris</h2>
-    <div class="row" id="product-list">
+    <h2 class="text-center mb-5 fw-bold text-primary">Produk Terbaru & Terlaris</h2>
+    <div class="row g-4" id="product-list">
       <div class="col-12 text-center">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading produk...</span>
-        </div>
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+        <p class="mt-3">Memuat produk dari database...</p>
       </div>
     </div>
   </section>
 
-  <!-- Modal Login / Register Super Lengkap -->
-  <div class="modal fade" id="loginModal" tabindex="-1">
+  <!-- Modal Login/Register Lengkap -->
+  <div class="modal fade" id="loginModal">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow-lg">
+      <div class="modal-content shadow-lg border-0">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="fas fa-user-lock"></i> Login / Register</h5>
+          <h5 class="modal-title"><i class="fas fa-lock"></i> Login / Register</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
-          <ul class="nav nav-tabs mb-3" id="authTab" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">Login</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Register</button>
-            </li>
+        <div class="modal-body p-4">
+          <!-- Tab Login/Register -->
+          <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-login">Login</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-register">Register</button></li>
           </ul>
           <div class="tab-content">
-            <div class="tab-pane fade show active" id="login">
-              <form id="login-form">
-                <div class="mb-3">
-                  <label>Email</label>
-                  <input type="email" id="login-email" class="form-control" placeholder="email@contoh.com" required>
-                </div>
-                <div class="mb-3">
-                  <label>Password</label>
-                  <input type="password" id="login-password" class="form-control" required>
-                </div>
+            <div class="tab-pane fade show active" id="tab-login">
+              <form id="form-login">
+                <input type="email" id="login-email" class="form-control mb-3" placeholder="Email" required>
+                <input type="password" id="login-password" class="form-control mb-4" placeholder="Password" required>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
               </form>
             </div>
-            <div class="tab-pane fade" id="register">
-              <form id="register-form">
-                <div class="mb-3">
-                  <label>Email</label>
-                  <input type="email" id="reg-email" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                  <label>Password</label>
-                  <input type="password" id="reg-password" class="form-control" required>
-                </div>
+            <div class="tab-pane fade" id="tab-register">
+              <form id="form-register">
+                <input type="email" id="reg-email" class="form-control mb-3" placeholder="Email" required>
+                <input type="password" id="reg-password" class="form-control mb-4" placeholder="Password" required>
                 <button type="submit" class="btn btn-success w-100">Register</button>
               </form>
             </div>
           </div>
-          <p class="text-center mt-3 small text-muted">Admin: Gunakan email admin@rhfgamestore.com</p>
+          <p class="text-center mt-4 small text-muted">Admin login: admin@rhfgamestore.com</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- Footer Pro -->
   <footer class="bg-dark text-white py-5 mt-5">
     <div class="container text-center">
-      <p class="mb-0">&copy; 2025 RHF Store. All Rights Reserved. | Kontak: cs@rhfstore.com</p>
-      <p>Powered by Firebase & Bootstrap</p>
+      <p class="mb-2">&copy; 2025 RHF Store - All Rights Reserved</p>
+      <p>Kontak CS: cs@rhfstore.com | Powered by Firebase</p>
     </div>
   </footer>
 
-  <!-- Bootstrap JS -->
+  <!-- Script Module (Melekat dengan Admin via Firebase) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { auth } from './firebase.js';
@@ -126,49 +109,49 @@
     import { fetchProducts, formatRupiah } from './utils.js';
 
     // Register
-    document.getElementById('register-form').addEventListener('submit', (e) => {
+    document.getElementById('form-register').addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('reg-email').value;
       const password = document.getElementById('reg-password').value;
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => alert('Register sukses! Silakan login.'))
-        .catch(err => alert('Gagal register: ' + err.message));
+        .then(() => alert('Register berhasil! Login sekarang.'))
+        .catch(err => alert('Error: ' + err.message));
     });
 
     // Login
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+    document.getElementById('form-login').addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
-          alert('Login sukses!');
+          alert('Login berhasil!');
           if (email === 'admin@rhfgamestore.com') window.location.href = 'admin.html';
         })
         .catch(err => alert('Login gagal: ' + err.message));
     });
 
-    // Load Produk Super Rapi dengan Gambar Besar
+    // Load Produk dari Firebase (Melekat 100% dengan Admin)
     async function loadProducts() {
       try {
         const products = await fetchProducts();
         const container = document.getElementById('product-list');
         container.innerHTML = '';
         if (Object.keys(products).length === 0) {
-          container.innerHTML = '<p class="text-center text-muted">Belum ada produk. Tambahkan dari Admin Panel!</p>';
+          container.innerHTML = '<div class="col-12 text-center"><p class="fs-4 text-muted">Belum ada produk. Tambahkan dari <a href="admin.html">Admin Panel</a>!</p></div>';
           return;
         }
         for (let id in products) {
           const p = products[id];
           container.innerHTML += `
-            <div class="col-lg-4 col-md-6 mb-4">
-              <div class="card h-100 shadow hover-shadow border-0">
-                <img src="\( {p.image || 'https://via.placeholder.com/600x400?text=Produk+Digital'}" class="card-img-top" alt=" \){p.name}" style="height: 250px; object-fit: cover;">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+              <div class="card h-100 border-0 shadow-lg hover-shadow transition">
+                <img src="\( {p.image || 'https://via.placeholder.com/600x400?text=Digital+Product'}" class="card-img-top" alt=" \){p.name}" style="height: 220px; object-fit: cover;">
                 <div class="card-body d-flex flex-column">
-                  <h5 class="card-title">${p.name}</h5>
-                  <p class="card-text text-muted flex-grow-1">${p.description || 'Produk digital berkualitas tinggi, proses cepat.'}</p>
+                  <h5 class="card-title fw-bold">${p.name}</h5>
+                  <p class="card-text text-muted flex-grow-1">${p.description || 'Produk digital berkualitas, proses instan.'}</p>
                   <div class="mt-auto">
-                    <p class="fs-4 fw-bold text-success">${formatRupiah(p.price)}</p>
+                    <p class="fs-3 fw-bold text-primary">${formatRupiah(p.price)}</p>
                     <a href="product-detail.html?id=${id}" class="btn btn-primary w-100"><i class="fas fa-cart-plus"></i> Beli Sekarang</a>
                   </div>
                 </div>
@@ -176,7 +159,7 @@
             </div>`;
         }
       } catch (err) {
-        document.getElementById('product-list').innerHTML = '<p class="text-danger text-center">Error loading produk. Cek console.</p>';
+        document.getElementById('product-list').innerHTML = '<p class="text-danger text-center">Gagal memuat produk. Cek koneksi Firebase.</p>';
         console.error(err);
       }
     }
