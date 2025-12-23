@@ -35,14 +35,13 @@
     </div>
 
     <div class="row mt-5" id="product-list">
-      <!-- Card produk akan dimuat otomatis dari Firebase -->
       <div class="col-12 text-center">
         <p>Loading produk terbaru...</p>
       </div>
     </div>
   </div>
 
-  <!-- Modal Login / Register Elegan -->
+  <!-- Modal Login / Register -->
   <div class="modal fade" id="loginModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -60,8 +59,7 @@
             <input type="password" id="login-password" class="form-control" placeholder="masukkan password">
           </div>
           <button id="btn-login" class="btn btn-primary w-100 mb-2">Login</button>
-          <button id="btn-register" class="btn btn-outline-primary w-100">Register (Buat Akun Baru)</button>
-          <p class="text-center mt-3 small">Admin login dengan email: admin@rhfgamestore.com</p>
+          <button id="btn-register" class="btn btn-outline-primary w-100">Register</button>
         </div>
       </div>
     </div>
@@ -77,59 +75,52 @@
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { fetchProducts, formatRupiah } from './utils.js';
 
-    // Handle Register
     document.getElementById('btn-register').addEventListener('click', () => {
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       if (!email || !password) return alert('Isi email & password!');
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          alert('Register berhasil! Silakan login.');
-        })
-        .catch((error) => {
-          alert('Gagal register: ' + error.message);
-        });
+        .then(() => alert('Register berhasil! Silakan login.'))
+        .catch((error) => alert('Gagal: ' + error.message));
     });
 
-    // Handle Login
     document.getElementById('btn-login').addEventListener('click', () => {
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       if (!email || !password) return alert('Isi email & password!');
       signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(() => {
           alert('Login berhasil!');
-          if (email === 'admin@rhfgamestore.com') {
-            window.location.href = 'admin.html';
-          }
+          if (email === 'admin@rhfgamestore.com') window.location.href = 'admin.html';
         })
-        .catch((error) => {
-          alert('Login gagal: ' + error.message);
-        });
+        .catch((error) => alert('Login gagal: ' + error.message));
     });
 
-    // Load Produk di Homepage
     async function loadProducts() {
-      const products = await fetchProducts();
-      const list = document.getElementById('product-list');
-      list.innerHTML = '';
-      for (let id in products) {
-        const prod = products[id];
-        list.innerHTML += `
-          <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-              <img src="${prod.image || 'https://via.placeholder.com/300'}" class="card-img-top">
-              <div class="card-body">
-                <h5>${prod.name}</h5>
-                <p>${prod.description || ''}</p>
-                <p class="text-success fw-bold">${formatRupiah(prod.price)}</p>
-                <a href="product-detail.html?id=${id}" class="btn btn-primary">Beli</a>
+      try {
+        const products = await fetchProducts();
+        const list = document.getElementById('product-list');
+        list.innerHTML = '';
+        for (let id in products) {
+          const prod = products[id];
+          list.innerHTML += `
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 shadow-sm">
+                <img src="\( {prod.image || 'https://via.placeholder.com/300'}" class="card-img-top" alt=" \){prod.name}">
+                <div class="card-body">
+                  <h5 class="card-title">${prod.name}</h5>
+                  <p class="card-text">${prod.description || ''}</p>
+                  <p class="text-success fw-bold">${formatRupiah(prod.price)}</p>
+                  <a href="product-detail.html?id=${id}" class="btn btn-primary">Beli Sekarang</a>
+                </div>
               </div>
-            </div>
-          </div>`;
+            </div>`;
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
-    loadProducts().catch(() => console.log('Gagal load produk'));
+    loadProducts();
   </script>
 </body>
 </html>
