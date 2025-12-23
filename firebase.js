@@ -21,9 +21,3 @@ const db = getDatabase(app);
 const analytics = getAnalytics(app);
 
 export { auth, db, analytics };
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
