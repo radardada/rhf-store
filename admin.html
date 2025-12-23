@@ -191,3 +191,19 @@
   </script>
 </body>
     </html>
+import { db } from './firebase.js';
+import { ref, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const testProduct = {
+  name: "Test VPS 1GB",
+  price: 50000,
+  description: "Test produk dari console",
+  image: "https://via.placeholder.com/300"
+};
+
+const newRef = push(ref(db, 'products'));
+set(newRef, testProduct).then(() => {
+  console.log("Berhasil ditambah!");
+}).catch((err) => {
+  console.error("Gagal:", err);
+});
